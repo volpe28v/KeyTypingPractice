@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイピングレーサー</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a1a;
+            color: #00ffaa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffaa;
+            letter-spacing: 2px;
+        }
+
+        .level-display {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #ff00ff;
+        }
+
+        .typing-area {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+        }
+
+        .word-display {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .meaning {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ffcc00;
+        }
+
+        .input-area {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        #word-input {
+            width: 80%;
+            padding: 10px;
+            font-size: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffaa;
+            border-radius: 5px;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        #word-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px #00ffaa;
+        }
+
+        .feedback {
+            height: 30px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .correct {
+            color: #00ff00;
+        }
+
+        .incorrect {
+            color: #ff0000;
+        }
+
+        .progress {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffaa, #00aaff);
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+
+        .score-display {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: #ffcc00;
+            display: none;
+        }
+
+        .race-track {
+            width: 100%;
+            height: 300px;
+            background-color: #222233;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #00ffaa;
+        }
+
+        .track {
+            width: 80%;
+            height: 80%;
+            border: 5px dashed #ffffff;
+            border-radius: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .car {
+            width: 30px;
+            height: 20px;
+            background-color: #ff0066;
+            position: absolute;
+            border-radius: 5px;
+            transform-origin: center;
+            transition: transform 0.1s;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            color: #aaaaaa;
+            font-size: 0.9rem;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ff0000;
+            font-size: 3rem;
+            display: none;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff0066;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .restart-btn:hover {
+            background-color: #ff3385;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="game-title">タイピングレーサー</h1>
+        <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
+        
+        <div class="race-track">
+            <div class="track"></div>
+            <div class="car"></div>
+            <div class="game-over">
+                ゲームオーバー！
+                <button class="restart-btn">もう一度挑戦する</button>
+            </div>
+        </div>
+
+        <div class="typing-area">
+            <div class="word-display" id="word-display"></div>
+            <div class="meaning" id="meaning"></div>
+            <div class="input-area">
+                <input type="text" id="word-input" autocomplete="off" placeholder="ここにタイプしてEnterを押してね">
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="score-display" id="score-display"></div>
+        
+        <div class="instructions">
+            <p>キーボードでタイプして、ラジコンカーを走らせよう！タイプが止まるとカーも止まるよ！</p>
+        </div>
+    </div>
+
+    <script>
+        // 音声効果
+        const keySound = new Audio();
+        keySound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        
+        const correctSound = new Audio();
+        correctSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        
+        const wrongSound = new Audio();
+        wrongSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+
+        // レベルごとの単語リスト
+        const wordLists = {
+            1: [ // 人差し指のみ (a, s, d, f, j, k, l, ;)
+                { word: "dad", meaning: "お父さん" },
+                { word: "sad", meaning: "悲しい" },
+                { word: "add", meaning: "足す" },
+                { word: "fall", meaning: "落ちる" },
+                { word: "salad", meaning: "サラダ" },
+                { word: "flask", meaning: "フラスコ" },
+                { word: "jak", meaning: "ジャック" },
+                { word: "lad", meaning: "少年" },
+                { word: "lass", meaning: "少女" },
+                { word: "fad", meaning: "一時的な流行" }
+            ],
+            2: [ // 人差し指 + 中指 (a, s, d, f, g, h, j, k, l, ;)
+                { word: "glad", meaning: "うれしい" },
+                { word: "flag", meaning: "旗" },
+                { word: "half", meaning: "半分" },
+                { word: "glass", meaning: "ガラス" },
+                { word: "dash", meaning: "ダッシュ" },
+                { word: "flash", meaning: "光る" },
+                { word: "slag", meaning: "鉱滓" },
+                { word: "hall", meaning: "ホール" },
+                { word: "gash", meaning: "深い切り傷" },
+                { word: "hash", meaning: "ハッシュ" }
+            ],
+            3: [ // 人差し指 + 中指 + 薬指 (a, s, d, f, g, h, j, k, l, ;, r, e, u, i)
+                { word: "fire", meaning: "火" },
+                { word: "rise", meaning: "上がる" },
+                { word: "hair", meaning: "髪" },
+                { word: "fair", meaning: "公平な" },
+                { word: "idea", meaning: "アイデア" },
+                { word: "guide", meaning: "ガイド" },
+                { word: "field", meaning: "畑" },
+                { word: "grief", meaning: "悲しみ" },
+                { word: "juice", meaning: "ジュース" },
+                { word: "ridge", meaning: "尾根" }
+            ],
+            4: [ // 全ての指 (全てのキー)
+                { word: "quick", meaning: "素早い" },
+                { word: "zebra", meaning: "シマウマ" },
+                { word: "oxygen", meaning: "酸素" },
+                { word: "puzzle", meaning: "パズル" },
+                { word: "wizard", meaning: "魔法使い" },
+                { word: "vortex", meaning: "渦" },
+                { word: "complex", meaning: "複雑な" },
+                { word: "bicycle", meaning: "自転車" },
+                { word: "pyramid", meaning: "ピラミッド" },
+                { word: "symphony", meaning: "交響曲" }
+            ]
+        };
+
+        // ゲーム状態
+        let currentLevel = 1;
+        let currentWordIndex = 0;
+        let correctCount = 0;
+        let words = [];
+        let lastKeyPressTime = Date.now();
+        let carSpeed = 0;
+        let carPosition = { x: 0, y: 0 };
+        let carAngle = 0;
+        let carPath = [];
+        let gameActive = true;
+
+        // DOM要素
+        const wordDisplay = document.getElementById('word-display');
+        const meaningDisplay = document.getElementById('meaning');
+        const wordInput = document.getElementById('word-input');
+        const feedback = document.getElementById('feedback');
+        const progressBar = document.getElementById('progress-bar');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level');
+        const levelDescDisplay = document.getElementById('level-desc');
+        const car = document.querySelector('.car');
+        const gameOverScreen = document.querySelector('.game-over');
+        const restartBtn = document.querySelector('.restart-btn');
+
+        // レベル説明
+        const levelDescriptions = {
+            1: "人差し指のみ",
+            2: "人差し指 + 中指",
+            3: "人差し指 + 中指 + 薬指",
+            4: "全ての指"
+        };
+
+        // ゲーム初期化
+        function initGame() {
+            words = [...wordLists[currentLevel]];
+            shuffleArray(words);
+            currentWordIndex = 0;
+            correctCount = 0;
+            displayWord();
+            updateProgressBar();
+            scoreDisplay.style.display = 'none';
+            levelDisplay.textContent = currentLevel;
+            levelDescDisplay.textContent = levelDescriptions[currentLevel];
+            wordInput.value = '';
+            wordInput.focus();
+            
+            // ラジコンカーの初期化
+            initCar();
+            gameActive = true;
+            gameOverScreen.style.display = 'none';
+        }
+
+        // 単語をシャッフル
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 単語表示
+        function displayWord() {
+            if (currentWordIndex < words.length) {
+                const currentWord = words[currentWordIndex];
+                wordDisplay.textContent = currentWord.word;
+                meaningDisplay.textContent = currentWord.meaning;
+                feedback.textContent = '';
+                feedback.className = 'feedback';
+            } else {
+                // 全ての単語が終了
+                const score = Math.floor((correctCount / words.length) * 100);
+                scoreDisplay.textContent = `スコア: ${score}/100点`;
+                scoreDisplay.style.display = 'block';
+                wordDisplay.textContent = 'クリア！';
+                meaningDisplay.textContent = '';
+                
+                // 100点だった場合、レベルアップ
+                if (score === 100 && currentLevel < 4) {
+                    currentLevel++;
+                    setTimeout(() => {
+                        alert(`レベル${currentLevel}にアップしました！`);
+                        initGame();
+                    }, 1500);
+                }
+            }
+        }
+
+        // 進捗バーの更新
+        function updateProgressBar() {
+            const progress = (currentWordIndex / words.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 入力チェック
+        function checkInput() {
+            const currentWord = words[currentWordIndex].word;
+            const userInput = wordInput.value.trim();
+            
+            if (userInput === currentWord) {
+                // 正解
+                correctSound.play();
+                feedback.textContent = '正解！';
+                feedback.className = 'feedback correct';
+                correctCount++;
+                currentWordIndex++;
+                wordInput.value = '';
+                updateProgressBar();
+                displayWord();
+            } else {
+                // 不正解
+                wrongSound.play();
+                feedback.textContent = '間違い！もう一度！';
+                feedback.className = 'feedback incorrect';
+                
+                // 間違った箇所をハイライト
+                let errorIndex = 0;
+                while (errorIndex < userInput.length && errorIndex < currentWord.length && 
+                       userInput[errorIndex] === currentWord[errorIndex]) {
+                    errorIndex++;
+                }
+                
+                if (errorIndex < userInput.length) {
+                    feedback.textContent += ` "${userInput[errorIndex]}" が間違っています`;
+                } else if (userInput.length < currentWord.length) {
+                    feedback.textContent += ` "${currentWord.substring(userInput.length)}" が足りません`;
+                } else {
+                    feedback.textContent += ` 長すぎます`;
+                }
+            }
+        }
+
+        // ラジコンカーの初期化
+        function initCar() {
+            const track = document.querySelector('.track');
+            const trackRect = track.getBoundingClientRect();
+            const trackCenterX = trackRect.width / 2;
+            const trackCenterY = trackRect.height / 2;
+            
+            // 楕円形のパスを生成
+            carPath = [];
+            for (let angle = 0; angle < 360; angle += 5) {
+                const radians = angle * Math.PI / 180;
+                const x = trackCenterX + (trackRect.width * 0.4) * Math.cos(radians);
+                const y = trackCenterY + (trackRect.height * 0.4) * Math.sin(radians);
+                carPath.push({ x, y });
+            }
+            
+            // 車の初期位置
+            carPosition = { ...carPath[0] };
+            carAngle = 0;
+            car.style.left = `${carPosition.x - 15}px`;
+            car.style.top = `${carPosition.y - 10}px`;
+            car.style.transform = `rotate(${carAngle}deg)`;
+            
+            carSpeed = 2;
+            lastKeyPressTime = Date.now();
+        }
+
+        // ラジコンカーの更新
+        function updateCar() {
+            if (!gameActive) return;
+            
+            // キー入力からの経過時間に基づいて速度を減衰
+            const currentTime = Date.now();
+            const timeSinceLastKeyPress = currentTime - lastKeyPressTime;
+            
+            if (timeSinceLastKeyPress > 2000) {
+                carSpeed = Math.max(0, carSpeed - 0.05);
+                
+                if (carSpeed <= 0) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // パスに沿って車を移動
+            const pathIndex = Math.floor(carAngle) % carPath.length;
+            const targetPosition = carPath[pathIndex];
+            
+            // 車の位置と角度を更新
+            carPosition = targetPosition;
+            carAngle = (carAngle + carSpeed) % 360;
+            
+            // ドリフト効果を追加
+            const driftAngle = 15 + (Math.sin(carAngle * 0.1) * 10);
+            
+            // 車の位置と回転を更新
+            car.style.left = `${carPosition.x - 15}px`;
+            car.style.top = `${carPosition.y - 10}px`;
+            car.style.transform = `rotate(${carAngle + driftAngle}deg)`;
+            
+            requestAnimationFrame(updateCar);
+        }
+
+        // ゲームオーバー
+        function gameOver() {
+            gameActive = false;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // イベントリスナー
+        wordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkInput();
+            } else {
+                // キー入力時に車の速度を上げる
+                lastKeyPressTime = Date.now();
+                carSpeed = Math.min(5, carSpeed + 0.2);
+                
+                // キー入力音
+                const keySound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+                keySound.play();
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            initGame();
+        });
+
+        // ゲーム開始
+        initGame();
+        updateCar();
+    </script>
+</body>
+</html> 
