@@ -413,44 +413,36 @@
         .keyboard-display-container {
             width: 100%;
             margin-top: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .keyboard-display {
+            padding: 15px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #00ffaa;
             border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3), inset 0 0 30px rgba(0, 255, 170, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            width: 90%;
-            max-width: 700px;
-            position: relative;
-            transform-style: preserve-3d;
-            perspective: 500px;
-            transform: rotateX(10deg);
-            animation: keyboardPulse 4s infinite alternate;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            animation: keyboardPulse 2s infinite alternate;
         }
 
-        @keyframes keyboardPulse {
-            0% {
-                box-shadow: 0 0 20px rgba(0, 255, 170, 0.3), inset 0 0 30px rgba(0, 255, 170, 0.1);
-            }
-            100% {
-                box-shadow: 0 0 30px rgba(0, 255, 170, 0.5), inset 0 0 40px rgba(0, 255, 170, 0.2);
-            }
+        .keyboard-display {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
         }
 
         .keyboard-row {
             display: flex;
             justify-content: center;
             gap: 5px;
+            margin-bottom: 5px;
             position: relative;
             z-index: 1;
+        }
+
+        .second-row {
+            padding-left: 20px;
+        }
+
+        .third-row {
+            padding-left: 40px;
         }
 
         .key {
@@ -468,8 +460,10 @@
             user-select: none;
             transition: all 0.2s ease;
             position: relative;
-            overflow: visible;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .key[data-key="."], .key[data-key="?"], .key[data-key="'"], .key[data-key="!"], .key[data-key=","] {
+            background-color: #2a2a3a;
         }
 
         .key::before {
@@ -628,7 +622,6 @@
             }
         }
 
-        /* キーボード全体に波紋エフェクト */
         .keyboard-ripple {
             position: absolute;
             top: 0;
@@ -642,7 +635,6 @@
             transform: scale(0);
         }
 
-        /* ベストタイム表示のスタイルを修正 */
         .level-record {
             margin-bottom: 10px;
             display: flex;
@@ -672,7 +664,6 @@
             margin: 0;
         }
 
-        /* 新記録達成メッセージのスタイル */
         .new-record-message {
             position: fixed;
             top: 100px;
@@ -691,10 +682,45 @@
             text-align: center;
         }
 
-        /* シフトキーのスタイル */
         .shift-key {
             width: 70px;
             background-color: #333344;
+        }
+
+        /* 数字キー行のスタイル */
+        .number-row {
+            margin-bottom: 8px;
+        }
+
+        /* 数字キーと特殊キーのスタイル */
+        .key[data-key="0"], .key[data-key="1"], .key[data-key="2"], .key[data-key="3"], 
+        .key[data-key="4"], .key[data-key="5"], .key[data-key="6"], .key[data-key="7"], 
+        .key[data-key="8"], .key[data-key="9"], .key[data-key="."], .key[data-key="/"], 
+        .key[data-key=","], .key[data-key=";"], .key[data-key="?"], .key[data-key="!"] {
+            background-color: #2a2a3a;
+        }
+
+        /* キー上の文字表示スタイル */
+        .shift-char {
+            display: block;
+            font-size: 0.8rem;
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            color: #ff00ff;
+        }
+
+        /* シフト必要文字がハイライトされたときのスタイル */
+        .key.highlight .shift-char {
+            color: #ffffff;
+            text-shadow: 0 0 5px #ffffff;
+        }
+
+        /* シフトキーがハイライトされたときの特別なスタイル */
+        .key.shift-key.highlight {
+            background-color: #ff00aa;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 0, 170, 0.7);
         }
     </style>
 </head>
@@ -721,9 +747,20 @@
 
             <div class="score-display" id="score-display"></div>
             
-            <!-- キーボード表示エリアをタイピングエリアの下に追加 -->
             <div class="keyboard-display-container">
                 <div class="keyboard-display">
+                    <div class="keyboard-row number-row">
+                        <div class="key" data-key="1">1<span class="shift-char">!</span></div>
+                        <div class="key" data-key="2">2</div>
+                        <div class="key" data-key="3">3</div>
+                        <div class="key" data-key="4">4</div>
+                        <div class="key" data-key="5">5</div>
+                        <div class="key" data-key="6">6</div>
+                        <div class="key" data-key="7">7<span class="shift-char">'</span></div>
+                        <div class="key" data-key="8">8</div>
+                        <div class="key" data-key="9">9</div>
+                        <div class="key" data-key="0">0</div>
+                    </div>
                     <div class="keyboard-row">
                         <div class="key" data-key="q">Q</div>
                         <div class="key" data-key="w">W</div>
@@ -736,7 +773,7 @@
                         <div class="key" data-key="o">O</div>
                         <div class="key" data-key="p">P</div>
                     </div>
-                    <div class="keyboard-row">
+                    <div class="keyboard-row second-row">
                         <div class="key" data-key="a">A</div>
                         <div class="key" data-key="s">S</div>
                         <div class="key" data-key="d">D</div>
@@ -747,7 +784,8 @@
                         <div class="key" data-key="k">K</div>
                         <div class="key" data-key="l">L</div>
                     </div>
-                    <div class="keyboard-row">
+                    <div class="keyboard-row third-row">
+                        <div class="key shift-key" data-key="shift">Shift</div>
                         <div class="key" data-key="z">Z</div>
                         <div class="key" data-key="x">X</div>
                         <div class="key" data-key="c">C</div>
@@ -755,9 +793,11 @@
                         <div class="key" data-key="b">B</div>
                         <div class="key" data-key="n">N</div>
                         <div class="key" data-key="m">M</div>
+                        <div class="key" data-key=",">,</div>
+                        <div class="key" data-key=".">.</div>
+                        <div class="key" data-key="/">/<span class="shift-char">?</span></div>
                     </div>
                     <div class="keyboard-row">
-                        <div class="key shift-key" data-key="shift">Shift</div>
                         <div class="key space-key" data-key=" ">Space</div>
                     </div>
                 </div>
@@ -801,50 +841,35 @@
         </div>
     </div>
 
-    <!-- 音声ファイル -->
     <audio id="key-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-tap-2244.mp3" preload="auto"></audio>
     <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
     <audio id="wrong-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
 
-    <!-- word-lists.jsを先に読み込む -->
     <script src="word-lists.js"></script>
     
-    <!-- メインのスクリプト -->
     <script>
-        // wordListsとlevelDescriptionsは外部ファイルから読み込まれるため、
-        // ここでの定義は不要になります
-        
-        // 既存のJavaScriptコード
-        
-        // 単語の発音機能を修正（重複発音を防止）
         function speakWord(word) {
-            // 既存の発話をキャンセル
             if (window.speechSynthesis) {
                 window.speechSynthesis.cancel();
                 
-                // 発話オブジェクトを作成
                 const utterance = new SpeechSynthesisUtterance(word);
-                utterance.lang = 'en-US'; // 英語の発音
-                utterance.rate = 0.8; // やや遅めの速度
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
                 
-                // 発話開始
                 window.speechSynthesis.speak(utterance);
                 console.log(word);
             }
         }
         
-        // initGame関数を修正（発音の重複を防止）
         function initGame() {
-            // 全単語リストからランダムに10問を選択
             const fullWordList = [...wordLists[currentLevel]];
             shuffleArray(fullWordList);
-            words = fullWordList.slice(0, 10); // 最初の10問だけを使用
+            words = fullWordList.slice(0, 10);
             
             currentWordIndex = 0;
             correctCount = 0;
             mistakeCount = 0;
             
-            // 問題表示を先に行う
             displayWord();
             
             updateProgressBar();
@@ -857,25 +882,19 @@
             gameActive = true;
             timerStarted = false;
             
-            // タイマーをリセット
             timerDisplay.textContent = "00.00";
             
-            // 既存のタイマーをクリア
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
             }
             
-            // ベストタイムを非表示
             hideRecords();
             
-            // レベルセレクターの更新
             initLevelSelectors();
             
-            // キーボードの初期化アニメーション
             initKeyboardAnimation();
             
-            // 最初の単語を一度だけ発音（遅延させて実行）
             setTimeout(() => {
                 if (words.length > 0) {
                     speakWord(words[0].word);
@@ -883,17 +902,14 @@
             }, 100);
         }
 
-        // 音声関連
         const keySound = document.getElementById('key-sound');
         const correctSound = document.getElementById('correct-sound');
         const wrongSound = document.getElementById('wrong-sound');
 
-        // 音量調整
         keySound.volume = 0.3;
         correctSound.volume = 0.5;
         wrongSound.volume = 0.5;
 
-        // ゲーム状態
         let words = [];
         let currentWordIndex = 0;
         let correctCount = 0;
@@ -904,7 +920,6 @@
         let startTime, endTime;
         let timerInterval = null;
 
-        // 記録の初期化
         let records = {
             level1: [],
             level2: [],
@@ -914,18 +929,15 @@
             level6: []
         };
 
-        // 記録を保存
         function saveRecords() {
             localStorage.setItem('typingRecords', JSON.stringify(records));
         }
 
-        // 記録を読み込む
         function loadRecords() {
             const savedRecords = localStorage.getItem('typingRecords');
             if (savedRecords) {
                 records = JSON.parse(savedRecords);
                 
-                // 古いデータ形式の場合、総合タイムを削除
                 if (records.total) {
                     delete records.total;
                     saveRecords();
@@ -933,51 +945,40 @@
             }
         }
 
-        // タイムを追加して上位3つを保持
         function addRecord(levelKey, time) {
             if (!records[levelKey]) {
                 records[levelKey] = [];
             }
             
-            // 現在の最速タイムを取得
             const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey]) : Infinity;
             
-            // 新しいタイムが最速の場合のみ更新
             if (time < currentBestTime) {
-                // 古い記録をクリアして新しい記録のみを保存
                 records[levelKey] = [time];
                 saveRecords();
                 
-                // 新記録達成メッセージを表示
                 showNewRecordMessage();
             }
         }
 
-        // タイムを表示用にフォーマット (秒.ミリ秒)
         function formatTime(timeMs) {
             const seconds = Math.floor(timeMs / 1000);
             const milliseconds = Math.floor((timeMs % 1000) / 10);
             return `${seconds}.${milliseconds.toString().padStart(2, '0')}秒`;
         }
 
-        // ベストタイムを表示
         function displayBestTimes() {
-            // レベルごとのベストタイム表示
             for (let i = 1; i <= 6; i++) {
                 const levelRecords = records[`level${i}`] || [];
                 const levelRecordsList = document.getElementById(`level${i}-records`);
                 
-                // リストをクリア
                 levelRecordsList.innerHTML = '';
                 
                 if (levelRecords.length > 0) {
-                    // 最速タイムのみを表示
                     const fastestTime = Math.min(...levelRecords);
                     const li = document.createElement('li');
                     li.textContent = formatTime(fastestTime);
                     levelRecordsList.appendChild(li);
                 } else {
-                    // 記録がない場合
                     const li = document.createElement('li');
                     li.textContent = '記録なし';
                     li.style.color = '#666666';
@@ -986,7 +987,6 @@
             }
         }
 
-        // DOM要素
         const wordDisplay = document.getElementById('word-display');
         const meaningDisplay = document.getElementById('meaning');
         const wordInput = document.getElementById('word-input');
@@ -997,7 +997,6 @@
         const levelDescDisplay = document.getElementById('level-desc');
         const timerDisplay = document.getElementById('timer-display');
 
-        // タイマー表示を更新
         function updateTimer() {
             if (!gameActive) return;
             
@@ -1006,7 +1005,6 @@
             timerDisplay.textContent = formatTime(elapsedTime);
         }
 
-        // タイマーを開始
         function startTimer() {
             startTime = Date.now();
             timerStarted = true;
@@ -1015,31 +1013,26 @@
                 timerDisplay.textContent = formatTime(elapsedTime);
             }, 10);
             
-            // タイマー開始時にベストタイムを非表示
             hideRecords();
         }
 
-        // キーボードの初期化アニメーション
         function initKeyboardAnimation() {
             const keys = document.querySelectorAll('.key');
             
-            // すべてのキーを一度非表示にする
             keys.forEach(key => {
                 key.style.opacity = '0';
                 key.style.transform = 'translateY(20px)';
             });
             
-            // キーを順番に表示する
             keys.forEach((key, index) => {
                 setTimeout(() => {
                     key.style.opacity = '1';
                     key.style.transform = 'translateY(0)';
                     key.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2)';
-                }, index * 20); // 20ミリ秒ごとに表示
+                }, index * 20);
             });
         }
 
-        // 単語をシャッフル
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1047,14 +1040,11 @@
             }
         }
 
-        // 単語表示
         function displayWord() {
             if (currentWordIndex < words.length) {
                 const currentWord = words[currentWordIndex];
                 
-                // 単語が存在することを確認
                 if (currentWord && currentWord.word) {
-                    // 通常表示（ハイライトなし）
                     wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
                     meaningDisplay.textContent = currentWord.meaning;
                     feedback.textContent = '';
@@ -1062,48 +1052,37 @@
                     wordInput.value = '';
                     wordInput.focus();
                     
-                    // 単語の発音
                     speakWord(currentWord.word);
                     
-                    // 次に打つキーをハイライト
                     highlightNextKey();
                 } else {
                     console.error('単語データが不正です:', currentWord);
-                    // エラー回避のためのフォールバック
                     wordDisplay.innerHTML = '<span>エラー</span>';
                     meaningDisplay.textContent = '単語データの読み込みに問題があります';
                 }
             } else {
-                // 全ての単語が終了
                 endTime = Date.now();
                 const elapsedTime = endTime - startTime;
                 
-                // タイマーを停止
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
                 }
                 
-                // レベルごとのタイム記録
                 addRecord(`level${currentLevel}`, elapsedTime);
                 
-                // 総タイプ数を計算（各単語の長さの合計）
                 let totalTypesCount = 0;
                 words.forEach(word => {
                     totalTypesCount += word.word.length;
                 });
                 
-                // 正確率を計算（100% - ミス率）
                 const accuracyRate = mistakeCount === 0 ? 100 : Math.max(0, Math.round((1 - mistakeCount / totalTypesCount) * 100));
                 
-                // 結果表示（タイムと正確率）
                 scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}%`;
                 scoreDisplay.style.display = 'block';
                 
-                // ミスがあったかどうかをチェック
                 const isPerfect = mistakeCount === 0;
                 
-                // ノーミスの場合のみレベルアップ表示（レベル5まで対応）
                 if (isPerfect && currentLevel < 5) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = `レベル${currentLevel}クリア！レベル${currentLevel + 1}に進みます`;
@@ -1117,7 +1096,6 @@
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
                 } else if (!isPerfect) {
-                    // ミスがある場合
                     wordDisplay.innerHTML = 'クリア！';
                     feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
                     feedback.className = 'feedback';
@@ -1125,10 +1103,8 @@
                     wordInput.placeholder = "Enterキーを押して再挑戦";
                 }
                 
-                // ベストタイム表示
                 showRecords();
                 
-                // 結果表示モードに設定
                 gameActive = false;
                 
                 wordInput.value = '';
@@ -1136,15 +1112,12 @@
             }
         }
 
-        // 進捗バーの更新
         function updateProgressBar() {
             const progress = (currentWordIndex / words.length) * 100;
             progressBar.style.width = `${progress}%`;
         }
 
-        // キー入力の検証（シフトキーをミスに含めない）
         function validateKeyInput(e) {
-            // シフトキーは無視
             if (e.key === 'Shift') {
                 return true;
             }
@@ -1152,27 +1125,21 @@
             const currentWord = words[currentWordIndex].word;
             const currentPosition = wordInput.value.length;
             
-            // 入力位置が単語の長さ以上の場合は無効
             if (currentPosition >= currentWord.length) {
                 e.preventDefault();
                 return false;
             }
             
-            // 次に入力すべき文字（大文字小文字を区別しない）
             const expectedChar = currentWord[currentPosition].toLowerCase();
             const inputChar = e.key.toLowerCase();
             
-            // 入力された文字が期待される文字と一致するか確認
             const isCorrect = expectedChar === inputChar;
             
-            // 間違った入力の場合はミスカウントを増やす（シフトキーは除く）
             if (!isCorrect && e.key !== 'Shift') {
                 mistakeCount++;
                 
-                // 間違った文字を赤く表示
                 highlightWrongChar(currentPosition);
                 
-                // 入力を許可しない
                 e.preventDefault();
                 return false;
             }
@@ -1180,90 +1147,69 @@
             return true;
         }
 
-        // 間違った文字をハイライト表示
         function highlightWrongChar(position) {
             const currentWord = words[currentWordIndex].word;
             let highlightedHTML = '';
             
             for (let i = 0; i < currentWord.length; i++) {
                 if (i < position) {
-                    // 既に正しく入力された文字
                     highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                 } else if (i === position) {
-                    // 間違って入力された文字位置
                     highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
                 } else {
-                    // まだ入力されていない文字
                     highlightedHTML += `<span>${currentWord[i]}</span>`;
                 }
             }
             
-            // ハイライト表示を適用
             wordDisplay.innerHTML = highlightedHTML;
         }
 
-        // リアルタイム入力チェック関数を修正
         function checkInputRealtime() {
             const currentWord = words[currentWordIndex].word;
             const userInput = wordInput.value.trim();
             
-            // 大文字小文字を区別せずに比較
             if (userInput.toLowerCase() === currentWord.toLowerCase()) {
-                // 正解の場合
                 wordDisplay.innerHTML = `<span class="correct-word">${currentWord}</span>`;
                 feedback.textContent = '正解！';
                 feedback.className = 'feedback correct';
                 
-                // 次の単語へ
                 currentWordIndex++;
                 correctCount++;
                 
-                // 進捗バーの更新
                 updateProgressBar();
                 
-                // 次の単語を表示（または終了）
                 setTimeout(() => {
                     displayWord();
                 }, 500);
                 return;
             }
             
-            // 部分一致のハイライト表示用のHTMLを生成（大文字小文字を区別しない）
             let highlightedHTML = '';
             for (let i = 0; i < currentWord.length; i++) {
                 if (i < userInput.length) {
                     if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                        // 正しく入力された文字は緑色で表示
                         highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                     } else {
-                        // 間違って入力された文字は赤色で表示
                         highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
                     }
                 } else {
-                    // まだ入力されていない文字は通常表示
                     highlightedHTML += `<span>${currentWord[i]}</span>`;
                 }
             }
             
-            // ハイライト表示を適用
             wordDisplay.innerHTML = highlightedHTML;
             
-            // 次に打つキーをハイライト
             highlightNextKey();
         }
 
-        // イベントリスナー
         wordInput.addEventListener('keydown', (e) => {
             if (!timerStarted && gameActive) {
-                // 最初のキー入力でタイマー開始
                 startTimer();
             }
             
             if (e.key === 'Enter') {
                 if (!gameActive) {
-                    // ゲーム終了後はリスタート
                     if (currentWordIndex >= words.length) {
-                        // ノーミスの場合のみ、レベルアップ（レベル5まで対応）
                         if (mistakeCount === 0 && currentLevel < 5) {
                             currentLevel++;
                         }
@@ -1271,82 +1217,62 @@
                     }
                 }
             } else if (gameActive) {
-                // ゲーム中は入力検証
                 if (validateKeyInput(e)) {
-                    // 正しいキーの場合のみキー入力音を再生
                     keySound.play();
                     
-                    // キーボード表示で押されたキーを一時的にハイライト
                     const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                     if (keyElement) {
-                        // クラスを追加する前に既存のアニメーションをリセット
                         keyElement.classList.remove('correct');
-                        void keyElement.offsetWidth; // リフロー（再描画）を強制
+                        void keyElement.offsetWidth;
                         
-                        // クラスを追加して新しいアニメーションを開始
                         keyElement.classList.add('correct');
                         
-                        // キーボード全体に波紋エフェクトを追加
                         createKeyboardRipple(keyElement);
                         
-                        // 長めの残像効果のため、クラスを遅延して削除
                         setTimeout(() => {
                             keyElement.classList.remove('correct');
-                        }, 1000); // 1秒後に削除（アニメーション時間より少し短く）
+                        }, 1000);
                     }
                     
-                    // 少し遅延させて次のキーをハイライト（入力値が更新された後）
                     setTimeout(highlightNextKey, 50);
                 } else {
-                    // 間違ったキーの場合、キーボード表示で間違ったキーを一時的にハイライト
                     const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                     if (keyElement) {
-                        // クラスを追加する前に既存のアニメーションをリセット
                         keyElement.classList.remove('incorrect');
-                        void keyElement.offsetWidth; // リフロー（再描画）を強制
+                        void keyElement.offsetWidth;
                         
-                        // クラスを追加して新しいアニメーションを開始
                         keyElement.classList.add('incorrect');
                         
-                        // キーボード全体に波紋エフェクトを追加（赤色）
                         createKeyboardRipple(keyElement, true);
                         
-                        // 長めの残像効果のため、クラスを遅延して削除
                         setTimeout(() => {
                             keyElement.classList.remove('incorrect');
-                        }, 1000); // 1秒後に削除（アニメーション時間より少し短く）
+                        }, 1000);
                     }
                 }
             }
         });
 
-        // 入力内容が変更されたときのイベント
         wordInput.addEventListener('input', () => {
             if (gameActive) {
                 checkInputRealtime();
             }
         });
 
-        // ページ読み込み時に記録を読み込む
         window.addEventListener('load', () => {
             loadRecords();
             
-            // 音声のプリロード
             if (typeof preloadSounds === 'function') {
                 preloadSounds();
             }
             
-            // レベルセレクターの初期化
             initLevelSelectors();
             
-            // ゲーム初期化（問題表示を含む）
             initGame();
             
-            // 初期表示時はベストタイムを表示
             showRecords();
         });
 
-        // 記録をクリア
         function clearRecords() {
             if (confirm('すべての記録をクリアしますか？')) {
                 records = {
@@ -1362,15 +1288,12 @@
             }
         }
 
-        // 発音ボタンの追加
         function addPronunciationButton() {
-            // 既存のボタンを確認
             const existingButton = document.querySelector('.pronunciation-button');
             if (existingButton) {
-                return; // 既にボタンがある場合は何もしない
+                return;
             }
             
-            // ボタン要素の作成
             const pronunciationButton = document.createElement('button');
             pronunciationButton.textContent = '🔊';
             pronunciationButton.className = 'pronunciation-button';
@@ -1388,20 +1311,17 @@
                 vertical-align: middle;
             `;
             
-            // クリックイベントの追加
             pronunciationButton.addEventListener('click', () => {
                 if (currentWordIndex < words.length) {
                     speakWord(words[currentWordIndex].word);
                 }
             });
             
-            // ボタンを単語の横に配置
             const meaningElement = document.getElementById('meaning');
             meaningElement.appendChild(document.createTextNode(' '));
             meaningElement.appendChild(pronunciationButton);
         }
 
-        // ベストタイムを非表示
         function hideRecords() {
             const recordsSidebar = document.querySelector('.records-sidebar');
             if (recordsSidebar) {
@@ -1409,42 +1329,35 @@
             }
         }
 
-        // ベストタイムを表示
         function showRecords() {
             const recordsSidebar = document.querySelector('.records-sidebar');
             if (recordsSidebar) {
                 recordsSidebar.style.display = 'block';
-                displayBestTimes(); // 最新の記録を表示
+                displayBestTimes();
             }
         }
 
-        // レベルセレクターの初期化
         function initLevelSelectors() {
             const levelSelectors = document.querySelectorAll('.level-selector');
             
             levelSelectors.forEach(selector => {
-                // 現在のレベルをアクティブに
                 if (parseInt(selector.dataset.level) === currentLevel) {
                     selector.classList.add('active');
                 } else {
                     selector.classList.remove('active');
                 }
                 
-                // クリックイベントの追加
                 selector.addEventListener('click', () => {
                     const selectedLevel = parseInt(selector.dataset.level);
                     
-                    // 既にゲームが進行中の場合は確認
                     if (gameActive && timerStarted) {
                         if (!confirm(`現在のゲームを中断してレベル${selectedLevel}を開始しますか？`)) {
                             return;
                         }
                     }
                     
-                    // レベル変更
                     currentLevel = selectedLevel;
                     
-                    // アクティブクラスの更新
                     levelSelectors.forEach(s => {
                         if (parseInt(s.dataset.level) === currentLevel) {
                             s.classList.add('active');
@@ -1453,25 +1366,28 @@
                         }
                     });
                     
-                    // ゲーム再初期化
                     initGame();
                     
-                    // フィードバック
                     feedback.textContent = `レベル${selectedLevel}を選択しました`;
                     feedback.className = 'feedback';
                     
-                    // フォーカス
                     wordInput.focus();
                 });
             });
         }
 
-        // 次に打つキーをハイライト表示する関数を修正
         function highlightNextKey() {
             // 前回のハイライトをクリア
             const highlightedKeys = document.querySelectorAll('.key.highlight');
             highlightedKeys.forEach(key => {
                 key.classList.remove('highlight');
+                
+                // シフト文字のスタイルをリセット
+                const shiftChar = key.querySelector('.shift-char');
+                if (shiftChar) {
+                    shiftChar.style.color = '#ff00ff';
+                    shiftChar.style.textShadow = 'none';
+                }
             });
             
             // 現在の単語と入力位置を取得
@@ -1481,17 +1397,83 @@
                 
                 // 入力位置が単語の長さ未満の場合
                 if (currentPosition < currentWord.length) {
-                    // 次に打つキーを取得（小文字に変換）
-                    const nextKey = currentWord[currentPosition].toLowerCase();
+                    // 次に打つ文字を取得
+                    const nextChar = currentWord[currentPosition];
                     
-                    // 対応するキー要素を探してハイライト
-                    const keyElement = document.querySelector(`.key[data-key="${nextKey}"]`);
-                    if (keyElement) {
-                        keyElement.classList.add('highlight');
+                    // シフトキーが必要かどうか判定
+                    let requiresShift = false;
+                    let actualKey = nextChar.toLowerCase();
+                    
+                    // 大文字の場合はシフトキーが必要
+                    if (nextChar !== nextChar.toLowerCase()) {
+                        requiresShift = true;
                     }
                     
-                    // 大文字の場合はシフトキーもハイライト
-                    if (currentWord[currentPosition] !== currentWord[currentPosition].toLowerCase()) {
+                    // 特定の記号の場合、対応するキーとシフトの必要性を設定
+                    switch(nextChar) {
+                        case '?':
+                            actualKey = '/';
+                            requiresShift = true;
+                            break;
+                        case '!':
+                            actualKey = '1';
+                            requiresShift = true;
+                            break;
+                        case '"':
+                            actualKey = ';';
+                            requiresShift = true;
+                            break;
+                        case '<':
+                            actualKey = ',';
+                            requiresShift = true;
+                            break;
+                        case '>':
+                            actualKey = '.';
+                            requiresShift = true;
+                            break;
+                        case '\'':
+                            actualKey = '7';
+                            requiresShift = true;
+                            break;
+                        case ':':
+                            actualKey = ';';
+                            requiresShift = true;
+                            break;
+                        case '{':
+                        case '}':
+                        case '~':
+                        case '@':
+                        case '#':
+                        case '$':
+                        case '%':
+                        case '^':
+                        case '&':
+                        case '*':
+                        case '(':
+                        case ')':
+                        case '_':
+                        case '+':
+                            requiresShift = true;
+                            break;
+                    }
+                    
+                    // 対応するキー要素を探してハイライト
+                    const keyElement = document.querySelector(`.key[data-key="${actualKey}"]`);
+                    if (keyElement) {
+                        keyElement.classList.add('highlight');
+                        
+                        // シフト文字の場合は、シフト文字部分も強調表示
+                        if (requiresShift) {
+                            const shiftChar = keyElement.querySelector('.shift-char');
+                            if (shiftChar) {
+                                shiftChar.style.color = '#ffffff';
+                                shiftChar.style.textShadow = '0 0 5px #ffffff';
+                            }
+                        }
+                    }
+                    
+                    // シフトキーが必要な場合はシフトキーもハイライト
+                    if (requiresShift) {
                         const shiftKey = document.querySelector(`.key[data-key="shift"]`);
                         if (shiftKey) {
                             shiftKey.classList.add('highlight');
@@ -1501,41 +1483,32 @@
             }
         }
 
-        // キーボード全体に波紋エフェクトを追加する関数
         function createKeyboardRipple(keyElement, isError = false) {
             const keyboardDisplay = document.querySelector('.keyboard-display');
             
-            // 既存の波紋を削除
             const existingRipples = document.querySelectorAll('.keyboard-ripple');
             existingRipples.forEach(ripple => ripple.remove());
             
-            // 新しい波紋要素を作成
             const ripple = document.createElement('div');
             ripple.className = 'keyboard-ripple';
             
-            // キーの位置を取得
             const keyRect = keyElement.getBoundingClientRect();
             const keyboardRect = keyboardDisplay.getBoundingClientRect();
             
-            // キーの中心座標（キーボード内の相対位置）
             const keyX = keyRect.left + keyRect.width / 2 - keyboardRect.left;
             const keyY = keyRect.top + keyRect.height / 2 - keyboardRect.top;
             
-            // 波紋のスタイルを設定
             ripple.style.background = isError 
                 ? `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(255, 0, 0, 0.5) 100%)`
                 : `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(0, 255, 0, 0.5) 100%)`;
             
-            // キーボードに波紋を追加
             keyboardDisplay.appendChild(ripple);
             
-            // アニメーションを開始
             setTimeout(() => {
                 ripple.style.opacity = '0.7';
                 ripple.style.transform = 'scale(3)';
                 ripple.style.transition = 'all 1s cubic-bezier(0, 0.5, 0.5, 1)';
                 
-                // アニメーション終了後に要素を削除
                 setTimeout(() => {
                     ripple.style.opacity = '0';
                     setTimeout(() => {
@@ -1545,7 +1518,6 @@
             }, 10);
         }
 
-        // 記録の初期化関数を更新
         function initRecords() {
             if (!localStorage.getItem('typingRecords')) {
                 records = {
@@ -1560,27 +1532,21 @@
             }
         }
 
-        // 新記録達成メッセージを表示する関数
         function showNewRecordMessage() {
-            // 新記録メッセージ要素を作成
             const newRecordMsg = document.createElement('div');
             newRecordMsg.className = 'new-record-message';
             newRecordMsg.textContent = '新記録達成！';
             
-            // 画面に追加
             document.body.appendChild(newRecordMsg);
             
-            // アニメーション
             setTimeout(() => {
                 newRecordMsg.style.opacity = '1';
                 newRecordMsg.style.transform = 'translateY(0) scale(1)';
                 
-                // 一定時間後に消える
                 setTimeout(() => {
                     newRecordMsg.style.opacity = '0';
                     newRecordMsg.style.transform = 'translateY(-50px) scale(0.8)';
                     
-                    // 要素を削除
                     setTimeout(() => {
                         newRecordMsg.remove();
                     }, 500);
@@ -1588,13 +1554,69 @@
             }, 100);
         }
 
-        // 入力検証関数を修正（大文字小文字を区別しない）
         function validateInput() {
             const currentWord = words[currentWordIndex].word;
             const userInput = wordInput.value.trim();
             
-            // 大文字小文字を区別せずに比較
             return currentWord.toLowerCase() === userInput.toLowerCase();
+        }
+
+        function initKeyboardDisplay() {
+            const keyboardDisplay = document.querySelector('.keyboard-display');
+            keyboardDisplay.innerHTML = `
+                <div class="keyboard-row number-row">
+                    <div class="key" data-key="1">1<span class="shift-char">!</span></div>
+                    <div class="key" data-key="2">2</div>
+                    <div class="key" data-key="3">3</div>
+                    <div class="key" data-key="4">4</div>
+                    <div class="key" data-key="5">5</div>
+                    <div class="key" data-key="6">6</div>
+                    <div class="key" data-key="7">7<span class="shift-char">'</span></div>
+                    <div class="key" data-key="8">8</div>
+                    <div class="key" data-key="9">9</div>
+                    <div class="key" data-key="0">0</div>
+                </div>
+                <div class="keyboard-row">
+                    <div class="key" data-key="q">Q</div>
+                    <div class="key" data-key="w">W</div>
+                    <div class="key" data-key="e">E</div>
+                    <div class="key" data-key="r">R</div>
+                    <div class="key" data-key="t">T</div>
+                    <div class="key" data-key="y">Y</div>
+                    <div class="key" data-key="u">U</div>
+                    <div class="key" data-key="i">I</div>
+                    <div class="key" data-key="o">O</div>
+                    <div class="key" data-key="p">P</div>
+                </div>
+                <div class="keyboard-row second-row">
+                    <div class="key" data-key="a">A</div>
+                    <div class="key" data-key="s">S</div>
+                    <div class="key" data-key="d">D</div>
+                    <div class="key" data-key="f">F</div>
+                    <div class="key" data-key="g">G</div>
+                    <div class="key" data-key="h">H</div>
+                    <div class="key" data-key="j">J</div>
+                    <div class="key" data-key="k">K</div>
+                    <div class="key" data-key="l">L</div>
+                    <div class="key" data-key=";">;<span class="shift-char">:</span></div>
+                </div>
+                <div class="keyboard-row third-row">
+                    <div class="key shift-key" data-key="shift">Shift</div>
+                    <div class="key" data-key="z">Z</div>
+                    <div class="key" data-key="x">X</div>
+                    <div class="key" data-key="c">C</div>
+                    <div class="key" data-key="v">V</div>
+                    <div class="key" data-key="b">B</div>
+                    <div class="key" data-key="n">N</div>
+                    <div class="key" data-key="m">M</div>
+                    <div class="key" data-key=",">,<span class="shift-char">&lt;</span></div>
+                    <div class="key" data-key=".">.<span class="shift-char">&gt;</span></div>
+                    <div class="key" data-key="/">/</div><span class="shift-char">?</span></div>
+                </div>
+                <div class="keyboard-row">
+                    <div class="key space-key" data-key=" ">Space</div>
+                </div>
+            `;
         }
     </script>
 </body>
