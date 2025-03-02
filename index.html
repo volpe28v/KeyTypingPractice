@@ -641,6 +641,55 @@
             z-index: -1;
             transform: scale(0);
         }
+
+        /* ベストタイム表示のスタイルを修正 */
+        .level-record {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dotted rgba(0, 255, 170, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .level-record h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .best-time-display {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+            color: #ffcc00;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: right;
+            flex: 1;
+        }
+
+        .best-time-display li {
+            margin: 0;
+        }
+
+        /* 新記録達成メッセージのスタイル */
+        .new-record-message {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50px) scale(0.8);
+            background-color: rgba(255, 204, 0, 0.9);
+            color: #000000;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -711,20 +760,35 @@
         <div class="records-sidebar">
             <h2>ベストタイム</h2>
             
-            <h3 class="level-selector" data-level="1">レベル1</h3>
-            <ol id="level1-records"></ol>
+            <div class="level-record">
+                <h3 class="level-selector" data-level="1">レベル1</h3>
+                <ol id="level1-records" class="best-time-display"></ol>
+            </div>
             
-            <h3 class="level-selector" data-level="2">レベル2</h3>
-            <ol id="level2-records"></ol>
+            <div class="level-record">
+                <h3 class="level-selector" data-level="2">レベル2</h3>
+                <ol id="level2-records" class="best-time-display"></ol>
+            </div>
             
-            <h3 class="level-selector" data-level="3">レベル3</h3>
-            <ol id="level3-records"></ol>
+            <div class="level-record">
+                <h3 class="level-selector" data-level="3">レベル3</h3>
+                <ol id="level3-records" class="best-time-display"></ol>
+            </div>
             
-            <h3 class="level-selector" data-level="4">レベル4</h3>
-            <ol id="level4-records"></ol>
+            <div class="level-record">
+                <h3 class="level-selector" data-level="4">レベル4</h3>
+                <ol id="level4-records" class="best-time-display"></ol>
+            </div>
             
-            <h3 class="level-selector" data-level="5">レベル5</h3>
-            <ol id="level5-records"></ol>
+            <div class="level-record">
+                <h3 class="level-selector" data-level="5">レベル5</h3>
+                <ol id="level5-records" class="best-time-display"></ol>
+            </div>
+            
+            <div class="level-record">
+                <h3 class="level-selector" data-level="6">レベル6</h3>
+                <ol id="level6-records" class="best-time-display"></ol>
+            </div>
             
             <button onclick="clearRecords()" class="clear-records-btn">記録をクリア</button>
         </div>
@@ -928,7 +992,8 @@
             level2: [],
             level3: [],
             level4: [],
-            level5: []
+            level5: [],
+            level6: []
         };
 
         // 記録を保存
@@ -951,19 +1016,23 @@
         }
 
         // タイムを追加して上位3つを保持
-        function addRecord(category, time) {
-            if (!records[category]) {
-                records[category] = [];
+        function addRecord(levelKey, time) {
+            if (!records[levelKey]) {
+                records[levelKey] = [];
             }
             
-            records[category].push(time);
-            records[category].sort((a, b) => a - b); // 昇順ソート
+            // 現在の最速タイムを取得
+            const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey]) : Infinity;
             
-            if (records[category].length > 3) {
-                records[category] = records[category].slice(0, 3); // 上位3つだけ保持
+            // 新しいタイムが最速の場合のみ更新
+            if (time < currentBestTime) {
+                // 古い記録をクリアして新しい記録のみを保存
+                records[levelKey] = [time];
+                saveRecords();
+                
+                // 新記録達成メッセージを表示
+                showNewRecordMessage();
             }
-            
-            saveRecords();
         }
 
         // タイムを表示用にフォーマット (秒.ミリ秒)
@@ -976,30 +1045,27 @@
         // ベストタイムを表示
         function displayBestTimes() {
             // レベルごとのベストタイム表示
-            for (let i = 1; i <= 5; i++) {
+            for (let i = 1; i <= 6; i++) {
                 const levelRecords = records[`level${i}`] || [];
                 const levelRecordsList = document.getElementById(`level${i}-records`);
                 
-                if (levelRecordsList) {
-                    levelRecordsList.innerHTML = '';
-                    
-                    if (levelRecords.length === 0) {
-                        const li = document.createElement('li');
-                        li.textContent = '記録なし';
-                        levelRecordsList.appendChild(li);
-                    } else {
-                        // 上位3件を表示
-                        const sortedRecords = [...levelRecords].sort((a, b) => a - b);
-                        for (let j = 0; j < Math.min(3, sortedRecords.length); j++) {
-                            const li = document.createElement('li');
-                            li.textContent = formatTime(sortedRecords[j]);
-                            levelRecordsList.appendChild(li);
-                        }
-                    }
+                // リストをクリア
+                levelRecordsList.innerHTML = '';
+                
+                if (levelRecords.length > 0) {
+                    // 最速タイムのみを表示
+                    const fastestTime = Math.min(...levelRecords);
+                    const li = document.createElement('li');
+                    li.textContent = formatTime(fastestTime);
+                    levelRecordsList.appendChild(li);
+                } else {
+                    // 記録がない場合
+                    const li = document.createElement('li');
+                    li.textContent = '記録なし';
+                    li.style.color = '#666666';
+                    levelRecordsList.appendChild(li);
                 }
             }
-            
-            // 総合ベストタイム表示部分を削除
         }
 
         // DOM要素
@@ -1416,7 +1482,8 @@
                     level2: [],
                     level3: [],
                     level4: [],
-                    level5: []
+                    level5: [],
+                    level6: []
                 };
                 saveRecords();
                 displayBestTimes();
@@ -1607,10 +1674,39 @@
                     level2: [],
                     level3: [],
                     level4: [],
-                    level5: [] // レベル5の記録を追加
+                    level5: [],
+                    level6: []
                 };
                 saveRecords();
             }
+        }
+
+        // 新記録達成メッセージを表示する関数
+        function showNewRecordMessage() {
+            // 新記録メッセージ要素を作成
+            const newRecordMsg = document.createElement('div');
+            newRecordMsg.className = 'new-record-message';
+            newRecordMsg.textContent = '新記録達成！';
+            
+            // 画面に追加
+            document.body.appendChild(newRecordMsg);
+            
+            // アニメーション
+            setTimeout(() => {
+                newRecordMsg.style.opacity = '1';
+                newRecordMsg.style.transform = 'translateY(0) scale(1)';
+                
+                // 一定時間後に消える
+                setTimeout(() => {
+                    newRecordMsg.style.opacity = '0';
+                    newRecordMsg.style.transform = 'translateY(-50px) scale(0.8)';
+                    
+                    // 要素を削除
+                    setTimeout(() => {
+                        newRecordMsg.remove();
+                    }, 500);
+                }, 2000);
+            }, 100);
         }
     </script>
 </body>
