@@ -23,12 +23,12 @@
             display: flex;
             width: 90%;
             max-width: 1200px;
-            gap: 20px;
+            gap: 30px;
             margin-top: 20px;
         }
 
         .game-container {
-            flex: 2;
+            flex: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -36,6 +36,7 @@
 
         .records-sidebar {
             flex: 1;
+            max-width: 250px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #00ffaa;
             border-radius: 10px;
@@ -44,6 +45,7 @@
             height: fit-content;
             position: sticky;
             top: 20px;
+            margin-left: 10px;
         }
 
         .game-title {
@@ -52,11 +54,12 @@
             text-shadow: 0 0 10px #00ffaa;
             letter-spacing: 2px;
             text-align: center;
+            margin-top: 20px;
         }
 
         .records-sidebar h2 {
             color: #ff00ff;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             margin-top: 0;
             margin-bottom: 15px;
             text-align: center;
@@ -66,36 +69,49 @@
 
         .records-sidebar h3 {
             color: #ff00ff;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            font-size: 1.2rem;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            font-size: 1.1rem;
         }
 
         .records-sidebar ol {
             color: #ffcc00;
-            margin-left: 20px;
+            margin-left: 15px;
             padding-left: 10px;
+            font-size: 0.9rem;
         }
 
         .records-sidebar li {
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         @media (max-width: 768px) {
             .main-container {
                 flex-direction: column;
+                gap: 20px;
             }
             
             .records-sidebar {
                 margin-top: 20px;
                 position: static;
+                max-width: 100%;
+                margin-left: 0;
+            }
+            
+            .game-container {
+                width: 100%;
             }
         }
 
         .level-display {
             font-size: 1.5rem;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             color: #ff00ff;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: inline-block;
         }
 
         .typing-area {
@@ -103,7 +119,7 @@
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #00ffaa;
             border-radius: 10px;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 20px;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
         }
@@ -202,15 +218,17 @@
         }
 
         .score-display {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             margin-top: 20px;
             color: #ffcc00;
             display: none;
             text-align: center;
-            padding: 10px;
+            padding: 10px 15px;
             background-color: rgba(0, 0, 0, 0.3);
             border-radius: 10px;
             transition: all 0.3s ease;
+            font-weight: bold;
+            line-height: 1.4;
         }
 
         .race-track {
@@ -331,19 +349,22 @@
             text-align: center;
         }
 
-        #clear-records-btn {
-            background-color: #ff3366;
+        .clear-records-btn {
+            margin-top: 15px;
+            background-color: #ff0066;
             color: white;
             border: none;
+            padding: 5px 10px;
             border-radius: 5px;
-            padding: 8px 15px;
-            font-size: 0.9rem;
             cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
             transition: background-color 0.3s;
         }
 
-        #clear-records-btn:hover {
+        .clear-records-btn:hover {
             background-color: #ff0044;
+            box-shadow: 0 0 8px rgba(255, 0, 102, 0.7);
         }
 
         .correct-char {
@@ -433,7 +454,7 @@
             <h3 class="level-selector" data-level="4">レベル4</h3>
             <ol id="level4-records"></ol>
             
-            <button onclick="clearRecords()" style="margin-top: 20px; background-color: #ff0066; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">記録をクリア</button>
+            <button onclick="clearRecords()" class="clear-records-btn">記録をクリア</button>
         </div>
     </div>
 
@@ -725,7 +746,6 @@
                 // 全ての単語が終了
                 endTime = Date.now();
                 const elapsedTime = endTime - startTime;
-                const score = Math.floor((correctCount / words.length) * 100);
                 
                 // タイマーを停止
                 if (timerInterval) {
@@ -736,37 +756,39 @@
                 // レベルごとのタイム記録
                 addRecord(`level${currentLevel}`, elapsedTime);
                 
-                // 結果表示
-                scoreDisplay.textContent = `スコア: ${score}/100点 (タイム: ${formatTime(elapsedTime)})`;
-                scoreDisplay.style.display = 'block';
-                
                 // ミスがあったかどうかをチェック
                 const isPerfect = mistakeCount === 0;
                 
-                // 100点かつノーミスの場合のみレベルアップ表示
-                if (score === 100 && isPerfect && currentLevel < 4) {
+                // 総タイプ数を計算（各単語の長さの合計）
+                let totalTypesCount = 0;
+                words.forEach(word => {
+                    totalTypesCount += word.word.length;
+                });
+                
+                // 正確率を計算（100% - ミス率）
+                const accuracyRate = mistakeCount === 0 ? 100 : Math.max(0, Math.round((1 - mistakeCount / totalTypesCount) * 100));
+                
+                // 結果表示（タイムと正確率）
+                scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}%`;
+                scoreDisplay.style.display = 'block';
+                
+                // ノーミスの場合のみレベルアップ表示
+                if (isPerfect && currentLevel < 4) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = `レベル${currentLevel}クリア！レベル${currentLevel + 1}に進みます`;
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して次のレベルへ';
                     wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
-                } else if (score === 100 && isPerfect && currentLevel >= 4) {
+                } else if (isPerfect && currentLevel >= 4) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = '全レベルクリア！おめでとうございます！';
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
-                } else if (score === 100 && !isPerfect) {
-                    // 100点だがミスがある場合
-                    wordDisplay.innerHTML = '<span style="color: #ffcc00;">クリア！</span>';
-                    feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
-                    feedback.className = 'feedback';
-                    meaningDisplay.textContent = 'Enterキーを押して再挑戦';
-                    wordInput.placeholder = "Enterキーを押して再挑戦";
-                } else {
-                    // 100点未満の場合
+                } else if (!isPerfect) {
+                    // ミスがある場合
                     wordDisplay.innerHTML = 'クリア！';
-                    feedback.textContent = `スコア: ${score}/100点 - 全問正解かつノーミスを目指そう！`;
+                    feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
                     feedback.className = 'feedback';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
@@ -898,9 +920,8 @@
                 if (!gameActive) {
                     // ゲーム終了後はリスタート
                     if (currentWordIndex >= words.length) {
-                        // 100点かつノーミスの場合のみ、レベルアップ
-                        const score = Math.floor((correctCount / words.length) * 100);
-                        if (score === 100 && mistakeCount === 0 && currentLevel < 4) {
+                        // ノーミスの場合のみ、レベルアップ
+                        if (mistakeCount === 0 && currentLevel < 4) {
                             currentLevel++;
                         }
                         initGame();
