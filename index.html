@@ -409,6 +409,162 @@
             content: '✓';
             opacity: 1;
         }
+
+        .keyboard-display-container {
+            width: 100%;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .keyboard-display {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 500px;
+            transform: rotateX(10deg);
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .key {
+            width: 40px;
+            height: 40px;
+            background-color: #222233;
+            border: 1px solid #444455;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #ffffff;
+            box-shadow: 0 2px 0 #111122;
+            user-select: none;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: visible;
+        }
+
+        .key::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            border-radius: 5px;
+            z-index: -1;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .key.highlight {
+            background-color: #ff00ff;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+            transform: translateY(2px);
+            border-color: #ff66ff;
+        }
+
+        .key.highlight::before {
+            background-color: #ff00ff;
+            box-shadow: 0 0 20px 5px rgba(255, 0, 255, 0.7);
+            opacity: 0.5;
+        }
+
+        .key.correct {
+            background-color: #00ff00;
+            color: #000000;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            transform: translateY(2px);
+        }
+
+        .key.correct::before {
+            background-color: #00ff00;
+            box-shadow: 0 0 20px 5px rgba(0, 255, 0, 0.7);
+            opacity: 0.7;
+            animation: keyPressTrail 1.2s ease-out;
+        }
+
+        .key.incorrect {
+            background-color: #ff0000;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            transform: translateY(2px);
+        }
+
+        .key.incorrect::before {
+            background-color: #ff0000;
+            box-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.7);
+            opacity: 0.7;
+            animation: keyPressTrail 1.2s ease-out;
+        }
+
+        @keyframes keyPressTrail {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .space-key {
+            width: 200px;
+        }
+
+        @media (max-width: 768px) {
+            .keyboard-display {
+                padding: 10px;
+            }
+            
+            .key {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+            
+            .space-key {
+                width: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .key {
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+            }
+            
+            .space-key {
+                width: 120px;
+            }
+        }
+
+        /* キーの押下時の3D効果 */
+        .key.correct, .key.incorrect, .key.highlight {
+            transform: translateY(4px) scale(1.1);
+            transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+        }
     </style>
 </head>
 
@@ -434,8 +590,45 @@
 
             <div class="score-display" id="score-display"></div>
             
-            <div class="instructions">
-                <p>キーボードでタイプして、タイピングスキルを向上させよう！</p>
+            <!-- キーボード表示エリアをタイピングエリアの下に追加 -->
+            <div class="keyboard-display-container">
+                <div class="keyboard-display">
+                    <div class="keyboard-row">
+                        <div class="key" data-key="q">Q</div>
+                        <div class="key" data-key="w">W</div>
+                        <div class="key" data-key="e">E</div>
+                        <div class="key" data-key="r">R</div>
+                        <div class="key" data-key="t">T</div>
+                        <div class="key" data-key="y">Y</div>
+                        <div class="key" data-key="u">U</div>
+                        <div class="key" data-key="i">I</div>
+                        <div class="key" data-key="o">O</div>
+                        <div class="key" data-key="p">P</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key" data-key="a">A</div>
+                        <div class="key" data-key="s">S</div>
+                        <div class="key" data-key="d">D</div>
+                        <div class="key" data-key="f">F</div>
+                        <div class="key" data-key="g">G</div>
+                        <div class="key" data-key="h">H</div>
+                        <div class="key" data-key="j">J</div>
+                        <div class="key" data-key="k">K</div>
+                        <div class="key" data-key="l">L</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key" data-key="z">Z</div>
+                        <div class="key" data-key="x">X</div>
+                        <div class="key" data-key="c">C</div>
+                        <div class="key" data-key="v">V</div>
+                        <div class="key" data-key="b">B</div>
+                        <div class="key" data-key="n">N</div>
+                        <div class="key" data-key="m">M</div>
+                    </div>
+                    <div class="keyboard-row">
+                        <div class="key space-key" data-key=" ">Space</div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -736,6 +929,9 @@
                     
                     // 単語の発音
                     speakWord(currentWord.word);
+                    
+                    // 次に打つキーをハイライト
+                    highlightNextKey();
                 } else {
                     console.error('単語データが不正です:', currentWord);
                     // エラー回避のためのフォールバック
@@ -907,6 +1103,9 @@
             
             // ハイライト表示を適用
             wordDisplay.innerHTML = highlightedHTML;
+            
+            // 次に打つキーをハイライト
+            highlightNextKey();
         }
 
         // イベントリスナー
@@ -932,6 +1131,41 @@
                 if (validateKeyInput(e)) {
                     // 正しいキーの場合のみキー入力音を再生
                     keySound.play();
+                    
+                    // キーボード表示で押されたキーを一時的にハイライト
+                    const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
+                    if (keyElement) {
+                        // クラスを追加する前に既存のアニメーションをリセット
+                        keyElement.classList.remove('correct');
+                        void keyElement.offsetWidth; // リフロー（再描画）を強制
+                        
+                        // クラスを追加して新しいアニメーションを開始
+                        keyElement.classList.add('correct');
+                        
+                        // 長めの残像効果のため、クラスを遅延して削除
+                        setTimeout(() => {
+                            keyElement.classList.remove('correct');
+                        }, 1000); // 1秒後に削除（アニメーション時間より少し短く）
+                    }
+                    
+                    // 少し遅延させて次のキーをハイライト（入力値が更新された後）
+                    setTimeout(highlightNextKey, 50);
+                } else {
+                    // 間違ったキーの場合、キーボード表示で間違ったキーを一時的にハイライト
+                    const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
+                    if (keyElement) {
+                        // クラスを追加する前に既存のアニメーションをリセット
+                        keyElement.classList.remove('incorrect');
+                        void keyElement.offsetWidth; // リフロー（再描画）を強制
+                        
+                        // クラスを追加して新しいアニメーションを開始
+                        keyElement.classList.add('incorrect');
+                        
+                        // 長めの残像効果のため、クラスを遅延して削除
+                        setTimeout(() => {
+                            keyElement.classList.remove('incorrect');
+                        }, 1000); // 1秒後に削除（アニメーション時間より少し短く）
+                    }
                 }
             }
         });
@@ -1079,6 +1313,33 @@
                     wordInput.focus();
                 });
             });
+        }
+
+        // 次に打つキーをハイライト表示する関数
+        function highlightNextKey() {
+            // 前回のハイライトをクリア
+            const highlightedKeys = document.querySelectorAll('.key.highlight');
+            highlightedKeys.forEach(key => {
+                key.classList.remove('highlight');
+            });
+            
+            // 現在の単語と入力位置を取得
+            if (currentWordIndex < words.length) {
+                const currentWord = words[currentWordIndex].word;
+                const currentPosition = wordInput.value.length;
+                
+                // 入力位置が単語の長さ未満の場合
+                if (currentPosition < currentWord.length) {
+                    // 次に打つキーを取得
+                    const nextKey = currentWord[currentPosition].toLowerCase();
+                    
+                    // 対応するキー要素を探してハイライト
+                    const keyElement = document.querySelector(`.key[data-key="${nextKey}"]`);
+                    if (keyElement) {
+                        keyElement.classList.add('highlight');
+                    }
+                }
+            }
         }
     </script>
 </body>
