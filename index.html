@@ -346,6 +346,39 @@
             color: #ff0000;
             text-shadow: 0 0 5px #ff0000;
         }
+
+        .level-selector {
+            cursor: pointer;
+            transition: color 0.3s;
+            position: relative;
+            display: inline-block;
+        }
+
+        .level-selector:hover {
+            color: #00ffaa;
+        }
+
+        .level-selector::after {
+            content: '👆';
+            font-size: 0.8em;
+            margin-left: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .level-selector:hover::after {
+            opacity: 1;
+        }
+
+        .level-selector.active {
+            color: #00ffaa;
+            text-shadow: 0 0 5px #00ffaa;
+        }
+
+        .level-selector.active::after {
+            content: '✓';
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -375,12 +408,22 @@
             </div>
         </div>
         
-        <div class="records-sidebar" id="records-container">
-            <h2>ベストタイム記録</h2>
-            <!-- ここにベストタイムが表示されます -->
-            <div class="clear-records">
-                <button id="clear-records-btn">記録をクリア</button>
-            </div>
+        <div class="records-sidebar">
+            <h2>ベストタイム</h2>
+            
+            <h3 class="level-selector" data-level="1">レベル1</h3>
+            <ol id="level1-records"></ol>
+            
+            <h3 class="level-selector" data-level="2">レベル2</h3>
+            <ol id="level2-records"></ol>
+            
+            <h3 class="level-selector" data-level="3">レベル3</h3>
+            <ol id="level3-records"></ol>
+            
+            <h3 class="level-selector" data-level="4">レベル4</h3>
+            <ol id="level4-records"></ol>
+            
+            <button onclick="clearRecords()" style="margin-top: 20px; background-color: #ff0066; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">記録をクリア</button>
         </div>
     </div>
 
@@ -474,26 +517,31 @@
         let timerInterval = null; // タイマー用インターバル
         let timerStarted = false; // タイマーが開始されたかどうか
 
-        // タイム記録用のデータ構造
+        // 記録の初期化
         let records = {
             level1: [],
             level2: [],
             level3: [],
-            level4: [],
-            total: []
+            level4: []
         };
 
-        // ローカルストレージからレコードを読み込む
+        // 記録を保存
+        function saveRecords() {
+            localStorage.setItem('typingRecords', JSON.stringify(records));
+        }
+
+        // 記録を読み込む
         function loadRecords() {
             const savedRecords = localStorage.getItem('typingRecords');
             if (savedRecords) {
                 records = JSON.parse(savedRecords);
+                
+                // 古いデータ形式の場合、総合タイムを削除
+                if (records.total) {
+                    delete records.total;
+                    saveRecords();
+                }
             }
-        }
-
-        // レコードをローカルストレージに保存
-        function saveRecords() {
-            localStorage.setItem('typingRecords', JSON.stringify(records));
         }
 
         // タイムを追加して上位3つを保持
@@ -521,63 +569,31 @@
 
         // ベストタイムを表示
         function displayBestTimes() {
-            const recordsContainer = document.getElementById('records-container');
-            recordsContainer.innerHTML = '<h2>ベストタイム記録</h2>';
-            
-            // 総合ベストタイム
-            const totalHeader = document.createElement('h3');
-            totalHeader.textContent = '総合ベストタイム';
-            recordsContainer.appendChild(totalHeader);
-            
-            const totalList = document.createElement('ol');
-            if (records.total.length === 0) {
-                const noRecord = document.createElement('li');
-                noRecord.textContent = '記録なし';
-                totalList.appendChild(noRecord);
-            } else {
-                records.total.forEach(time => {
-                    const item = document.createElement('li');
-                    item.textContent = formatTime(time);
-                    totalList.appendChild(item);
-                });
-            }
-            recordsContainer.appendChild(totalList);
-            
-            // レベルごとのベストタイム
+            // レベルごとのベストタイム表示
             for (let i = 1; i <= 4; i++) {
-                const levelHeader = document.createElement('h3');
-                levelHeader.textContent = `レベル${i}ベストタイム`;
-                recordsContainer.appendChild(levelHeader);
+                const levelRecords = records[`level${i}`] || [];
+                const levelRecordsList = document.getElementById(`level${i}-records`);
                 
-                const levelList = document.createElement('ol');
-                const levelRecords = records[`level${i}`];
-                
-                if (!levelRecords || levelRecords.length === 0) {
-                    const noRecord = document.createElement('li');
-                    noRecord.textContent = '記録なし';
-                    levelList.appendChild(noRecord);
-                } else {
-                    levelRecords.forEach(time => {
-                        const item = document.createElement('li');
-                        item.textContent = formatTime(time);
-                        levelList.appendChild(item);
-                    });
+                if (levelRecordsList) {
+                    levelRecordsList.innerHTML = '';
+                    
+                    if (levelRecords.length === 0) {
+                        const li = document.createElement('li');
+                        li.textContent = '記録なし';
+                        levelRecordsList.appendChild(li);
+                    } else {
+                        // 上位3件を表示
+                        const sortedRecords = [...levelRecords].sort((a, b) => a - b);
+                        for (let j = 0; j < Math.min(3, sortedRecords.length); j++) {
+                            const li = document.createElement('li');
+                            li.textContent = formatTime(sortedRecords[j]);
+                            levelRecordsList.appendChild(li);
+                        }
+                    }
                 }
-                
-                recordsContainer.appendChild(levelList);
             }
             
-            // クリアボタンを追加
-            const clearButtonDiv = document.createElement('div');
-            clearButtonDiv.className = 'clear-records';
-            
-            const clearButton = document.createElement('button');
-            clearButton.id = 'clear-records-btn';
-            clearButton.textContent = '記録をクリア';
-            clearButton.addEventListener('click', clearRecords);
-            
-            clearButtonDiv.appendChild(clearButton);
-            recordsContainer.appendChild(clearButtonDiv);
+            // 総合ベストタイム表示部分を削除
         }
 
         // DOM要素
@@ -655,6 +671,9 @@
             
             // ベストタイムを非表示
             hideRecords();
+            
+            // レベルセレクターの更新
+            initLevelSelectors();
         }
 
         // 単語をシャッフル
@@ -702,11 +721,6 @@
                 
                 // レベルごとのタイム記録
                 addRecord(`level${currentLevel}`, elapsedTime);
-                
-                // 100点だった場合、総合タイムも記録
-                if (score === 100) {
-                    addRecord('total', elapsedTime);
-                }
                 
                 // 結果表示
                 scoreDisplay.textContent = `スコア: ${score}/100点 (タイム: ${formatTime(elapsedTime)})`;
@@ -878,6 +892,9 @@
                 preloadSounds();
             }
             
+            // レベルセレクターの初期化
+            initLevelSelectors();
+            
             // ゲーム初期化（問題表示を含む）
             initGame();
             
@@ -892,8 +909,7 @@
                     level1: [],
                     level2: [],
                     level3: [],
-                    level4: [],
-                    total: []
+                    level4: []
                 };
                 saveRecords();
                 displayBestTimes();
@@ -955,6 +971,54 @@
                 recordsSidebar.style.display = 'block';
                 displayBestTimes(); // 最新の記録を表示
             }
+        }
+
+        // レベルセレクターの初期化
+        function initLevelSelectors() {
+            const levelSelectors = document.querySelectorAll('.level-selector');
+            
+            levelSelectors.forEach(selector => {
+                // 現在のレベルをアクティブに
+                if (parseInt(selector.dataset.level) === currentLevel) {
+                    selector.classList.add('active');
+                } else {
+                    selector.classList.remove('active');
+                }
+                
+                // クリックイベントの追加
+                selector.addEventListener('click', () => {
+                    const selectedLevel = parseInt(selector.dataset.level);
+                    
+                    // 既にゲームが進行中の場合は確認
+                    if (gameActive && timerStarted) {
+                        if (!confirm(`現在のゲームを中断してレベル${selectedLevel}を開始しますか？`)) {
+                            return;
+                        }
+                    }
+                    
+                    // レベル変更
+                    currentLevel = selectedLevel;
+                    
+                    // アクティブクラスの更新
+                    levelSelectors.forEach(s => {
+                        if (parseInt(s.dataset.level) === currentLevel) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                    
+                    // ゲーム再初期化
+                    initGame();
+                    
+                    // フィードバック
+                    feedback.textContent = `レベル${selectedLevel}を選択しました`;
+                    feedback.className = 'feedback';
+                    
+                    // フォーカス
+                    wordInput.focus();
+                });
+            });
         }
     </script>
 </body>
