@@ -113,6 +113,12 @@
             margin-bottom: 10px;
             text-align: center;
             color: #ffffff;
+            letter-spacing: 2px;
+        }
+
+        .word-display span {
+            display: inline-block;
+            min-width: 1.2rem;
         }
 
         .meaning {
@@ -330,6 +336,16 @@
         #clear-records-btn:hover {
             background-color: #ff0044;
         }
+
+        .correct-char {
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .incorrect-char {
+            color: #ff0000;
+            text-shadow: 0 0 5px #ff0000;
+        }
     </style>
 </head>
 <body>
@@ -368,56 +384,72 @@
         </div>
     </div>
 
+    <!-- 音声ファイル -->
+    <audio id="key-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-tap-2244.mp3" preload="auto"></audio>
+    <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
+    <audio id="wrong-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
+
     <script>
-        // 音声効果
-        const keySound = new Audio();
-        keySound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
-        
-        const correctSound = new Audio();
-        correctSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
-        
-        const wrongSound = new Audio();
-        wrongSound.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        // 音声関連
+        const keySound = document.getElementById('key-sound');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+
+        // 音量調整
+        keySound.volume = 0.3;
+        correctSound.volume = 0.5;
+        wrongSound.volume = 0.5;
+
+        // 単語の発音
+        function speakWord(word) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8; // 少しゆっくり
+                utterance.pitch = 1;
+                speechSynthesis.speak(utterance);
+            }
+        }
 
         // レベルごとの単語リスト
         const wordLists = {
             1: [ // 人差し指のみ (4rfv5tgb6yhn7ujm)
                 { word: "fun", meaning: "楽しい" },
                 { word: "run", meaning: "走る" },
-                { word: "jump", meaning: "ジャンプ" },
-                { word: "gym", meaning: "体育館" },
                 { word: "hum", meaning: "ハミング" },
                 { word: "mum", meaning: "お母さん" },
                 { word: "bun", meaning: "パン" },
-                { word: "gun", meaning: "銃" },
-                { word: "nun", meaning: "修道女" },
-                { word: "rum", meaning: "ラム酒" }
+                { word: "nut", meaning: "ナッツ" },
+                { word: "bug", meaning: "虫" },
+                { word: "hug", meaning: "抱擁" },
+                { word: "rum", meaning: "ラム酒" },
+                { word: "gum", meaning: "ガム" }
             ],
-            2: [ // 人差し指 + 中指 (4rfv5tgb6yhn7ujm + 3edc8ik)
+            2: [ // 人差し指 + 中指 (4rfv5tgb6yhn7ujm + 3edc8ik,)
                 { word: "bike", meaning: "自転車" },
-                { word: "ice", meaning: "氷" },
-                { word: "cake", meaning: "ケーキ" },
+                { word: "mice", meaning: "ネズミ（複数）" },
+                { word: "rice", meaning: "お米" },
                 { word: "time", meaning: "時間" },
-                { word: "duck", meaning: "アヒル" },
+                { word: "mine", meaning: "私のもの" },
                 { word: "kite", meaning: "凧" },
                 { word: "juice", meaning: "ジュース" },
                 { word: "milk", meaning: "牛乳" },
-                { word: "bed", meaning: "ベッド" },
-                { word: "kid", meaning: "子供" }
+                { word: "nick", meaning: "傷" },
+                { word: "king", meaning: "王様" }
             ],
-            3: [ // 人差し指 + 中指 + 薬指 (4rfv5tgb6yhn7ujm + 3edc8ik + 2wsx9ol)
-                { word: "school", meaning: "学校" },
-                { word: "lunch", meaning: "昼食" },
-                { word: "book", meaning: "本" },
-                { word: "window", meaning: "窓" },
-                { word: "box", meaning: "箱" },
-                { word: "clock", meaning: "時計" },
+            3: [ // 人差し指 + 中指 + 薬指 (4rfv5tgb6yhn7ujm + 3edc8ik, + 2wsx9ol.)
                 { word: "snow", meaning: "雪" },
-                { word: "sun", meaning: "太陽" },
+                { word: "slow", meaning: "遅い" },
+                { word: "bowl", meaning: "ボウル" },
+                { word: "wolf", meaning: "オオカミ" },
+                { word: "box", meaning: "箱" },
+                { word: "cow", meaning: "牛" },
+                { word: "owl", meaning: "フクロウ" },
                 { word: "sock", meaning: "靴下" },
-                { word: "wolf", meaning: "オオカミ" }
+                { word: "clock", meaning: "時計" },
+                { word: "school", meaning: "学校" }
             ],
-            4: [ // 全ての指 (全てのキー)
+            4: [ // 全ての指 (4rfv5tgb6yhn7ujm + 3edc8ik, + 2wsx9ol. + 1qaz0p;/)
                 { word: "apple", meaning: "りんご" },
                 { word: "pizza", meaning: "ピザ" },
                 { word: "pencil", meaning: "鉛筆" },
@@ -613,6 +645,9 @@
                 timerInterval = null;
             }
             
+            // 発音ボタンを追加
+            addPronunciationButton();
+            
             // 記録を表示
             displayBestTimes();
         }
@@ -629,10 +664,16 @@
         function displayWord() {
             if (currentWordIndex < words.length) {
                 const currentWord = words[currentWordIndex];
-                wordDisplay.textContent = currentWord.word;
+                // 通常表示（ハイライトなし）
+                wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
                 meaningDisplay.textContent = currentWord.meaning;
                 feedback.textContent = '';
                 feedback.className = 'feedback';
+                wordInput.value = '';
+                wordInput.focus();
+                
+                // 単語の発音
+                speakWord(currentWord.word);
             } else {
                 // 全ての単語が終了
                 endTime = Date.now();
@@ -656,7 +697,7 @@
                 // 結果表示
                 scoreDisplay.textContent = `スコア: ${score}/100点 (タイム: ${formatTime(elapsedTime)})`;
                 scoreDisplay.style.display = 'block';
-                wordDisplay.textContent = 'クリア！';
+                wordDisplay.innerHTML = 'クリア！';
                 meaningDisplay.textContent = 'Enterキーを押して次へ進む';
                 
                 // ベストタイム表示
@@ -683,14 +724,70 @@
             progressBar.style.width = `${progress}%`;
         }
 
-        // 入力チェック
-        function checkInput() {
+        // キー入力の検証（間違ったキーは受け付けない）
+        function validateKeyInput(e) {
+            // Enterキーやバックスペース、矢印キーなどの制御キーは常に許可
+            if (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete' || 
+                e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
+                e.key === 'Tab' || e.ctrlKey || e.altKey || e.metaKey) {
+                return true;
+            }
+            
+            // 現在の単語と入力中のテキスト
+            const currentWord = words[currentWordIndex].word;
+            const currentPosition = wordInput.selectionStart;
+            
+            // 入力位置が単語の長さを超えている場合は入力を許可しない
+            if (currentPosition >= currentWord.length) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // 正しいキーが押されたかチェック
+            if (e.key === currentWord[currentPosition]) {
+                return true;
+            } else {
+                // 間違ったキーの場合、入力を許可しない
+                e.preventDefault();
+                
+                // 間違った文字を赤く表示
+                highlightWrongChar(currentPosition);
+                
+                // 間違った入力音は再生しない
+                return false;
+            }
+        }
+
+        // 間違った文字をハイライト表示
+        function highlightWrongChar(position) {
+            const currentWord = words[currentWordIndex].word;
+            let highlightedHTML = '';
+            
+            for (let i = 0; i < currentWord.length; i++) {
+                if (i < position) {
+                    // 既に正しく入力された文字
+                    highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                } else if (i === position) {
+                    // 間違って入力された文字位置
+                    highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                } else {
+                    // まだ入力されていない文字
+                    highlightedHTML += `<span>${currentWord[i]}</span>`;
+                }
+            }
+            
+            // ハイライト表示を適用
+            wordDisplay.innerHTML = highlightedHTML;
+        }
+
+        // 入力チェック（リアルタイム）
+        function checkInputRealtime() {
             const currentWord = words[currentWordIndex].word;
             const userInput = wordInput.value.trim();
             
+            // 正解の場合
             if (userInput === currentWord) {
-                // 正解
-                correctSound.play();
+                // 正解（効果音なし）
                 feedback.textContent = '正解！';
                 feedback.className = 'feedback correct';
                 correctCount++;
@@ -698,27 +795,28 @@
                 wordInput.value = '';
                 updateProgressBar();
                 displayWord();
-            } else {
-                // 不正解
-                wrongSound.play();
-                feedback.textContent = '間違い！もう一度！';
-                feedback.className = 'feedback incorrect';
-                
-                // 間違った箇所をハイライト
-                let errorIndex = 0;
-                while (errorIndex < userInput.length && errorIndex < currentWord.length && 
-                       userInput[errorIndex] === currentWord[errorIndex]) {
-                    errorIndex++;
-                }
-                
-                if (errorIndex < userInput.length) {
-                    feedback.textContent += ` "${userInput[errorIndex]}" が間違っています`;
-                } else if (userInput.length < currentWord.length) {
-                    feedback.textContent += ` "${currentWord.substring(userInput.length)}" が足りません`;
+                return;
+            }
+            
+            // 部分一致のハイライト表示用のHTMLを生成
+            let highlightedHTML = '';
+            for (let i = 0; i < currentWord.length; i++) {
+                if (i < userInput.length) {
+                    if (userInput[i] === currentWord[i]) {
+                        // 正しく入力された文字は緑色で表示
+                        highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    } else {
+                        // 間違って入力された文字は赤色で表示（ここには来ないはず）
+                        highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                    }
                 } else {
-                    feedback.textContent += ` 長すぎます`;
+                    // まだ入力されていない文字は通常表示
+                    highlightedHTML += `<span>${currentWord[i]}</span>`;
                 }
             }
+            
+            // ハイライト表示を適用
+            wordDisplay.innerHTML = highlightedHTML;
         }
 
         // イベントリスナー
@@ -729,10 +827,7 @@
             }
             
             if (e.key === 'Enter') {
-                if (gameActive) {
-                    // ゲーム中はタイピング判定
-                    checkInput();
-                } else {
+                if (!gameActive) {
                     // ゲーム終了後はリスタート
                     if (currentWordIndex >= words.length) {
                         // 100点だった場合、レベルアップ
@@ -745,8 +840,18 @@
                     }
                 }
             } else if (gameActive) {
-                // ゲーム中のみキー入力音を再生
-                keySound.play();
+                // ゲーム中は入力検証
+                if (validateKeyInput(e)) {
+                    // 正しいキーの場合のみキー入力音を再生
+                    keySound.play();
+                }
+            }
+        });
+
+        // 入力内容が変更されたときのイベント
+        wordInput.addEventListener('input', () => {
+            if (gameActive) {
+                checkInputRealtime();
             }
         });
 
@@ -771,6 +876,45 @@
                 displayBestTimes();
                 alert('記録をクリアしました！');
             }
+        }
+
+        // 発音ボタンの追加
+        function addPronunciationButton() {
+            // 既存のボタンを確認
+            const existingButton = document.querySelector('.pronunciation-button');
+            if (existingButton) {
+                return; // 既にボタンがある場合は何もしない
+            }
+            
+            // ボタン要素の作成
+            const pronunciationButton = document.createElement('button');
+            pronunciationButton.textContent = '🔊';
+            pronunciationButton.className = 'pronunciation-button';
+            pronunciationButton.title = '発音を聞く';
+            pronunciationButton.style.cssText = `
+                background-color: #ff00ff;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-left: 10px;
+                vertical-align: middle;
+            `;
+            
+            // クリックイベントの追加
+            pronunciationButton.addEventListener('click', () => {
+                if (currentWordIndex < words.length) {
+                    speakWord(words[currentWordIndex].word);
+                }
+            });
+            
+            // ボタンを単語の横に配置
+            const meaningElement = document.getElementById('meaning');
+            meaningElement.appendChild(document.createTextNode(' '));
+            meaningElement.appendChild(pronunciationButton);
         }
     </script>
 </body>
