@@ -610,13 +610,15 @@
 
         // タイマーを開始
         function startTimer() {
-            if (timerStarted) return; // 既に開始している場合は何もしない
-            
-            timerStarted = true;
             startTime = Date.now();
+            timerStarted = true;
+            timerInterval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+                timerDisplay.textContent = formatTime(elapsedTime);
+            }, 10);
             
-            // タイマーを開始 (10ミリ秒ごとに更新)
-            timerInterval = setInterval(updateTimer, 10);
+            // タイマー開始時にベストタイムを非表示
+            hideRecords();
         }
 
         // ゲーム初期化
@@ -625,7 +627,10 @@
             shuffleArray(words);
             currentWordIndex = 0;
             correctCount = 0;
+            
+            // 問題表示を先に行う
             displayWord();
+            
             updateProgressBar();
             scoreDisplay.style.display = 'none';
             levelDisplay.textContent = currentLevel;
@@ -648,8 +653,8 @@
             // 発音ボタンを追加
             addPronunciationButton();
             
-            // 記録を表示
-            displayBestTimes();
+            // ベストタイムを非表示
+            hideRecords();
         }
 
         // 単語をシャッフル
@@ -664,16 +669,25 @@
         function displayWord() {
             if (currentWordIndex < words.length) {
                 const currentWord = words[currentWordIndex];
-                // 通常表示（ハイライトなし）
-                wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
-                meaningDisplay.textContent = currentWord.meaning;
-                feedback.textContent = '';
-                feedback.className = 'feedback';
-                wordInput.value = '';
-                wordInput.focus();
                 
-                // 単語の発音
-                speakWord(currentWord.word);
+                // 単語が存在することを確認
+                if (currentWord && currentWord.word) {
+                    // 通常表示（ハイライトなし）
+                    wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                    meaningDisplay.textContent = currentWord.meaning;
+                    feedback.textContent = '';
+                    feedback.className = 'feedback';
+                    wordInput.value = '';
+                    wordInput.focus();
+                    
+                    // 単語の発音
+                    speakWord(currentWord.word);
+                } else {
+                    console.error('単語データが不正です:', currentWord);
+                    // エラー回避のためのフォールバック
+                    wordDisplay.innerHTML = '<span>エラー</span>';
+                    meaningDisplay.textContent = '単語データの読み込みに問題があります';
+                }
             } else {
                 // 全ての単語が終了
                 endTime = Date.now();
@@ -701,7 +715,7 @@
                 meaningDisplay.textContent = 'Enterキーを押して次へ進む';
                 
                 // ベストタイム表示
-                displayBestTimes();
+                showRecords();
                 
                 // 結果表示モードに設定
                 gameActive = false;
@@ -858,8 +872,17 @@
         // ページ読み込み時に記録を読み込む
         window.addEventListener('load', () => {
             loadRecords();
-            displayBestTimes(); // 初期表示
+            
+            // 音声のプリロード
+            if (typeof preloadSounds === 'function') {
+                preloadSounds();
+            }
+            
+            // ゲーム初期化（問題表示を含む）
             initGame();
+            
+            // 初期表示時はベストタイムを表示
+            showRecords();
         });
 
         // 記録をクリア
@@ -915,6 +938,23 @@
             const meaningElement = document.getElementById('meaning');
             meaningElement.appendChild(document.createTextNode(' '));
             meaningElement.appendChild(pronunciationButton);
+        }
+
+        // ベストタイムを非表示
+        function hideRecords() {
+            const recordsSidebar = document.querySelector('.records-sidebar');
+            if (recordsSidebar) {
+                recordsSidebar.style.display = 'none';
+            }
+        }
+
+        // ベストタイムを表示
+        function showRecords() {
+            const recordsSidebar = document.querySelector('.records-sidebar');
+            if (recordsSidebar) {
+                recordsSidebar.style.display = 'block';
+                displayBestTimes(); // 最新の記録を表示
+            }
         }
     </script>
 </body>
