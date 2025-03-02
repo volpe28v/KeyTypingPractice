@@ -723,6 +723,9 @@
             <h3 class="level-selector" data-level="4">レベル4</h3>
             <ol id="level4-records"></ol>
             
+            <h3 class="level-selector" data-level="5">レベル5</h3>
+            <ol id="level5-records"></ol>
+            
             <button onclick="clearRecords()" class="clear-records-btn">記録をクリア</button>
         </div>
     </div>
@@ -754,7 +757,7 @@
             }
         }
 
-        // レベルごとの単語リスト
+        // レベルごとの単語リストを拡張（レベル5を追加）
         const wordLists = {
             1: [ // 人差し指のみ (4rfv5tgb6yhn7ujm)
                 { word: "fun", meaning: "楽しい" },
@@ -803,6 +806,108 @@
                 { word: "pocket", meaning: "ポケット" },
                 { word: "family", meaning: "家族" },
                 { word: "monkey", meaning: "猿" }
+            ],
+            5: [ // 日常的に使う頻出単語100個
+                { word: "time", meaning: "時間" },
+                { word: "year", meaning: "年" },
+                { word: "people", meaning: "人々" },
+                { word: "way", meaning: "方法" },
+                { word: "day", meaning: "日" },
+                { word: "man", meaning: "男性" },
+                { word: "thing", meaning: "物" },
+                { word: "woman", meaning: "女性" },
+                { word: "life", meaning: "人生" },
+                { word: "child", meaning: "子供" },
+                { word: "world", meaning: "世界" },
+                { word: "school", meaning: "学校" },
+                { word: "state", meaning: "状態" },
+                { word: "family", meaning: "家族" },
+                { word: "student", meaning: "学生" },
+                { word: "group", meaning: "グループ" },
+                { word: "country", meaning: "国" },
+                { word: "problem", meaning: "問題" },
+                { word: "hand", meaning: "手" },
+                { word: "part", meaning: "部分" },
+                { word: "place", meaning: "場所" },
+                { word: "case", meaning: "場合" },
+                { word: "week", meaning: "週" },
+                { word: "company", meaning: "会社" },
+                { word: "system", meaning: "システム" },
+                { word: "program", meaning: "プログラム" },
+                { word: "question", meaning: "質問" },
+                { word: "work", meaning: "仕事" },
+                { word: "government", meaning: "政府" },
+                { word: "number", meaning: "数" },
+                { word: "night", meaning: "夜" },
+                { word: "point", meaning: "点" },
+                { word: "home", meaning: "家" },
+                { word: "water", meaning: "水" },
+                { word: "room", meaning: "部屋" },
+                { word: "mother", meaning: "母" },
+                { word: "area", meaning: "地域" },
+                { word: "money", meaning: "お金" },
+                { word: "story", meaning: "物語" },
+                { word: "fact", meaning: "事実" },
+                { word: "month", meaning: "月" },
+                { word: "lot", meaning: "多く" },
+                { word: "right", meaning: "正しい" },
+                { word: "study", meaning: "勉強" },
+                { word: "book", meaning: "本" },
+                { word: "eye", meaning: "目" },
+                { word: "job", meaning: "仕事" },
+                { word: "word", meaning: "単語" },
+                { word: "business", meaning: "ビジネス" },
+                { word: "issue", meaning: "問題" },
+                { word: "side", meaning: "側" },
+                { word: "kind", meaning: "種類" },
+                { word: "head", meaning: "頭" },
+                { word: "house", meaning: "家" },
+                { word: "service", meaning: "サービス" },
+                { word: "friend", meaning: "友達" },
+                { word: "father", meaning: "父" },
+                { word: "power", meaning: "力" },
+                { word: "hour", meaning: "時間" },
+                { word: "game", meaning: "ゲーム" },
+                { word: "line", meaning: "線" },
+                { word: "end", meaning: "終わり" },
+                { word: "member", meaning: "メンバー" },
+                { word: "law", meaning: "法律" },
+                { word: "car", meaning: "車" },
+                { word: "city", meaning: "都市" },
+                { word: "community", meaning: "コミュニティ" },
+                { word: "name", meaning: "名前" },
+                { word: "president", meaning: "大統領" },
+                { word: "team", meaning: "チーム" },
+                { word: "minute", meaning: "分" },
+                { word: "idea", meaning: "アイデア" },
+                { word: "kid", meaning: "子供" },
+                { word: "body", meaning: "体" },
+                { word: "information", meaning: "情報" },
+                { word: "back", meaning: "背中" },
+                { word: "parent", meaning: "親" },
+                { word: "face", meaning: "顔" },
+                { word: "others", meaning: "他の人々" },
+                { word: "level", meaning: "レベル" },
+                { word: "office", meaning: "オフィス" },
+                { word: "door", meaning: "ドア" },
+                { word: "health", meaning: "健康" },
+                { word: "person", meaning: "人" },
+                { word: "art", meaning: "芸術" },
+                { word: "war", meaning: "戦争" },
+                { word: "history", meaning: "歴史" },
+                { word: "party", meaning: "パーティー" },
+                { word: "result", meaning: "結果" },
+                { word: "change", meaning: "変化" },
+                { word: "morning", meaning: "朝" },
+                { word: "reason", meaning: "理由" },
+                { word: "research", meaning: "研究" },
+                { word: "girl", meaning: "女の子" },
+                { word: "guy", meaning: "男性" },
+                { word: "moment", meaning: "瞬間" },
+                { word: "air", meaning: "空気" },
+                { word: "teacher", meaning: "教師" },
+                { word: "force", meaning: "力" },
+                { word: "education", meaning: "教育" }
             ]
         };
 
@@ -822,7 +927,8 @@
             level1: [],
             level2: [],
             level3: [],
-            level4: []
+            level4: [],
+            level5: []
         };
 
         // 記録を保存
@@ -870,7 +976,7 @@
         // ベストタイムを表示
         function displayBestTimes() {
             // レベルごとのベストタイム表示
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= 5; i++) {
                 const levelRecords = records[`level${i}`] || [];
                 const levelRecordsList = document.getElementById(`level${i}-records`);
                 
@@ -909,10 +1015,11 @@
 
         // レベル説明
         const levelDescriptions = {
-            1: "人差し指のみ",
-            2: "人差し指 + 中指",
-            3: "人差し指 + 中指 + 薬指",
-            4: "全ての指"
+            1: "人差し指のみ (4rfv5tgb6yhn7ujm)",
+            2: "人差し指と中指 (3edc4rfv5tgb)",
+            3: "人差し指、中指、薬指 (2wsx3edc4rfv)",
+            4: "全ての指 (全てのキー)",
+            5: "日常的に使う頻出単語"
         };
 
         // タイマー表示を更新
@@ -1051,9 +1158,6 @@
                 // レベルごとのタイム記録
                 addRecord(`level${currentLevel}`, elapsedTime);
                 
-                // ミスがあったかどうかをチェック
-                const isPerfect = mistakeCount === 0;
-                
                 // 総タイプ数を計算（各単語の長さの合計）
                 let totalTypesCount = 0;
                 words.forEach(word => {
@@ -1067,14 +1171,17 @@
                 scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}%`;
                 scoreDisplay.style.display = 'block';
                 
-                // ノーミスの場合のみレベルアップ表示
-                if (isPerfect && currentLevel < 4) {
+                // ミスがあったかどうかをチェック
+                const isPerfect = mistakeCount === 0;
+                
+                // ノーミスの場合のみレベルアップ表示（レベル5まで対応）
+                if (isPerfect && currentLevel < 5) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = `レベル${currentLevel}クリア！レベル${currentLevel + 1}に進みます`;
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して次のレベルへ';
                     wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
-                } else if (isPerfect && currentLevel >= 4) {
+                } else if (isPerfect && currentLevel >= 5) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = '全レベルクリア！おめでとうございます！';
                     feedback.className = 'feedback correct';
@@ -1218,8 +1325,8 @@
                 if (!gameActive) {
                     // ゲーム終了後はリスタート
                     if (currentWordIndex >= words.length) {
-                        // ノーミスの場合のみ、レベルアップ
-                        if (mistakeCount === 0 && currentLevel < 4) {
+                        // ノーミスの場合のみ、レベルアップ（レベル5まで対応）
+                        if (mistakeCount === 0 && currentLevel < 5) {
                             currentLevel++;
                         }
                         initGame();
@@ -1308,7 +1415,8 @@
                     level1: [],
                     level2: [],
                     level3: [],
-                    level4: []
+                    level4: [],
+                    level5: []
                 };
                 saveRecords();
                 displayBestTimes();
@@ -1489,6 +1597,20 @@
                     }, 300);
                 }, 700);
             }, 10);
+        }
+
+        // 記録の初期化関数を更新
+        function initRecords() {
+            if (!localStorage.getItem('typingRecords')) {
+                records = {
+                    level1: [],
+                    level2: [],
+                    level3: [],
+                    level4: [],
+                    level5: [] // レベル5の記録を追加
+                };
+                saveRecords();
+            }
         }
     </script>
 </body>
