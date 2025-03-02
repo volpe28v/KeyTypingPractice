@@ -690,6 +690,12 @@
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-align: center;
         }
+
+        /* シフトキーのスタイル */
+        .shift-key {
+            width: 70px;
+            background-color: #333344;
+        }
     </style>
 </head>
 
@@ -742,6 +748,7 @@
                         <div class="key" data-key="l">L</div>
                     </div>
                     <div class="keyboard-row">
+                        <div class="key shift-key" data-key="shift">Shift</div>
                         <div class="key" data-key="z">Z</div>
                         <div class="key" data-key="x">X</div>
                         <div class="key" data-key="c">C</div>
@@ -821,7 +828,7 @@
             }
         }
 
-        // レベルごとの単語リストを拡張（レベル5を追加）
+        // レベルごとの単語リストを拡張（レベル6を追加）
         const wordLists = {
             1: [ // 人差し指のみ (4rfv5tgb6yhn7ujm)
                 { word: "fun", meaning: "楽しい" },
@@ -972,6 +979,105 @@
                 { word: "teacher", meaning: "教師" },
                 { word: "force", meaning: "力" },
                 { word: "education", meaning: "教育" }
+            ],
+            6: [ // 日常で使う短い文章100個
+                { word: "How are you today?", meaning: "今日の調子はどうですか？" },
+                { word: "Nice to meet you.", meaning: "はじめまして。" },
+                { word: "What time is it now?", meaning: "今何時ですか？" },
+                { word: "I need to go home.", meaning: "家に帰る必要があります。" },
+                { word: "Can you help me?", meaning: "手伝ってもらえますか？" },
+                { word: "Where is the bathroom?", meaning: "お手洗いはどこですか？" },
+                { word: "I don't understand.", meaning: "理解できません。" },
+                { word: "Please speak slowly.", meaning: "ゆっくり話してください。" },
+                { word: "Thank you very much.", meaning: "どうもありがとうございます。" },
+                { word: "You're welcome.", meaning: "どういたしまして。" },
+                { word: "I'm sorry I'm late.", meaning: "遅れてすみません。" },
+                { word: "What's your name?", meaning: "お名前は何ですか？" },
+                { word: "My name is John.", meaning: "私の名前はジョンです。" },
+                { word: "How much is this?", meaning: "これはいくらですか？" },
+                { word: "I'll take this one.", meaning: "これをください。" },
+                { word: "Do you speak English?", meaning: "英語を話せますか？" },
+                { word: "I speak a little Japanese.", meaning: "日本語を少し話します。" },
+                { word: "I'm from the United States.", meaning: "アメリカ出身です。" },
+                { word: "Where are you from?", meaning: "どちらの出身ですか？" },
+                { word: "I like Japanese food.", meaning: "日本食が好きです。" },
+                { word: "What do you do?", meaning: "お仕事は何ですか？" },
+                { word: "I'm a student.", meaning: "学生です。" },
+                { word: "I'm a teacher.", meaning: "教師です。" },
+                { word: "I work at a company.", meaning: "会社で働いています。" },
+                { word: "How was your weekend?", meaning: "週末はどうでしたか？" },
+                { word: "I had a great time.", meaning: "とても楽しかったです。" },
+                { word: "What's the weather like?", meaning: "天気はどうですか？" },
+                { word: "It's raining today.", meaning: "今日は雨です。" },
+                { word: "It's very hot today.", meaning: "今日はとても暑いです。" },
+                { word: "I'm feeling sick.", meaning: "体調が悪いです。" },
+                { word: "I need to see a doctor.", meaning: "医者に診てもらう必要があります。" },
+                { word: "Could you repeat that?", meaning: "もう一度言っていただけますか？" },
+                { word: "I don't know how to say it.", meaning: "言い方がわかりません。" },
+                { word: "What does this mean?", meaning: "これはどういう意味ですか？" },
+                { word: "How do you say this in English?", meaning: "これは英語で何と言いますか？" },
+                { word: "I'm looking for the station.", meaning: "駅を探しています。" },
+                { word: "Which way should I go?", meaning: "どちらの方向に行けばいいですか？" },
+                { word: "Turn right at the corner.", meaning: "角を右に曲がってください。" },
+                { word: "It's about ten minutes walk.", meaning: "歩いて約10分です。" },
+                { word: "I'd like to make a reservation.", meaning: "予約をしたいです。" },
+                { word: "Do you have any vacancies?", meaning: "空室はありますか？" },
+                { word: "I'd like a table for two.", meaning: "2人用のテーブルをお願いします。" },
+                { word: "What would you recommend?", meaning: "おすすめは何ですか？" },
+                { word: "The food was delicious.", meaning: "料理はおいしかったです。" },
+                { word: "Could I have the bill, please?", meaning: "お会計をお願いします。" },
+                { word: "I'd like to pay by credit card.", meaning: "クレジットカードで支払いたいです。" },
+                { word: "Do you have Wi-Fi here?", meaning: "ここにWi-Fiはありますか？" },
+                { word: "What's the password?", meaning: "パスワードは何ですか？" },
+                { word: "I need to charge my phone.", meaning: "携帯を充電する必要があります。" },
+                { word: "Can I use your phone?", meaning: "あなたの電話を使ってもいいですか？" },
+                { word: "I lost my wallet.", meaning: "財布をなくしました。" },
+                { word: "I need to go to the police station.", meaning: "警察署に行く必要があります。" },
+                { word: "Could you take a photo for me?", meaning: "写真を撮ってもらえますか？" },
+                { word: "What time does the store open?", meaning: "お店は何時に開きますか？" },
+                { word: "What time does it close?", meaning: "何時に閉まりますか？" },
+                { word: "Is there a convenience store nearby?", meaning: "近くにコンビニはありますか？" },
+                { word: "I'm just looking, thanks.", meaning: "見ているだけです、ありがとう。" },
+                { word: "Do you have this in another color?", meaning: "これは他の色がありますか？" },
+                { word: "What size do you wear?", meaning: "何サイズを着ますか？" },
+                { word: "It's too expensive for me.", meaning: "私には高すぎます。" },
+                { word: "Can I try this on?", meaning: "これを試着してもいいですか？" },
+                { word: "I'll think about it.", meaning: "考えておきます。" },
+                { word: "I need to buy some souvenirs.", meaning: "お土産を買う必要があります。" },
+                { word: "Do you have anything cheaper?", meaning: "もっと安いものはありますか？" },
+                { word: "I'm looking for a gift.", meaning: "贈り物を探しています。" },
+                { word: "What time is the next train?", meaning: "次の電車は何時ですか？" },
+                { word: "Which platform does it leave from?", meaning: "どのプラットフォームから出発しますか？" },
+                { word: "I'd like a one-way ticket.", meaning: "片道切符をお願いします。" },
+                { word: "I'd like a round-trip ticket.", meaning: "往復切符をお願いします。" },
+                { word: "How long does it take?", meaning: "どのくらい時間がかかりますか？" },
+                { word: "Is this seat taken?", meaning: "この席は空いていますか？" },
+                { word: "Could you wake me up at 7?", meaning: "7時に起こしてもらえますか？" },
+                { word: "I'd like to check out, please.", meaning: "チェックアウトをお願いします。" },
+                { word: "Could you call a taxi for me?", meaning: "タクシーを呼んでもらえますか？" },
+                { word: "I'm allergic to peanuts.", meaning: "ピーナッツアレルギーがあります。" },
+                { word: "I'm a vegetarian.", meaning: "ベジタリアンです。" },
+                { word: "I don't eat pork.", meaning: "豚肉は食べません。" },
+                { word: "It's an emergency.", meaning: "緊急事態です。" },
+                { word: "I need help right now.", meaning: "今すぐ助けが必要です。" },
+                { word: "Call an ambulance, please.", meaning: "救急車を呼んでください。" },
+                { word: "I have a headache.", meaning: "頭痛がします。" },
+                { word: "I have a fever.", meaning: "熱があります。" },
+                { word: "I need some medicine.", meaning: "薬が必要です。" },
+                { word: "How long will it take to get there?", meaning: "そこに着くまでどのくらいかかりますか？" },
+                { word: "Is it far from here?", meaning: "ここから遠いですか？" },
+                { word: "Can I get a discount?", meaning: "割引してもらえますか？" },
+                { word: "Do you accept credit cards?", meaning: "クレジットカードは使えますか？" },
+                { word: "I'd like to exchange money.", meaning: "お金を両替したいです。" },
+                { word: "What's the exchange rate?", meaning: "為替レートはいくらですか？" },
+                { word: "I'm having a great time here.", meaning: "ここでとても楽しんでいます。" },
+                { word: "The view is beautiful.", meaning: "景色が美しいです。" },
+                { word: "I'd like to visit again.", meaning: "また訪れたいです。" },
+                { word: "It was nice talking to you.", meaning: "お話できて良かったです。" },
+                { word: "See you tomorrow.", meaning: "また明日。" },
+                { word: "Have a nice day!", meaning: "良い一日を！" },
+                { word: "Take care of yourself.", meaning: "お体に気をつけて。" },
+                { word: "I hope to see you again soon.", meaning: "またすぐにお会いできることを願っています。" }
             ]
         };
 
@@ -1085,7 +1191,8 @@
             2: "人差し指と中指 (3edc4rfv5tgb)",
             3: "人差し指、中指、薬指 (2wsx3edc4rfv)",
             4: "全ての指 (全てのキー)",
-            5: "日常的に使う頻出単語"
+            5: "日常的に使う頻出単語",
+            6: "日常で使う短い文章"
         };
 
         // タイマー表示を更新
@@ -1279,41 +1386,42 @@
             progressBar.style.width = `${progress}%`;
         }
 
-        // キー入力の検証（間違ったキーは受け付けない）
+        // キー入力の検証（シフトキーをミスに含めない）
         function validateKeyInput(e) {
-            // Enterキーやバックスペース、矢印キーなどの制御キーは常に許可
-            if (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete' || 
-                e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
-                e.key === 'Tab' || e.ctrlKey || e.altKey || e.metaKey) {
+            // シフトキーは無視
+            if (e.key === 'Shift') {
                 return true;
             }
             
-            // 現在の単語と入力中のテキスト
             const currentWord = words[currentWordIndex].word;
-            const currentPosition = wordInput.selectionStart;
+            const currentPosition = wordInput.value.length;
             
-            // 入力位置が単語の長さを超えている場合は入力を許可しない
+            // 入力位置が単語の長さ以上の場合は無効
             if (currentPosition >= currentWord.length) {
                 e.preventDefault();
                 return false;
             }
             
-            // 正しいキーが押されたかチェック
-            if (e.key === currentWord[currentPosition]) {
-                return true;
-            } else {
-                // 間違ったキーの場合、入力を許可しない
-                e.preventDefault();
+            // 次に入力すべき文字（大文字小文字を区別しない）
+            const expectedChar = currentWord[currentPosition].toLowerCase();
+            const inputChar = e.key.toLowerCase();
+            
+            // 入力された文字が期待される文字と一致するか確認
+            const isCorrect = expectedChar === inputChar;
+            
+            // 間違った入力の場合はミスカウントを増やす（シフトキーは除く）
+            if (!isCorrect && e.key !== 'Shift') {
+                mistakeCount++;
                 
                 // 間違った文字を赤く表示
                 highlightWrongChar(currentPosition);
                 
-                // ミスカウントを増やす
-                mistakeCount++;
-                
-                // 間違った入力音は再生しない
+                // 入力を許可しない
+                e.preventDefault();
                 return false;
             }
+            
+            return true;
         }
 
         // 間違った文字をハイライト表示
@@ -1338,33 +1446,41 @@
             wordDisplay.innerHTML = highlightedHTML;
         }
 
-        // 入力チェック（リアルタイム）
+        // リアルタイム入力チェック関数を修正
         function checkInputRealtime() {
             const currentWord = words[currentWordIndex].word;
             const userInput = wordInput.value.trim();
             
-            // 正解の場合
-            if (userInput === currentWord) {
-                // 正解（効果音なし）
+            // 大文字小文字を区別せずに比較
+            if (userInput.toLowerCase() === currentWord.toLowerCase()) {
+                // 正解の場合
+                wordDisplay.innerHTML = `<span class="correct-word">${currentWord}</span>`;
                 feedback.textContent = '正解！';
                 feedback.className = 'feedback correct';
-                correctCount++;
+                
+                // 次の単語へ
                 currentWordIndex++;
-                wordInput.value = '';
+                correctCount++;
+                
+                // 進捗バーの更新
                 updateProgressBar();
-                displayWord();
+                
+                // 次の単語を表示（または終了）
+                setTimeout(() => {
+                    displayWord();
+                }, 500);
                 return;
             }
             
-            // 部分一致のハイライト表示用のHTMLを生成
+            // 部分一致のハイライト表示用のHTMLを生成（大文字小文字を区別しない）
             let highlightedHTML = '';
             for (let i = 0; i < currentWord.length; i++) {
                 if (i < userInput.length) {
-                    if (userInput[i] === currentWord[i]) {
+                    if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
                         // 正しく入力された文字は緑色で表示
                         highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                     } else {
-                        // 間違って入力された文字は赤色で表示（ここには来ないはず）
+                        // 間違って入力された文字は赤色で表示
                         highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
                     }
                 } else {
@@ -1595,7 +1711,7 @@
             });
         }
 
-        // 次に打つキーをハイライト表示する関数
+        // 次に打つキーをハイライト表示する関数を修正
         function highlightNextKey() {
             // 前回のハイライトをクリア
             const highlightedKeys = document.querySelectorAll('.key.highlight');
@@ -1610,13 +1726,21 @@
                 
                 // 入力位置が単語の長さ未満の場合
                 if (currentPosition < currentWord.length) {
-                    // 次に打つキーを取得
+                    // 次に打つキーを取得（小文字に変換）
                     const nextKey = currentWord[currentPosition].toLowerCase();
                     
                     // 対応するキー要素を探してハイライト
                     const keyElement = document.querySelector(`.key[data-key="${nextKey}"]`);
                     if (keyElement) {
                         keyElement.classList.add('highlight');
+                    }
+                    
+                    // 大文字の場合はシフトキーもハイライト
+                    if (currentWord[currentPosition] !== currentWord[currentPosition].toLowerCase()) {
+                        const shiftKey = document.querySelector(`.key[data-key="shift"]`);
+                        if (shiftKey) {
+                            shiftKey.classList.add('highlight');
+                        }
                     }
                 }
             }
@@ -1707,6 +1831,15 @@
                     }, 500);
                 }, 2000);
             }, 100);
+        }
+
+        // 入力検証関数を修正（大文字小文字を区別しない）
+        function validateInput() {
+            const currentWord = words[currentWordIndex].word;
+            const userInput = wordInput.value.trim();
+            
+            // 大文字小文字を区別せずに比較
+            return currentWord.toLowerCase() === userInput.toLowerCase();
         }
     </script>
 </body>
