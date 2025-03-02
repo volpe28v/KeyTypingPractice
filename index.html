@@ -28,7 +28,7 @@
         }
 
         .game-container {
-            flex: 3;
+            flex: 2;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -36,11 +36,11 @@
 
         .records-sidebar {
             flex: 1;
-            max-width: 250px;
+            max-width: 350px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #00ffaa;
             border-radius: 10px;
-            padding: 15px;
+            padding: 20px;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
             height: fit-content;
             position: sticky;
@@ -100,6 +100,22 @@
             
             .game-container {
                 width: 100%;
+            }
+
+            .level-record {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .level-record h3 {
+                margin: 0;
+                flex: 1;
+            }
+
+            .best-time-display {
+                flex: 1;
+                text-align: right;
             }
         }
 
@@ -636,17 +652,16 @@
         }
 
         .level-record {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             border-bottom: 1px dotted rgba(0, 255, 170, 0.3);
-            padding-bottom: 5px;
+            padding-bottom: 10px;
         }
 
         .level-record h3 {
-            margin: 0;
-            flex: 1;
+            margin: 0 0 8px 0;
+            width: 100%;
         }
 
         .best-time-display {
@@ -656,12 +671,13 @@
             color: #ffcc00;
             font-size: 1.1rem;
             font-weight: bold;
-            text-align: right;
-            flex: 1;
+            text-align: center;
+            width: 100%;
         }
 
         .best-time-display li {
             margin: 0;
+            padding: 5px 0;
         }
 
         .new-record-message {
@@ -1534,7 +1550,7 @@
                 const levelTitle = document.createElement('h3');
                 levelTitle.className = 'level-selector';
                 levelTitle.setAttribute('data-level', level.level);
-                levelTitle.textContent = `レベル${level.level}`;
+                levelTitle.textContent = `${level.level} - ${level.description}`;
                 
                 const recordsList = document.createElement('ol');
                 recordsList.id = `level${level.level}-records`;

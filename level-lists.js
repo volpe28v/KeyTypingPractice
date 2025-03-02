@@ -109,7 +109,7 @@ const levelLists = [
     },
     {
         level: 5,
-        description: "日常的に使う頻出単語100個",
+        description: "頻出単語100個",
         words: [
         { word: "time", meaning: "時間" },
         { word: "year", meaning: "年" },
@@ -212,7 +212,7 @@ const levelLists = [
     },
     {
         level: 6,
-        description: "日常で使う短い文章100個",
+        description: "短い文章100個",
         words: [
         { word: "How are you today?", meaning: "今日の調子はどうですか？" },
         { word: "Nice to meet you.", meaning: "はじめまして。" },
