@@ -737,7 +737,7 @@
                 <div class="meaning" id="meaning"></div>
                 <div class="timer-display" id="timer-display">00.00</div>
                 <div class="input-area">
-                    <input type="text" id="word-input" autocomplete="off" placeholder="ここにタイプしてEnterを押してね">
+                    <input type="text" id="word-input" autocomplete="off" placeholder="ここにタイプしてね">
                 </div>
                 <div class="feedback" id="feedback"></div>
                 <div class="progress">
@@ -808,35 +808,7 @@
         <div class="records-sidebar">
             <h2>ベストタイム</h2>
             
-            <div class="level-record">
-                <h3 class="level-selector" data-level="1">レベル1</h3>
-                <ol id="level1-records" class="best-time-display"></ol>
-            </div>
-            
-            <div class="level-record">
-                <h3 class="level-selector" data-level="2">レベル2</h3>
-                <ol id="level2-records" class="best-time-display"></ol>
-            </div>
-            
-            <div class="level-record">
-                <h3 class="level-selector" data-level="3">レベル3</h3>
-                <ol id="level3-records" class="best-time-display"></ol>
-            </div>
-            
-            <div class="level-record">
-                <h3 class="level-selector" data-level="4">レベル4</h3>
-                <ol id="level4-records" class="best-time-display"></ol>
-            </div>
-            
-            <div class="level-record">
-                <h3 class="level-selector" data-level="5">レベル5</h3>
-                <ol id="level5-records" class="best-time-display"></ol>
-            </div>
-            
-            <div class="level-record">
-                <h3 class="level-selector" data-level="6">レベル6</h3>
-                <ol id="level6-records" class="best-time-display"></ol>
-            </div>
+            <!-- 動的に生成されるレベル記録がここに入ります -->
             
             <button onclick="clearRecords()" class="clear-records-btn">記録をクリア</button>
         </div>
@@ -920,14 +892,7 @@
         let startTime, endTime;
         let timerInterval = null;
 
-        let records = {
-            level1: [],
-            level2: [],
-            level3: [],
-            level4: [],
-            level5: [],
-            level6: []
-        };
+        let records = {};
 
         function saveRecords() {
             localStorage.setItem('typingRecords', JSON.stringify(records));
@@ -1266,6 +1231,9 @@
                 preloadSounds();
             }
             
+            // レベル記録を動的に生成
+            generateLevelRecords();
+            
             initLevelSelectors();
             
             initGame();
@@ -1275,14 +1243,13 @@
 
         function clearRecords() {
             if (confirm('すべての記録をクリアしますか？')) {
-                records = {
-                    level1: [],
-                    level2: [],
-                    level3: [],
-                    level4: [],
-                    level5: [],
-                    level6: []
-                };
+                records = {};
+                
+                // levelListsを使って動的に記録オブジェクトを初期化
+                levelLists.forEach(level => {
+                    records[`level${level.level}`] = [];
+                });
+                
                 saveRecords();
                 displayBestTimes();
             }
@@ -1511,14 +1478,13 @@
 
         function initRecords() {
             if (!localStorage.getItem('typingRecords')) {
-                records = {
-                    level1: [],
-                    level2: [],
-                    level3: [],
-                    level4: [],
-                    level5: [],
-                    level6: []
-                };
+                records = {};
+                
+                // levelListsを使って動的に記録オブジェクトを初期化
+                levelLists.forEach(level => {
+                    records[`level${level.level}`] = [];
+                });
+                
                 saveRecords();
             }
         }
@@ -1550,6 +1516,39 @@
             const userInput = wordInput.value.trim();
             
             return currentWord.toLowerCase() === userInput.toLowerCase();
+        }
+
+        function generateLevelRecords() {
+            const recordsSidebar = document.querySelector('.records-sidebar');
+            const clearButton = recordsSidebar.querySelector('.clear-records-btn');
+            
+            // 既存のレベル記録を削除
+            const existingRecords = recordsSidebar.querySelectorAll('.level-record');
+            existingRecords.forEach(record => record.remove());
+            
+            // levelListsを使って動的にレベル記録を生成
+            levelLists.forEach(level => {
+                const levelRecord = document.createElement('div');
+                levelRecord.className = 'level-record';
+                
+                const levelTitle = document.createElement('h3');
+                levelTitle.className = 'level-selector';
+                levelTitle.setAttribute('data-level', level.level);
+                levelTitle.textContent = `レベル${level.level}`;
+                
+                const recordsList = document.createElement('ol');
+                recordsList.id = `level${level.level}-records`;
+                recordsList.className = 'best-time-display';
+                
+                levelRecord.appendChild(levelTitle);
+                levelRecord.appendChild(recordsList);
+                
+                // クリアボタンの前に挿入
+                recordsSidebar.insertBefore(levelRecord, clearButton);
+            });
+            
+            // レベルセレクタのイベントリスナーを設定
+            initLevelSelectors();
         }
     </script>
 </body>
