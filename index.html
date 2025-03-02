@@ -132,13 +132,12 @@
             position: relative;
             overflow: hidden;
             border: 2px solid #00ffaa;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
         }
 
         .track {
-            width: 80%;
-            height: 80%;
-            border: 5px dashed #ffffff;
-            border-radius: 40px;
+            width: 90%;
+            height: 90%;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -153,6 +152,23 @@
             border-radius: 5px;
             transform-origin: center;
             transition: transform 0.1s;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(255, 0, 102, 0.7);
+        }
+
+        .car::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 20%, rgba(255, 255, 255, 0.8) 50%, transparent 80%);
+            animation: carLight 1s infinite;
+        }
+
+        @keyframes carLight {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.3; }
         }
 
         .instructions {
@@ -196,18 +212,9 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="game-title">タイピングレーサー</h1>
+        <h1 class="game-title">タイピングマスター</h1>
         <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
         
-        <div class="race-track">
-            <div class="track"></div>
-            <div class="car"></div>
-            <div class="game-over">
-                ゲームオーバー！
-                <button class="restart-btn">もう一度挑戦する</button>
-            </div>
-        </div>
-
         <div class="typing-area">
             <div class="word-display" id="word-display"></div>
             <div class="meaning" id="meaning"></div>
@@ -223,7 +230,7 @@
         <div class="score-display" id="score-display"></div>
         
         <div class="instructions">
-            <p>キーボードでタイプして、ラジコンカーを走らせよう！タイプが止まるとカーも止まるよ！</p>
+            <p>キーボードでタイプして、タイピングスキルを向上させよう！</p>
         </div>
     </div>
 
@@ -240,53 +247,53 @@
 
         // レベルごとの単語リスト
         const wordLists = {
-            1: [ // 人差し指のみ (a, s, d, f, j, k, l, ;)
-                { word: "dad", meaning: "お父さん" },
-                { word: "sad", meaning: "悲しい" },
-                { word: "add", meaning: "足す" },
-                { word: "fall", meaning: "落ちる" },
-                { word: "salad", meaning: "サラダ" },
-                { word: "flask", meaning: "フラスコ" },
-                { word: "jak", meaning: "ジャック" },
-                { word: "lad", meaning: "少年" },
-                { word: "lass", meaning: "少女" },
-                { word: "fad", meaning: "一時的な流行" }
+            1: [ // 人差し指のみ (f, r, v, t, g, b, y, h, n, u, j, m)
+                { word: "fun", meaning: "楽しい" },
+                { word: "run", meaning: "走る" },
+                { word: "jump", meaning: "ジャンプ" },
+                { word: "gym", meaning: "体育館" },
+                { word: "bug", meaning: "虫" },
+                { word: "toy", meaning: "おもちゃ" },
+                { word: "jam", meaning: "ジャム" },
+                { word: "hat", meaning: "帽子" },
+                { word: "nut", meaning: "ナッツ" },
+                { word: "hum", meaning: "ハミング" }
             ],
-            2: [ // 人差し指 + 中指 (a, s, d, f, g, h, j, k, l, ;)
-                { word: "glad", meaning: "うれしい" },
-                { word: "flag", meaning: "旗" },
-                { word: "half", meaning: "半分" },
-                { word: "glass", meaning: "ガラス" },
-                { word: "dash", meaning: "ダッシュ" },
-                { word: "flash", meaning: "光る" },
-                { word: "slag", meaning: "鉱滓" },
-                { word: "hall", meaning: "ホール" },
-                { word: "gash", meaning: "深い切り傷" },
-                { word: "hash", meaning: "ハッシュ" }
-            ],
-            3: [ // 人差し指 + 中指 + 薬指 (a, s, d, f, g, h, j, k, l, ;, r, e, u, i)
-                { word: "fire", meaning: "火" },
-                { word: "rise", meaning: "上がる" },
-                { word: "hair", meaning: "髪" },
-                { word: "fair", meaning: "公平な" },
-                { word: "idea", meaning: "アイデア" },
-                { word: "guide", meaning: "ガイド" },
-                { word: "field", meaning: "畑" },
-                { word: "grief", meaning: "悲しみ" },
+            2: [ // 人差し指 + 中指 (f, r, v, t, g, b, y, h, n, u, j, m + 3, e, d, c, 8, i, k)
+                { word: "bike", meaning: "自転車" },
+                { word: "ice", meaning: "氷" },
+                { word: "cake", meaning: "ケーキ" },
+                { word: "time", meaning: "時間" },
+                { word: "duck", meaning: "アヒル" },
+                { word: "kite", meaning: "凧" },
                 { word: "juice", meaning: "ジュース" },
-                { word: "ridge", meaning: "尾根" }
+                { word: "milk", meaning: "牛乳" },
+                { word: "bed", meaning: "ベッド" },
+                { word: "kid", meaning: "子供" }
+            ],
+            3: [ // 人差し指 + 中指 + 薬指 (f, r, v, t, g, b, y, h, n, u, j, m + 3, e, d, c, 8, i, k + 2, w, s, x, 9, o, l)
+                { word: "school", meaning: "学校" },
+                { word: "lunch", meaning: "昼食" },
+                { word: "book", meaning: "本" },
+                { word: "window", meaning: "窓" },
+                { word: "box", meaning: "箱" },
+                { word: "clock", meaning: "時計" },
+                { word: "snow", meaning: "雪" },
+                { word: "sun", meaning: "太陽" },
+                { word: "sock", meaning: "靴下" },
+                { word: "wolf", meaning: "オオカミ" }
             ],
             4: [ // 全ての指 (全てのキー)
-                { word: "quick", meaning: "素早い" },
-                { word: "zebra", meaning: "シマウマ" },
-                { word: "oxygen", meaning: "酸素" },
-                { word: "puzzle", meaning: "パズル" },
-                { word: "wizard", meaning: "魔法使い" },
-                { word: "vortex", meaning: "渦" },
-                { word: "complex", meaning: "複雑な" },
-                { word: "bicycle", meaning: "自転車" },
-                { word: "pyramid", meaning: "ピラミッド" },
-                { word: "symphony", meaning: "交響曲" }
+                { word: "apple", meaning: "りんご" },
+                { word: "pizza", meaning: "ピザ" },
+                { word: "pencil", meaning: "鉛筆" },
+                { word: "water", meaning: "水" },
+                { word: "animal", meaning: "動物" },
+                { word: "flower", meaning: "花" },
+                { word: "banana", meaning: "バナナ" },
+                { word: "pocket", meaning: "ポケット" },
+                { word: "family", meaning: "家族" },
+                { word: "monkey", meaning: "猿" }
             ]
         };
 
@@ -295,11 +302,6 @@
         let currentWordIndex = 0;
         let correctCount = 0;
         let words = [];
-        let lastKeyPressTime = Date.now();
-        let carSpeed = 0;
-        let carPosition = { x: 0, y: 0 };
-        let carAngle = 0;
-        let carPath = [];
         let gameActive = true;
 
         // DOM要素
@@ -311,9 +313,6 @@
         const scoreDisplay = document.getElementById('score-display');
         const levelDisplay = document.getElementById('level');
         const levelDescDisplay = document.getElementById('level-desc');
-        const car = document.querySelector('.car');
-        const gameOverScreen = document.querySelector('.game-over');
-        const restartBtn = document.querySelector('.restart-btn');
 
         // レベル説明
         const levelDescriptions = {
@@ -337,10 +336,7 @@
             wordInput.value = '';
             wordInput.focus();
             
-            // ラジコンカーの初期化
-            initCar();
             gameActive = true;
-            gameOverScreen.style.display = 'none';
         }
 
         // 単語をシャッフル
@@ -422,97 +418,18 @@
             }
         }
 
-        // ラジコンカーの初期化
-        function initCar() {
-            const track = document.querySelector('.track');
-            const trackRect = track.getBoundingClientRect();
-            const trackCenterX = trackRect.width / 2;
-            const trackCenterY = trackRect.height / 2;
-            
-            // 楕円形のパスを生成
-            carPath = [];
-            for (let angle = 0; angle < 360; angle += 5) {
-                const radians = angle * Math.PI / 180;
-                const x = trackCenterX + (trackRect.width * 0.4) * Math.cos(radians);
-                const y = trackCenterY + (trackRect.height * 0.4) * Math.sin(radians);
-                carPath.push({ x, y });
-            }
-            
-            // 車の初期位置
-            carPosition = { ...carPath[0] };
-            carAngle = 0;
-            car.style.left = `${carPosition.x - 15}px`;
-            car.style.top = `${carPosition.y - 10}px`;
-            car.style.transform = `rotate(${carAngle}deg)`;
-            
-            carSpeed = 2;
-            lastKeyPressTime = Date.now();
-        }
-
-        // ラジコンカーの更新
-        function updateCar() {
-            if (!gameActive) return;
-            
-            // キー入力からの経過時間に基づいて速度を減衰
-            const currentTime = Date.now();
-            const timeSinceLastKeyPress = currentTime - lastKeyPressTime;
-            
-            if (timeSinceLastKeyPress > 2000) {
-                carSpeed = Math.max(0, carSpeed - 0.05);
-                
-                if (carSpeed <= 0) {
-                    gameOver();
-                    return;
-                }
-            }
-            
-            // パスに沿って車を移動
-            const pathIndex = Math.floor(carAngle) % carPath.length;
-            const targetPosition = carPath[pathIndex];
-            
-            // 車の位置と角度を更新
-            carPosition = targetPosition;
-            carAngle = (carAngle + carSpeed) % 360;
-            
-            // ドリフト効果を追加
-            const driftAngle = 15 + (Math.sin(carAngle * 0.1) * 10);
-            
-            // 車の位置と回転を更新
-            car.style.left = `${carPosition.x - 15}px`;
-            car.style.top = `${carPosition.y - 10}px`;
-            car.style.transform = `rotate(${carAngle + driftAngle}deg)`;
-            
-            requestAnimationFrame(updateCar);
-        }
-
-        // ゲームオーバー
-        function gameOver() {
-            gameActive = false;
-            gameOverScreen.style.display = 'flex';
-        }
-
         // イベントリスナー
         wordInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 checkInput();
             } else {
-                // キー入力時に車の速度を上げる
-                lastKeyPressTime = Date.now();
-                carSpeed = Math.min(5, carSpeed + 0.2);
-                
-                // キー入力音
-                const keySound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+                // キー入力音を再生
                 keySound.play();
             }
         });
 
-        restartBtn.addEventListener('click', () => {
-            initGame();
-        });
-
         // ゲーム開始
         initGame();
-        updateCar();
     </script>
 </body>
 </html> 
