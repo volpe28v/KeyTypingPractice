@@ -114,6 +114,7 @@
             text-align: center;
             color: #ffffff;
             letter-spacing: 2px;
+            transition: all 0.3s ease;
         }
 
         .word-display span {
@@ -170,10 +171,13 @@
             text-align: center;
             font-size: 1.2rem;
             margin-bottom: 10px;
+            transition: all 0.3s ease;
         }
 
         .correct {
             color: #00ff00;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
 
         .incorrect {
@@ -202,6 +206,11 @@
             margin-top: 20px;
             color: #ffcc00;
             display: none;
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
 
         .race-track {
@@ -339,12 +348,12 @@
 
         .correct-char {
             color: #00ff00;
-            text-shadow: 0 0 5px #00ff00;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
         }
 
         .incorrect-char {
             color: #ff0000;
-            text-shadow: 0 0 5px #ff0000;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
         }
 
         .level-selector {
@@ -507,15 +516,15 @@
         };
 
         // ゲーム状態
-        let currentLevel = 1;
+        let words = [];
         let currentWordIndex = 0;
         let correctCount = 0;
-        let words = [];
+        let mistakeCount = 0;
+        let currentLevel = 1;
         let gameActive = true;
-        let startTime = 0;
-        let endTime = 0;
-        let timerInterval = null; // タイマー用インターバル
-        let timerStarted = false; // タイマーが開始されたかどうか
+        let timerStarted = false;
+        let startTime, endTime;
+        let timerInterval = null;
 
         // 記録の初期化
         let records = {
@@ -639,10 +648,14 @@
 
         // ゲーム初期化
         function initGame() {
-            words = [...wordLists[currentLevel]];
-            shuffleArray(words);
+            // 全単語リストからランダムに10問を選択
+            const fullWordList = [...wordLists[currentLevel]];
+            shuffleArray(fullWordList);
+            words = fullWordList.slice(0, 10); // 最初の10問だけを使用
+            
             currentWordIndex = 0;
             correctCount = 0;
+            mistakeCount = 0; // ミスカウントをリセット
             
             // 問題表示を先に行う
             displayWord();
@@ -725,21 +738,44 @@
                 // 結果表示
                 scoreDisplay.textContent = `スコア: ${score}/100点 (タイム: ${formatTime(elapsedTime)})`;
                 scoreDisplay.style.display = 'block';
-                wordDisplay.innerHTML = 'クリア！';
-                meaningDisplay.textContent = 'Enterキーを押して次へ進む';
+                
+                // ミスがあったかどうかをチェック
+                const isPerfect = mistakeCount === 0;
+                
+                // 100点かつノーミスの場合のみレベルアップ表示
+                if (score === 100 && isPerfect && currentLevel < 4) {
+                    wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
+                    feedback.textContent = `レベル${currentLevel}クリア！レベル${currentLevel + 1}に進みます`;
+                    feedback.className = 'feedback correct';
+                    meaningDisplay.textContent = 'Enterキーを押して次のレベルへ';
+                    wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
+                } else if (score === 100 && isPerfect && currentLevel >= 4) {
+                    wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
+                    feedback.textContent = '全レベルクリア！おめでとうございます！';
+                    feedback.className = 'feedback correct';
+                    meaningDisplay.textContent = 'Enterキーを押して再挑戦';
+                    wordInput.placeholder = "Enterキーを押して再挑戦";
+                } else if (score === 100 && !isPerfect) {
+                    // 100点だがミスがある場合
+                    wordDisplay.innerHTML = '<span style="color: #ffcc00;">クリア！</span>';
+                    feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
+                    feedback.className = 'feedback';
+                    meaningDisplay.textContent = 'Enterキーを押して再挑戦';
+                    wordInput.placeholder = "Enterキーを押して再挑戦";
+                } else {
+                    // 100点未満の場合
+                    wordDisplay.innerHTML = 'クリア！';
+                    feedback.textContent = `スコア: ${score}/100点 - 全問正解かつノーミスを目指そう！`;
+                    feedback.className = 'feedback';
+                    meaningDisplay.textContent = 'Enterキーを押して再挑戦';
+                    wordInput.placeholder = "Enterキーを押して再挑戦";
+                }
                 
                 // ベストタイム表示
                 showRecords();
                 
                 // 結果表示モードに設定
                 gameActive = false;
-                
-                // 100点だった場合、レベルアップ準備
-                if (score === 100 && currentLevel < 4) {
-                    wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
-                } else {
-                    wordInput.placeholder = "Enterキーを押して再挑戦";
-                }
                 
                 wordInput.value = '';
                 wordInput.focus();
@@ -780,6 +816,9 @@
                 
                 // 間違った文字を赤く表示
                 highlightWrongChar(currentPosition);
+                
+                // ミスカウントを増やす
+                mistakeCount++;
                 
                 // 間違った入力音は再生しない
                 return false;
@@ -858,11 +897,10 @@
                 if (!gameActive) {
                     // ゲーム終了後はリスタート
                     if (currentWordIndex >= words.length) {
-                        // 100点だった場合、レベルアップ
+                        // 100点かつノーミスの場合のみ、レベルアップ
                         const score = Math.floor((correctCount / words.length) * 100);
-                        if (score === 100 && currentLevel < 4) {
+                        if (score === 100 && mistakeCount === 0 && currentLevel < 4) {
                             currentLevel++;
-                            alert(`レベル${currentLevel}にアップしました！`);
                         }
                         initGame();
                     }
