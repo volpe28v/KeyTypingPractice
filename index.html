@@ -15,15 +15,35 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .container {
-            width: 800px;
+        .main-container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .game-container {
+            flex: 2;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        .records-sidebar {
+            flex: 1;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
 
         .game-title {
@@ -31,6 +51,45 @@
             margin-bottom: 20px;
             text-shadow: 0 0 10px #00ffaa;
             letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .records-sidebar h2 {
+            color: #ff00ff;
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #00ffaa;
+            padding-bottom: 5px;
+        }
+
+        .records-sidebar h3 {
+            color: #ff00ff;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+
+        .records-sidebar ol {
+            color: #ffcc00;
+            margin-left: 20px;
+            padding-left: 10px;
+        }
+
+        .records-sidebar li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .records-sidebar {
+                margin-top: 20px;
+                position: static;
+            }
         }
 
         .level-display {
@@ -61,6 +120,21 @@
             margin-bottom: 20px;
             text-align: center;
             color: #ffcc00;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            text-align: center;
+            color: #ff00ff;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 5px 10px;
+            display: inline-block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .input-area {
@@ -208,29 +282,89 @@
         .restart-btn:hover {
             background-color: #ff3385;
         }
+
+        .records-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            display: none;
+        }
+
+        .records-container h3 {
+            color: #ff00ff;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-size: 1.2rem;
+        }
+
+        .records-container ol {
+            color: #ffcc00;
+            margin-left: 20px;
+            padding-left: 20px;
+        }
+
+        .records-container li {
+            margin-bottom: 5px;
+        }
+
+        .clear-records {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #clear-records-btn {
+            background-color: #ff3366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #clear-records-btn:hover {
+            background-color: #ff0044;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="game-title">タイピングマスター</h1>
-        <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
-        
-        <div class="typing-area">
-            <div class="word-display" id="word-display"></div>
-            <div class="meaning" id="meaning"></div>
-            <div class="input-area">
-                <input type="text" id="word-input" autocomplete="off" placeholder="ここにタイプしてEnterを押してね">
+    <h1 class="game-title">タイピングマスター</h1>
+    
+    <div class="main-container">
+        <div class="game-container">
+            <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
+            
+            <div class="typing-area">
+                <div class="word-display" id="word-display"></div>
+                <div class="meaning" id="meaning"></div>
+                <div class="timer-display" id="timer-display">00.00</div>
+                <div class="input-area">
+                    <input type="text" id="word-input" autocomplete="off" placeholder="ここにタイプしてEnterを押してね">
+                </div>
+                <div class="feedback" id="feedback"></div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
             </div>
-            <div class="feedback" id="feedback"></div>
-            <div class="progress">
-                <div class="progress-bar" id="progress-bar"></div>
+
+            <div class="score-display" id="score-display"></div>
+            
+            <div class="instructions">
+                <p>キーボードでタイプして、タイピングスキルを向上させよう！</p>
             </div>
         </div>
-
-        <div class="score-display" id="score-display"></div>
         
-        <div class="instructions">
-            <p>キーボードでタイプして、タイピングスキルを向上させよう！</p>
+        <div class="records-sidebar" id="records-container">
+            <h2>ベストタイム記録</h2>
+            <!-- ここにベストタイムが表示されます -->
+            <div class="clear-records">
+                <button id="clear-records-btn">記録をクリア</button>
+            </div>
         </div>
     </div>
 
@@ -247,19 +381,19 @@
 
         // レベルごとの単語リスト
         const wordLists = {
-            1: [ // 人差し指のみ (f, r, v, t, g, b, y, h, n, u, j, m)
+            1: [ // 人差し指のみ (4rfv5tgb6yhn7ujm)
                 { word: "fun", meaning: "楽しい" },
                 { word: "run", meaning: "走る" },
                 { word: "jump", meaning: "ジャンプ" },
                 { word: "gym", meaning: "体育館" },
-                { word: "bug", meaning: "虫" },
-                { word: "toy", meaning: "おもちゃ" },
-                { word: "jam", meaning: "ジャム" },
-                { word: "hat", meaning: "帽子" },
-                { word: "nut", meaning: "ナッツ" },
-                { word: "hum", meaning: "ハミング" }
+                { word: "hum", meaning: "ハミング" },
+                { word: "mum", meaning: "お母さん" },
+                { word: "bun", meaning: "パン" },
+                { word: "gun", meaning: "銃" },
+                { word: "nun", meaning: "修道女" },
+                { word: "rum", meaning: "ラム酒" }
             ],
-            2: [ // 人差し指 + 中指 (f, r, v, t, g, b, y, h, n, u, j, m + 3, e, d, c, 8, i, k)
+            2: [ // 人差し指 + 中指 (4rfv5tgb6yhn7ujm + 3edc8ik)
                 { word: "bike", meaning: "自転車" },
                 { word: "ice", meaning: "氷" },
                 { word: "cake", meaning: "ケーキ" },
@@ -271,7 +405,7 @@
                 { word: "bed", meaning: "ベッド" },
                 { word: "kid", meaning: "子供" }
             ],
-            3: [ // 人差し指 + 中指 + 薬指 (f, r, v, t, g, b, y, h, n, u, j, m + 3, e, d, c, 8, i, k + 2, w, s, x, 9, o, l)
+            3: [ // 人差し指 + 中指 + 薬指 (4rfv5tgb6yhn7ujm + 3edc8ik + 2wsx9ol)
                 { word: "school", meaning: "学校" },
                 { word: "lunch", meaning: "昼食" },
                 { word: "book", meaning: "本" },
@@ -303,6 +437,116 @@
         let correctCount = 0;
         let words = [];
         let gameActive = true;
+        let startTime = 0;
+        let endTime = 0;
+        let timerInterval = null; // タイマー用インターバル
+        let timerStarted = false; // タイマーが開始されたかどうか
+
+        // タイム記録用のデータ構造
+        let records = {
+            level1: [],
+            level2: [],
+            level3: [],
+            level4: [],
+            total: []
+        };
+
+        // ローカルストレージからレコードを読み込む
+        function loadRecords() {
+            const savedRecords = localStorage.getItem('typingRecords');
+            if (savedRecords) {
+                records = JSON.parse(savedRecords);
+            }
+        }
+
+        // レコードをローカルストレージに保存
+        function saveRecords() {
+            localStorage.setItem('typingRecords', JSON.stringify(records));
+        }
+
+        // タイムを追加して上位3つを保持
+        function addRecord(category, time) {
+            if (!records[category]) {
+                records[category] = [];
+            }
+            
+            records[category].push(time);
+            records[category].sort((a, b) => a - b); // 昇順ソート
+            
+            if (records[category].length > 3) {
+                records[category] = records[category].slice(0, 3); // 上位3つだけ保持
+            }
+            
+            saveRecords();
+        }
+
+        // タイムを表示用にフォーマット (秒.ミリ秒)
+        function formatTime(timeMs) {
+            const seconds = Math.floor(timeMs / 1000);
+            const milliseconds = Math.floor((timeMs % 1000) / 10);
+            return `${seconds}.${milliseconds.toString().padStart(2, '0')}秒`;
+        }
+
+        // ベストタイムを表示
+        function displayBestTimes() {
+            const recordsContainer = document.getElementById('records-container');
+            recordsContainer.innerHTML = '<h2>ベストタイム記録</h2>';
+            
+            // 総合ベストタイム
+            const totalHeader = document.createElement('h3');
+            totalHeader.textContent = '総合ベストタイム';
+            recordsContainer.appendChild(totalHeader);
+            
+            const totalList = document.createElement('ol');
+            if (records.total.length === 0) {
+                const noRecord = document.createElement('li');
+                noRecord.textContent = '記録なし';
+                totalList.appendChild(noRecord);
+            } else {
+                records.total.forEach(time => {
+                    const item = document.createElement('li');
+                    item.textContent = formatTime(time);
+                    totalList.appendChild(item);
+                });
+            }
+            recordsContainer.appendChild(totalList);
+            
+            // レベルごとのベストタイム
+            for (let i = 1; i <= 4; i++) {
+                const levelHeader = document.createElement('h3');
+                levelHeader.textContent = `レベル${i}ベストタイム`;
+                recordsContainer.appendChild(levelHeader);
+                
+                const levelList = document.createElement('ol');
+                const levelRecords = records[`level${i}`];
+                
+                if (!levelRecords || levelRecords.length === 0) {
+                    const noRecord = document.createElement('li');
+                    noRecord.textContent = '記録なし';
+                    levelList.appendChild(noRecord);
+                } else {
+                    levelRecords.forEach(time => {
+                        const item = document.createElement('li');
+                        item.textContent = formatTime(time);
+                        levelList.appendChild(item);
+                    });
+                }
+                
+                recordsContainer.appendChild(levelList);
+            }
+            
+            // クリアボタンを追加
+            const clearButtonDiv = document.createElement('div');
+            clearButtonDiv.className = 'clear-records';
+            
+            const clearButton = document.createElement('button');
+            clearButton.id = 'clear-records-btn';
+            clearButton.textContent = '記録をクリア';
+            clearButton.addEventListener('click', clearRecords);
+            
+            clearButtonDiv.appendChild(clearButton);
+            recordsContainer.appendChild(clearButtonDiv);
+        }
 
         // DOM要素
         const wordDisplay = document.getElementById('word-display');
@@ -313,6 +557,7 @@
         const scoreDisplay = document.getElementById('score-display');
         const levelDisplay = document.getElementById('level');
         const levelDescDisplay = document.getElementById('level-desc');
+        const timerDisplay = document.getElementById('timer-display');
 
         // レベル説明
         const levelDescriptions = {
@@ -321,6 +566,26 @@
             3: "人差し指 + 中指 + 薬指",
             4: "全ての指"
         };
+
+        // タイマー表示を更新
+        function updateTimer() {
+            if (!gameActive) return;
+            
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - startTime;
+            timerDisplay.textContent = formatTime(elapsedTime);
+        }
+
+        // タイマーを開始
+        function startTimer() {
+            if (timerStarted) return; // 既に開始している場合は何もしない
+            
+            timerStarted = true;
+            startTime = Date.now();
+            
+            // タイマーを開始 (10ミリ秒ごとに更新)
+            timerInterval = setInterval(updateTimer, 10);
+        }
 
         // ゲーム初期化
         function initGame() {
@@ -337,6 +602,19 @@
             wordInput.focus();
             
             gameActive = true;
+            timerStarted = false; // タイマー開始状態をリセット
+            
+            // タイマーをリセット
+            timerDisplay.textContent = "00.00";
+            
+            // 既存のタイマーをクリア
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // 記録を表示
+            displayBestTimes();
         }
 
         // 単語をシャッフル
@@ -357,20 +635,45 @@
                 feedback.className = 'feedback';
             } else {
                 // 全ての単語が終了
+                endTime = Date.now();
+                const elapsedTime = endTime - startTime;
                 const score = Math.floor((correctCount / words.length) * 100);
-                scoreDisplay.textContent = `スコア: ${score}/100点`;
+                
+                // タイマーを停止
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                
+                // レベルごとのタイム記録
+                addRecord(`level${currentLevel}`, elapsedTime);
+                
+                // 100点だった場合、総合タイムも記録
+                if (score === 100) {
+                    addRecord('total', elapsedTime);
+                }
+                
+                // 結果表示
+                scoreDisplay.textContent = `スコア: ${score}/100点 (タイム: ${formatTime(elapsedTime)})`;
                 scoreDisplay.style.display = 'block';
                 wordDisplay.textContent = 'クリア！';
-                meaningDisplay.textContent = '';
+                meaningDisplay.textContent = 'Enterキーを押して次へ進む';
                 
-                // 100点だった場合、レベルアップ
+                // ベストタイム表示
+                displayBestTimes();
+                
+                // 結果表示モードに設定
+                gameActive = false;
+                
+                // 100点だった場合、レベルアップ準備
                 if (score === 100 && currentLevel < 4) {
-                    currentLevel++;
-                    setTimeout(() => {
-                        alert(`レベル${currentLevel}にアップしました！`);
-                        initGame();
-                    }, 1500);
+                    wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
+                } else {
+                    wordInput.placeholder = "Enterキーを押して再挑戦";
                 }
+                
+                wordInput.value = '';
+                wordInput.focus();
             }
         }
 
@@ -420,16 +723,55 @@
 
         // イベントリスナー
         wordInput.addEventListener('keydown', (e) => {
+            if (!timerStarted && gameActive) {
+                // 最初のキー入力でタイマー開始
+                startTimer();
+            }
+            
             if (e.key === 'Enter') {
-                checkInput();
-            } else {
-                // キー入力音を再生
+                if (gameActive) {
+                    // ゲーム中はタイピング判定
+                    checkInput();
+                } else {
+                    // ゲーム終了後はリスタート
+                    if (currentWordIndex >= words.length) {
+                        // 100点だった場合、レベルアップ
+                        const score = Math.floor((correctCount / words.length) * 100);
+                        if (score === 100 && currentLevel < 4) {
+                            currentLevel++;
+                            alert(`レベル${currentLevel}にアップしました！`);
+                        }
+                        initGame();
+                    }
+                }
+            } else if (gameActive) {
+                // ゲーム中のみキー入力音を再生
                 keySound.play();
             }
         });
 
-        // ゲーム開始
-        initGame();
+        // ページ読み込み時に記録を読み込む
+        window.addEventListener('load', () => {
+            loadRecords();
+            displayBestTimes(); // 初期表示
+            initGame();
+        });
+
+        // 記録をクリア
+        function clearRecords() {
+            if (confirm('すべての記録をクリアしますか？')) {
+                records = {
+                    level1: [],
+                    level2: [],
+                    level3: [],
+                    level4: [],
+                    total: []
+                };
+                saveRecords();
+                displayBestTimes();
+                alert('記録をクリアしました！');
+            }
+        }
     </script>
 </body>
 </html> 
