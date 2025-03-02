@@ -846,8 +846,8 @@
     <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
     <audio id="wrong-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
 
-    <script src="word-lists.js"></script>
-    
+    <script src="level-lists.js"></script>
+
     <script>
         function speakWord(word) {
             if (window.speechSynthesis) {
@@ -858,12 +858,11 @@
                 utterance.rate = 0.8;
                 
                 window.speechSynthesis.speak(utterance);
-                console.log(word);
             }
         }
         
         function initGame() {
-            const fullWordList = [...wordLists[currentLevel]];
+            const fullWordList = [...levelLists.find(level => level.level === currentLevel).words];
             shuffleArray(fullWordList);
             words = fullWordList.slice(0, 10);
             
@@ -876,7 +875,7 @@
             updateProgressBar();
             scoreDisplay.style.display = 'none';
             levelDisplay.textContent = currentLevel;
-            levelDescDisplay.textContent = levelDescriptions[currentLevel];
+            levelDescDisplay.textContent = levelLists.find(level => level.level === currentLevel).description;
             wordInput.value = '';
             wordInput.focus();
             
@@ -968,9 +967,9 @@
         }
 
         function displayBestTimes() {
-            for (let i = 1; i <= 6; i++) {
-                const levelRecords = records[`level${i}`] || [];
-                const levelRecordsList = document.getElementById(`level${i}-records`);
+            levelLists.forEach(level => {
+                const levelRecords = records[`level${level.level}`] || [];
+                const levelRecordsList = document.getElementById(`level${level.level}-records`);
                 
                 levelRecordsList.innerHTML = '';
                 
@@ -985,7 +984,7 @@
                     li.style.color = '#666666';
                     levelRecordsList.appendChild(li);
                 }
-            }
+            })
         }
 
         const wordDisplay = document.getElementById('word-display');

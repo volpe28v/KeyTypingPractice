@@ -1,8 +1,12 @@
+
 // word-lists.js - タイピングゲーム用の単語リスト
 
 // レベルごとの単語リスト
-const wordLists = {
-    1: [ // 人差し指のみ (4rfv5tgb6yhn7ujm)
+const levelLists = [
+    {
+        level: 1,
+        description: "人差し指のみ",
+        words: [
         { word: "run", meaning: "走る" },
         { word: "fun", meaning: "楽しい" },
         { word: "gun", meaning: "銃" },
@@ -23,8 +27,12 @@ const wordLists = {
         { word: "hug", meaning: "抱擁" },
         { word: "tug", meaning: "引っ張る" },
         { word: "nut", meaning: "ナッツ" }
-    ],
-    2: [ // 人差し指と中指 (3edc4rfv5tgb)
+        ]
+    },
+    {
+        level: 2,
+        description: "人差し指と中指",
+        words: [
         { word: "red", meaning: "赤" },
         { word: "bed", meaning: "ベッド" },
         { word: "fed", meaning: "養った" },
@@ -45,8 +53,12 @@ const wordLists = {
         { word: "tee", meaning: "Tシャツ" },
         { word: "vex", meaning: "悩ます" },
         { word: "rex", meaning: "レックス" }
-    ],
-    3: [ // 人差し指、中指、薬指 (2wsx3edc4rfv)
+        ]
+    },
+    {
+        level: 3,
+        description: "人差し指、中指、薬指",
+        words: [
         { word: "was", meaning: "だった" },
         { word: "saw", meaning: "見た" },
         { word: "war", meaning: "戦争" },
@@ -67,8 +79,12 @@ const wordLists = {
         { word: "are", meaning: "〜です" },
         { word: "far", meaning: "遠い" },
         { word: "war", meaning: "戦争" }
-    ],
-    4: [ // 全ての指 (全てのキー)
+        ]
+    },
+    {
+        level: 4,
+        description: "全ての指",
+        words: [
         { word: "apple", meaning: "りんご" },
         { word: "banana", meaning: "バナナ" },
         { word: "cherry", meaning: "さくらんぼ" },
@@ -89,8 +105,12 @@ const wordLists = {
         { word: "guava", meaning: "グアバ" },
         { word: "pineapple", meaning: "パイナップル" },
         { word: "strawberry", meaning: "いちご" }
-    ],
-    5: [ // 日常的に使う頻出単語100個
+        ]
+    },
+    {
+        level: 5,
+        description: "日常的に使う頻出単語100個",
+        words: [
         { word: "time", meaning: "時間" },
         { word: "year", meaning: "年" },
         { word: "people", meaning: "人々" },
@@ -188,8 +208,12 @@ const wordLists = {
         { word: "teacher", meaning: "教師" },
         { word: "force", meaning: "力" },
         { word: "education", meaning: "教育" }
-    ],
-    6: [ // 日常で使う短い文章100個
+        ]
+    },
+    {
+        level: 6,
+        description: "日常で使う短い文章100個",
+        words: [
         { word: "How are you today?", meaning: "今日の調子はどうですか？" },
         { word: "Nice to meet you.", meaning: "はじめまして。" },
         { word: "What time is it now?", meaning: "今何時ですか？" },
@@ -287,15 +311,6 @@ const wordLists = {
         { word: "Have a nice day!", meaning: "良い一日を！" },
         { word: "Take care of yourself.", meaning: "お体に気をつけて。" },
         { word: "I hope to see you again soon.", meaning: "またすぐにお会いできることを願っています。" }
-    ]
-};
-
-// レベルの説明
-const levelDescriptions = {
-    1: "人差し指のみ",
-    2: "人差し指と中指",
-    3: "人差し指、中指、薬指",
-    4: "全ての指 (全てのキー)",
-    5: "日常的に使う頻出単語",
-    6: "日常で使う短い文章"
-}; 
+        ]
+    }
+];
