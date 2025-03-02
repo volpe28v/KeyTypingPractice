@@ -359,5 +359,32 @@ const levelLists = [
         { word: "one billion", meaning: "1000000000" },
         { word: "one trillion", meaning: "1000000000000" },
         ]
+    },
+    {
+        level: 8,
+        description: "マイクラ",
+        words: [
+        { word: "Let's go mining!", meaning: "採掘に行こう！" },
+        { word: "Watch out for creepers!", meaning: "クリーパーに気をつけて！" },
+        { word: "I found diamonds!", meaning: "ダイヤモンドを見つけた！" },
+        { word: "Need more wood.", meaning: "木材が必要です。" },
+        { word: "Building a house here.", meaning: "ここに家を建てています。" },
+        { word: "Got any spare iron?", meaning: "余分な鉄ありますか？" },
+        { word: "Meet at spawn point.", meaning: "スポーン地点で会いましょう。" },
+        { word: "The sun is setting.", meaning: "日が沈んでいます。" },
+        { word: "Time to sleep!", meaning: "寝る時間です！" },
+        { word: "Found a village!", meaning: "村を見つけた！" },
+        { word: "Need food badly.", meaning: "食料が切実に必要です。" },
+        { word: "Help me fight zombies!", meaning: "ゾンビと戦うの手伝って！" },
+        { word: "Going to the Nether.", meaning: "ネザーに行きます。" },
+        { word: "Bring obsidian.", meaning: "黒曜石を持ってきて。" },
+        { word: "Nice base design!", meaning: "いい拠点デザインですね！" },
+        { word: "Protect the villagers!", meaning: "村人を守って！" },
+        { word: "Need more torches.", meaning: "松明が必要です。" },
+        { word: "Found ancient ruins!", meaning: "古代遺跡を見つけた！" },
+        { word: "Let's build a farm.", meaning: "農場を作りましょう。" },
+        { word: "Dragon fight ready?", meaning: "ドラゴン戦の準備できた？" }
+        ]
     }
+
 ];
