@@ -404,6 +404,32 @@ const levelLists = [
         { word: "Found a mineshaft!", meaning: "廃坑を見つけた！" },
         { word: "Let's trade with villagers.", meaning: "村人と取引しましょう。" }
         ]
+    },
+    {
+        level: 9,
+        description: "プログラマー",
+        words: [
+        { word: "Fixed the bug!", meaning: "バグを修正しました！" },
+        { word: "Need code review.", meaning: "コードレビューが必要です。" },
+        { word: "Push to master.", meaning: "マスターにプッシュして。" },
+        { word: "Running unit tests.", meaning: "ユニットテスト実行中。" },
+        { word: "Merge conflict here.", meaning: "マージコンフリクトが発生。" },
+        { word: "Let's refactor this.", meaning: "リファクタリングしましょう。" },
+        { word: "API is down.", meaning: "APIがダウンしています。" },
+        { word: "Check the logs.", meaning: "ログを確認して。" },
+        { word: "Deploy to staging.", meaning: "ステージング環境にデプロイ。" },
+        { word: "Database error.", meaning: "データベースエラー。" },
+        { word: "New feature ready.", meaning: "新機能が完成。" },
+        { word: "Update dependencies.", meaning: "依存関係を更新して。" },
+        { word: "Memory leak found.", meaning: "メモリリークを発見。" },
+        { word: "Code optimization done.", meaning: "コード最適化完了。" },
+        { word: "Pull request sent.", meaning: "プルリクエスト送信済み。" },
+        { word: "Server is slow.", meaning: "サーバーが遅い。" },
+        { word: "Debug mode on.", meaning: "デバッグモード開始。" },
+        { word: "Compile error.", meaning: "コンパイルエラー。" },
+        { word: "Need more coffee.", meaning: "コーヒーが必要です。" },
+        { word: "Documentation updated.", meaning: "ドキュメント更新完了。" }
+        ]
     }
 
 ];
