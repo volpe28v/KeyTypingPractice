@@ -138,6 +138,7 @@
             padding: 25px;
             margin-bottom: 20px;
             box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+            position: relative;
         }
 
         .word-display {
@@ -330,6 +331,27 @@
 
         .restart-btn:hover {
             background-color: #ff3385;
+        }
+
+        .back-to-title-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #333344;
+            color: #00ffaa;
+            border: 1px solid #00ffaa;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .back-to-title-btn:hover {
+            background-color: #00ffaa;
+            color: #000000;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.7);
         }
 
         .records-container {
@@ -749,6 +771,7 @@
             <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
             
             <div class="typing-area">
+                <button id="back-to-title-btn" class="back-to-title-btn">タイトルに戻る</button>
                 <div class="word-display" id="word-display"></div>
                 <div class="meaning" id="meaning"></div>
                 <div class="timer-display" id="timer-display">00.00</div>
@@ -879,6 +902,11 @@
             
             hideRecords();
             
+            document.getElementById('back-to-title-btn').style.display = 'none';
+            
+            // レベル表示を表示
+            document.querySelector('.level-display').style.display = 'inline-block';
+            
             initLevelSelectors();
             
             initKeyboardAnimation();
@@ -995,6 +1023,8 @@
             }, 10);
             
             hideRecords();
+            
+            document.getElementById('back-to-title-btn').style.display = 'block';
         }
 
         function initKeyboardAnimation() {
@@ -1252,7 +1282,8 @@
             
             initLevelSelectors();
             
-            initGame();
+            // initGame()の代わりにbackToTitle()を呼び出す
+            backToTitle();
             
             showRecords();
         });
@@ -1348,6 +1379,9 @@
                             s.classList.remove('active');
                         }
                     });
+                    
+                    // レベル表示を表示
+                    document.querySelector('.level-display').style.display = 'inline-block';
                     
                     initGame();
                     
@@ -1566,6 +1600,58 @@
             // レベルセレクタのイベントリスナーを設定
             initLevelSelectors();
         }
+
+        // タイトルに戻る機能
+        function backToTitle() {
+            if (gameActive && timerStarted) {
+                if (!confirm('現在のゲームを中断してタイトル画面に戻りますか？')) {
+                    return;
+                }
+            }
+            
+            // タイマーをリセット
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // ゲーム状態をリセット
+            gameActive = false;
+            timerStarted = false;
+            
+            // タイトル画面表示の状態にする
+            wordDisplay.innerHTML = '<span style="font-size: 1.5em; color: #ff00ff;">タイピングマスター</span>';
+            meaningDisplay.textContent = '「Enterキー」を押してゲームスタート！';
+            timerDisplay.textContent = "00.00";
+            wordInput.value = '';
+            wordInput.placeholder = "Enterキーを押して開始";
+            feedback.textContent = 'レベルを選んでゲームを始めましょう';
+            feedback.className = 'feedback';
+            
+            progressBar.style.width = '0%';
+            scoreDisplay.style.display = 'none';
+            
+            // 戻るボタンを非表示
+            document.getElementById('back-to-title-btn').style.display = 'none';
+            
+            // すべてのレベルセレクターから選択状態を解除
+            const levelSelectors = document.querySelectorAll('.level-selector');
+            levelSelectors.forEach(selector => {
+                selector.classList.remove('active');
+            });
+            
+            // レベル表示を非表示
+            document.querySelector('.level-display').style.display = 'none';
+            
+            // 記録を表示
+            showRecords();
+            
+            // キーボードをリセット
+            initKeyboardAnimation();
+        }
+
+        // 戻るボタンにイベントリスナーを追加
+        document.getElementById('back-to-title-btn').addEventListener('click', backToTitle);
     </script>
 </body>
 </html> 
