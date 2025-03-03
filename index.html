@@ -1109,18 +1109,27 @@
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して次のレベルへ';
                     wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
+                    
+                    // レベルアップを音声でお知らせ
+                    playCorrectSound("level up");
                 } else if (isPerfect && currentLevel >= 5) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
                     feedback.textContent = '全レベルクリア！おめでとうございます！';
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
+                    
+                    // 全問完了時に「おめでとう」を英語で発音
+                    playCorrectSound("congratulations");
                 } else if (!isPerfect) {
                     wordDisplay.innerHTML = 'クリア！';
                     feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
                     feedback.className = 'feedback';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
+                    
+                    // ミスありでも完了をお知らせ
+                    playCorrectSound("complete");
                 }
                 
                 showRecords();
