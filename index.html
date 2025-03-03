@@ -1180,18 +1180,31 @@
             const userInput = wordInput.value.trim();
             
             if (userInput.toLowerCase() === currentWord.toLowerCase()) {
-                wordDisplay.innerHTML = `<span class="correct-word">${currentWord}</span>`;
+                // 単語全体を緑色にする（全ての文字を正解状態にする）
+                let correctHTML = '';
+                for (let i = 0; i < currentWord.length; i++) {
+                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                }
+                wordDisplay.innerHTML = correctHTML;
+                
                 feedback.textContent = '正解！';
                 feedback.className = 'feedback correct';
                 
-                currentWordIndex++;
-                correctCount++;
-                
-                updateProgressBar();
-                
+                // 遅延を追加して、緑色の状態を見えるようにする
                 setTimeout(() => {
+                    currentWordIndex++;
+                    correctCount++;
+                    
+                    updateProgressBar();
                     displayWord();
+                }, 500); // 500ミリ秒の遅延
+                
+                // 入力フィールドを一時的に無効化して、連続入力を防止
+                wordInput.disabled = true;
+                setTimeout(() => {
+                    wordInput.disabled = false;
                 }, 500);
+                
                 return;
             }
             
