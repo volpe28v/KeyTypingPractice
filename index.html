@@ -36,7 +36,7 @@
 
         .records-sidebar {
             flex: 1;
-            max-width: 350px;
+            max-width: 400px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #00ffaa;
             border-radius: 10px;
@@ -390,9 +390,9 @@
 
         .clear-records-btn {
             margin-top: 15px;
-            background-color: #ff0066;
+            background-color: #222233;
+            border: 1px solid #444455;
             color: white;
-            border: none;
             padding: 5px 10px;
             border-radius: 5px;
             cursor: pointer;
@@ -675,16 +675,23 @@
         }
 
         .level-record {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
             border-bottom: 1px dotted rgba(0, 255, 170, 0.3);
-            padding-bottom: 10px;
+            padding-bottom: 6px;
         }
 
         .level-record h3 {
-            margin: 0 0 8px 0;
-            width: 100%;
+            margin: 0;
+            width: auto;
+            flex: 2;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .best-time-display {
@@ -692,15 +699,17 @@
             padding: 0;
             list-style-type: none;
             color: #ffcc00;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
-            text-align: center;
-            width: 100%;
+            text-align: right;
+            width: auto;
+            flex: 1;
+            margin-left: 10px;
         }
-
+        
         .best-time-display li {
             margin: 0;
-            padding: 5px 0;
+            padding: 0;
         }
 
         .new-record-message {
@@ -844,7 +853,7 @@
         </div>
         
         <div class="records-sidebar">
-            <h2>ベストタイム</h2>
+            <h2>レッスン</h2>
             
             <!-- 動的に生成されるレベル記録がここに入ります -->
             
