@@ -1079,7 +1079,6 @@
                     meaningDisplay.textContent = '単語データの読み込みに問題があります';
                 }
                 
-                addPronunciationButton();
             } else {
                 endTime = Date.now();
                 const elapsedTime = endTime - startTime;
@@ -1103,27 +1102,18 @@
                 
                 const isPerfect = mistakeCount === 0;
                 
-                if (isPerfect && currentLevel < 5) {
+                if (isPerfect) {
                     wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
-                    feedback.textContent = `レベル${currentLevel}クリア！レベル${currentLevel + 1}に進みます`;
-                    feedback.className = 'feedback correct';
-                    meaningDisplay.textContent = 'Enterキーを押して次のレベルへ';
-                    wordInput.placeholder = "Enterキーを押してレベル" + (currentLevel + 1) + "へ";
-                    
-                    // レベルアップを音声でお知らせ
-                    playCorrectSound("level up");
-                } else if (isPerfect && currentLevel >= 5) {
-                    wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
-                    feedback.textContent = '全レベルクリア！おめでとうございます！';
+                    feedback.textContent = 'おめでとうございます！';
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
                     
                     // 全問完了時に「おめでとう」を英語で発音
                     playCorrectSound("congratulations");
-                } else if (!isPerfect) {
+                } else {
                     wordDisplay.innerHTML = 'クリア！';
-                    feedback.textContent = `${mistakeCount}回のミスがありました。ノーミスでクリアするとレベルアップします！`;
+                    feedback.textContent = `${mistakeCount}回のミスがありました。`;
                     feedback.className = 'feedback';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
                     wordInput.placeholder = "Enterキーを押して再挑戦";
@@ -1264,9 +1254,6 @@
             if (e.key === 'Enter') {
                 if (!gameActive) {
                     if (currentWordIndex >= words.length) {
-                        if (mistakeCount === 0 && currentLevel < 5) {
-                            currentLevel++;
-                        }
                         initGame();
                     }
                 }
@@ -1655,40 +1642,6 @@
 
         // 戻るボタンにイベントリスナーを追加
         document.getElementById('back-to-title-btn').addEventListener('click', backToTitle);
-
-        function addPronunciationButton() {
-            const existingButton = document.querySelector('.pronunciation-button');
-            if (existingButton) {
-                return;
-            }
-            
-            const pronunciationButton = document.createElement('button');
-            pronunciationButton.textContent = '🔊';
-            pronunciationButton.className = 'pronunciation-button';
-            pronunciationButton.title = '発音を聞く';
-            pronunciationButton.style.cssText = `
-                background-color: #ff00ff;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
-                cursor: pointer;
-                margin-left: 10px;
-                vertical-align: middle;
-            `;
-            
-            pronunciationButton.addEventListener('click', () => {
-                if (currentWordIndex < words.length) {
-                    speakWord(words[currentWordIndex].word);
-                }
-            });
-            
-            const meaningElement = document.getElementById('meaning');
-            meaningElement.appendChild(document.createTextNode(' '));
-            meaningElement.appendChild(pronunciationButton);
-        }
     </script>
 </body>
 </html> 
