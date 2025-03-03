@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>タイピングレーサー</title>
+    <title>タイピングマスター</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -52,6 +52,7 @@
             font-size: 2.5rem;
             margin-bottom: 20px;
             text-shadow: 0 0 10px #00ffaa;
+            color: #00ffaa;
             letter-spacing: 2px;
             text-align: center;
             margin-top: 20px;
@@ -764,8 +765,6 @@
 </head>
 
 <body>
-    <h1 class="game-title">タイピングマスター</h1>
-    
     <div class="main-container">
         <div class="game-container">
             <div class="level-display">レベル: <span id="level">1</span> - <span id="level-desc">人差し指のみ</span></div>
@@ -1611,7 +1610,7 @@
             timerStarted = false;
             
             // タイトル画面表示の状態にする
-            wordDisplay.innerHTML = '<span style="font-size: 1.5em; color: #ff00ff;">タイピングマスター</span>';
+            wordDisplay.innerHTML = '<span class="game-title">タイピングマスター</span>';
             meaningDisplay.textContent = 'レベルを選んでゲームスタート！';
             timerDisplay.textContent = "00.00";
             wordInput.value = '';
