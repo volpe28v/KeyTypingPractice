@@ -364,9 +364,9 @@ const levelLists = [
         { word: "ninety", meaning: "90" },
         { word: "one hundred", meaning: "100" },
         { word: "one thousand", meaning: "1000" },
-        { word: "one million", meaning: "1000000" },
-        { word: "one billion", meaning: "1000000000" },
-        { word: "one trillion", meaning: "1000000000000" },
+        { word: "one million", meaning: "100万" },
+        { word: "one billion", meaning: "10億" },
+        { word: "one trillion", meaning: "1兆" },
         ]
     },
     {
