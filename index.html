@@ -853,10 +853,6 @@
         </div>
     </div>
 
-    <audio id="key-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-tap-2244.mp3" preload="auto"></audio>
-    <audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
-    <audio id="wrong-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
-
     <script src="level-lists.js"></script>
 
     <script>
@@ -867,6 +863,21 @@
                 const utterance = new SpeechSynthesisUtterance(word);
                 utterance.lang = 'en-US';
                 utterance.rate = 0.8;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // 正解時に効果音を再生する関数
+        function playCorrectSound(word = "good") {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 1.2; // 速度を下げて聞き取りやすくする
+                utterance.pitch = 2.0;
+                utterance.volume = 1.0;
                 
                 window.speechSynthesis.speak(utterance);
             }
@@ -913,18 +924,10 @@
             
             setTimeout(() => {
                 if (words.length > 0) {
-                    speakWord(words[0].word);
+                    displayWord();
                 }
             }, 100);
         }
-
-        const keySound = document.getElementById('key-sound');
-        const correctSound = document.getElementById('correct-sound');
-        const wrongSound = document.getElementById('wrong-sound');
-
-        keySound.volume = 0.3;
-        correctSound.volume = 0.5;
-        wrongSound.volume = 0.5;
 
         let words = [];
         let currentWordIndex = 0;
@@ -935,6 +938,7 @@
         let timerStarted = false;
         let startTime, endTime;
         let timerInterval = null;
+        let currentWordMistake = false; // 現在の単語の入力中にミスがあったかどうかを追跡
 
         let records = {};
 
@@ -1066,11 +1070,16 @@
                     speakWord(currentWord.word);
                     
                     highlightNextKey();
+                    
+                    // 新しい単語を表示するたびにミス状態をリセット
+                    currentWordMistake = false;
                 } else {
                     console.error('単語データが不正です:', currentWord);
                     wordDisplay.innerHTML = '<span>エラー</span>';
                     meaningDisplay.textContent = '単語データの読み込みに問題があります';
                 }
+                
+                addPronunciationButton();
             } else {
                 endTime = Date.now();
                 const elapsedTime = endTime - startTime;
@@ -1149,6 +1158,9 @@
             if (!isCorrect && e.key !== 'Shift') {
                 mistakeCount++;
                 
+                // 現在の単語のミス状態を記録
+                currentWordMistake = true;
+                
                 highlightWrongChar(currentPosition);
                 
                 e.preventDefault();
@@ -1187,7 +1199,16 @@
                 }
                 wordDisplay.innerHTML = correctHTML;
                 
-                feedback.textContent = '正解！';
+                // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
+                if (!currentWordMistake) {
+                    feedback.textContent = 'Excellent!';
+                    // 正解効果音を再生（ミスなし）
+                    playCorrectSound("excellent");
+                } else {
+                    feedback.textContent = 'Good!';
+                    // 正解効果音を再生（ミスあり）
+                    playCorrectSound("good");
+                }
                 feedback.className = 'feedback correct';
                 
                 // 遅延を追加して、緑色の状態を見えるようにする
@@ -1242,8 +1263,6 @@
                 }
             } else if (gameActive) {
                 if (validateKeyInput(e)) {
-                    keySound.play();
-                    
                     const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                     if (keyElement) {
                         keyElement.classList.remove('correct');
@@ -1286,10 +1305,6 @@
         window.addEventListener('load', () => {
             loadRecords();
             
-            if (typeof preloadSounds === 'function') {
-                preloadSounds();
-            }
-            
             // レベル記録を動的に生成
             generateLevelRecords();
             
@@ -1313,40 +1328,6 @@
                 saveRecords();
                 displayBestTimes();
             }
-        }
-
-        function addPronunciationButton() {
-            const existingButton = document.querySelector('.pronunciation-button');
-            if (existingButton) {
-                return;
-            }
-            
-            const pronunciationButton = document.createElement('button');
-            pronunciationButton.textContent = '🔊';
-            pronunciationButton.className = 'pronunciation-button';
-            pronunciationButton.title = '発音を聞く';
-            pronunciationButton.style.cssText = `
-                background-color: #ff00ff;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
-                cursor: pointer;
-                margin-left: 10px;
-                vertical-align: middle;
-            `;
-            
-            pronunciationButton.addEventListener('click', () => {
-                if (currentWordIndex < words.length) {
-                    speakWord(words[currentWordIndex].word);
-                }
-            });
-            
-            const meaningElement = document.getElementById('meaning');
-            meaningElement.appendChild(document.createTextNode(' '));
-            meaningElement.appendChild(pronunciationButton);
         }
 
         function hideRecords() {
@@ -1665,6 +1646,40 @@
 
         // 戻るボタンにイベントリスナーを追加
         document.getElementById('back-to-title-btn').addEventListener('click', backToTitle);
+
+        function addPronunciationButton() {
+            const existingButton = document.querySelector('.pronunciation-button');
+            if (existingButton) {
+                return;
+            }
+            
+            const pronunciationButton = document.createElement('button');
+            pronunciationButton.textContent = '🔊';
+            pronunciationButton.className = 'pronunciation-button';
+            pronunciationButton.title = '発音を聞く';
+            pronunciationButton.style.cssText = `
+                background-color: #ff00ff;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-left: 10px;
+                vertical-align: middle;
+            `;
+            
+            pronunciationButton.addEventListener('click', () => {
+                if (currentWordIndex < words.length) {
+                    speakWord(words[currentWordIndex].word);
+                }
+            });
+            
+            const meaningElement = document.getElementById('meaning');
+            meaningElement.appendChild(document.createTextNode(' '));
+            meaningElement.appendChild(pronunciationButton);
+        }
     </script>
 </body>
 </html> 
