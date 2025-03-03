@@ -1223,6 +1223,7 @@
                 wordInput.disabled = true;
                 setTimeout(() => {
                     wordInput.disabled = false;
+                    wordInput.focus(); // フォーカスを再設定
                 }, 500);
                 
                 return;
