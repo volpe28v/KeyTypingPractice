@@ -1106,7 +1106,7 @@
                     feedback.textContent = 'おめでとうございます！';
                     feedback.className = 'feedback correct';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
-                    wordInput.placeholder = "Enterキーを押して再挑戦";
+                    wordInput.placeholder = "";
                     
                     // 全問完了時に「おめでとう」を英語で発音
                     playCorrectSound("congratulations");
@@ -1115,7 +1115,7 @@
                     feedback.textContent = `${mistakeCount}回のミスがありました。`;
                     feedback.className = 'feedback';
                     meaningDisplay.textContent = 'Enterキーを押して再挑戦';
-                    wordInput.placeholder = "Enterキーを押して再挑戦";
+                    wordInput.placeholder = "";
                     
                     // ミスありでも完了をお知らせ
                     playCorrectSound("complete");
