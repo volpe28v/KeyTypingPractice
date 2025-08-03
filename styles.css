@@ -213,6 +213,12 @@ body {
     text-align: center;
     outline: none;
     caret-color: transparent;
+    /* IME制御 */
+    ime-mode: disabled;
+    -webkit-ime-mode: disabled;
+    -moz-ime-mode: disabled;
+    -ms-ime-mode: disabled;
+    composition-mode: disabled;
 }
 
 #word-input:focus {

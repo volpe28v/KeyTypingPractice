@@ -630,6 +630,52 @@ class UIManager {
         this.wordInput.value = '';
         this.wordInput.focus();
     }
+
+    // IMEを無効化してアルファベット入力を強制
+    forceAlphabetInput() {
+        // IME関連の属性を設定
+        this.wordInput.setAttribute('inputmode', 'none');
+        this.wordInput.setAttribute('lang', 'en');
+        this.wordInput.style.imeMode = 'disabled';
+        
+        // 既にイベントリスナーが設定されている場合はスキップ
+        if (this.wordInput.hasAttribute('data-ime-disabled')) {
+            return;
+        }
+        this.wordInput.setAttribute('data-ime-disabled', 'true');
+        
+        // フォーカス時にIMEを確実に無効化
+        this.wordInput.addEventListener('focus', () => {
+            this.wordInput.style.imeMode = 'disabled';
+        });
+        
+        // 日本語入力を検出して警告
+        this.wordInput.addEventListener('compositionstart', (e) => {
+            this.showInputModeWarning();
+        });
+        
+        // 全角文字の入力を検出
+        this.wordInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            // 全角文字（ひらがな、カタカナ、漢字、全角英数字）を検出
+            if (/[^\x00-\x7F]/.test(value)) {
+                this.showInputModeWarning();
+                // 全角文字を削除
+                e.target.value = value.replace(/[^\x00-\x7F]/g, '');
+            }
+        });
+    }
+    
+    // 入力モード警告を表示
+    showInputModeWarning() {
+        this.showFeedback('日本語モードになっています。英数字モードに切り替えてください', 'incorrect');
+        setTimeout(() => {
+            if (this.feedback.textContent.includes('日本語モード')) {
+                this.feedback.textContent = '';
+                this.feedback.className = 'feedback';
+            }
+        }, 3000);
+    }
     
     // 入力フィールドを無効化/有効化
     setInputEnabled(enabled) {
@@ -1133,6 +1179,9 @@ function initGame() {
     }
     wordInput.value = '';
     wordInput.focus();
+    
+    // IMEを無効化してアルファベット入力を強制
+    uiManager.forceAlphabetInput();
     
     gameActive = true;
     timerStarted = false;
