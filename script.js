@@ -233,6 +233,139 @@ class StorageManager {
 
 // StorageManagerのインスタンスを作成
 const storageManager = new StorageManager();
+// LessonManager: レッスン管理機能を管理するクラス
+class LessonManager {
+    constructor(storageManager) {
+        this.storageManager = storageManager;
+    }
+
+    // 入力された単語を解析
+    parseCustomWords(input) {
+        const lines = input.trim().split('\n');
+        const words = [];
+        
+        for (let line of lines) {
+            line = line.trim();
+            if (line === '') continue;
+            
+            const parts = line.split(',');
+            if (parts.length >= 2) {
+                const word = parts[0].trim();
+                const meaning = parts.slice(1).join(',').trim();
+                
+                if (word && meaning) {
+                    words.push({ word, meaning });
+                }
+            }
+        }
+        
+        return words;
+    }
+
+    // 新しいレッスンを保存
+    saveNewLesson(customLessons, updateLessonListCallback) {
+        const lessonName = document.getElementById('lesson-name-input').value.trim();
+        const wordsText = document.getElementById('custom-words-input').value.trim();
+        
+        if (!wordsText) {
+            alert('単語を入力してください。');
+            return null;
+        }
+        
+        // 単語を解析
+        const words = this.parseCustomWords(wordsText);
+        if (words.length === 0) {
+            alert('有効な単語が見つかりません。形式を確認してください。');
+            return null;
+        }
+        
+        // レッスン名が空の場合は最初の単語から自動生成
+        let finalLessonName = lessonName;
+        if (!finalLessonName) {
+            finalLessonName = `${words[0].word} - ${words[0].meaning}`;
+        }
+        
+        // 新しいレッスンオブジェクトを作成
+        const newLesson = {
+            id: Date.now(), // 一意のID
+            name: finalLessonName,
+            words: words,
+            createdAt: new Date().toLocaleString()
+        };
+        
+        // レッスンリストに追加
+        customLessons.push(newLesson);
+        
+        // ローカルストレージに保存
+        this.storageManager.saveCustomLessons(customLessons);
+        
+        // サイドバーのレッスン一覧を更新
+        if (updateLessonListCallback) {
+            updateLessonListCallback();
+        }
+        
+        // 入力フィールドをクリア
+        document.getElementById('lesson-name-input').value = '';
+        document.getElementById('custom-words-input').value = '';
+        
+        alert(`レッスン「${finalLessonName}」を保存しました！`);
+        return newLesson;
+    }
+
+    // 単語リストを表示
+    displayWordsInSelection(lesson) {
+        const wordsDisplay = document.getElementById('words-display');
+        let displayHTML = '';
+        
+        lesson.words.forEach((wordObj, index) => {
+            displayHTML += `<div class="word-item">${index + 1}. ${wordObj.word} - ${wordObj.meaning}</div>`;
+        });
+        
+        if (lesson.words.length === 0) {
+            displayHTML = '<div class="word-item">単語がありません</div>';
+        }
+        
+        wordsDisplay.innerHTML = displayHTML;
+    }
+
+    // 単語編集を保存
+    saveWordsEdit(selectedLessonForMode, customLessons, updateLessonListCallback) {
+        const wordsEditArea = document.getElementById('words-edit-area');
+        const wordsText = wordsEditArea.value.trim();
+        
+        if (!wordsText) {
+            alert('単語を入力してください。');
+            return false;
+        }
+        
+        // 単語を解析
+        const newWords = this.parseCustomWords(wordsText);
+        if (newWords.length === 0) {
+            alert('有効な単語が見つかりません。形式を確認してください。');
+            return false;
+        }
+        
+        // レッスンの単語リストを更新
+        const lessonIndex = selectedLessonForMode.index;
+        customLessons[lessonIndex].words = newWords;
+        selectedLessonForMode.lesson.words = newWords;
+        
+        // ローカルストレージに保存
+        this.storageManager.saveCustomLessons(customLessons);
+        
+        // 表示を更新
+        this.displayWordsInSelection(selectedLessonForMode.lesson);
+        if (updateLessonListCallback) {
+            updateLessonListCallback();
+        }
+        
+        alert('単語リストを更新しました！');
+        return true;
+    }
+}
+
+// LessonManagerのインスタンスを作成
+const lessonManager = new LessonManager(storageManager);
 let audioContext = null;
 
 // カスタムレッスン関連の変数
@@ -287,49 +420,7 @@ function loadCustomLessons() {
 
 // 新しいレッスンを保存
 function saveNewLesson() {
-    const lessonName = document.getElementById('lesson-name-input').value.trim();
-    const wordsText = document.getElementById('custom-words-input').value.trim();
-    
-    if (!wordsText) {
-        alert('単語を入力してください。');
-        return;
-    }
-    
-    // 単語を解析
-    const words = parseCustomWords(wordsText);
-    if (words.length === 0) {
-        alert('有効な単語が見つかりません。形式を確認してください。');
-        return;
-    }
-    
-    // レッスン名が空の場合は最初の単語から自動生成
-    let finalLessonName = lessonName;
-    if (!finalLessonName) {
-        finalLessonName = `${words[0].word} - ${words[0].meaning}`;
-    }
-    
-    // 新しいレッスンオブジェクトを作成
-    const newLesson = {
-        id: Date.now(), // 一意のID
-        name: finalLessonName,
-        words: words,
-        createdAt: new Date().toLocaleString()
-    };
-    
-    // レッスンリストに追加
-    customLessons.push(newLesson);
-    
-    // ローカルストレージに保存
-    saveCustomLessons();
-    
-    // サイドバーのレッスン一覧を更新
-    updateLessonList();
-    
-    // 入力フィールドをクリア
-    document.getElementById('lesson-name-input').value = '';
-    document.getElementById('custom-words-input').value = '';
-    
-    alert(`レッスン「${finalLessonName}」を保存しました！`);
+    return lessonManager.saveNewLesson(customLessons, updateLessonList);
 }
 
 // カスタムレッスン設定を表示
@@ -379,18 +470,7 @@ function showLessonModeSelection(lessonIndex) {
 
 // 単語リストを表示
 function displayWordsInSelection(lesson) {
-    const wordsDisplay = document.getElementById('words-display');
-    let displayHTML = '';
-    
-    lesson.words.forEach((wordObj, index) => {
-        displayHTML += `<div class="word-item">${index + 1}. ${wordObj.word} - ${wordObj.meaning}</div>`;
-    });
-    
-    if (lesson.words.length === 0) {
-        displayHTML = '<div class="word-item">単語がありません</div>';
-    }
-    
-    wordsDisplay.innerHTML = displayHTML;
+    return lessonManager.displayWordsInSelection(lesson);
 }
 
 // 単語編集モードを切り替え
@@ -438,37 +518,11 @@ function resetWordsEditMode() {
 
 // 単語編集を保存
 function saveWordsEdit() {
-    const wordsEditArea = document.getElementById('words-edit-area');
-    const wordsText = wordsEditArea.value.trim();
-    
-    if (!wordsText) {
-        alert('単語を入力してください。');
-        return;
+    const success = lessonManager.saveWordsEdit(selectedLessonForMode, customLessons, updateLessonList);
+    if (success) {
+        resetWordsEditMode();
     }
-    
-    // 単語を解析
-    const newWords = parseCustomWords(wordsText);
-    if (newWords.length === 0) {
-        alert('有効な単語が見つかりません。形式を確認してください。');
-        return;
-    }
-    
-    // レッスンの単語リストを更新
-    const lessonIndex = selectedLessonForMode.index;
-    customLessons[lessonIndex].words = newWords;
-    selectedLessonForMode.lesson.words = newWords;
-    
-    // ローカルストレージに保存
-    saveCustomLessons();
-    
-    // 表示を更新
-    displayWordsInSelection(selectedLessonForMode.lesson);
-    updateLessonList();
-    
-    // 編集モードを終了
-    resetWordsEditMode();
-    
-    alert('単語リストを更新しました！');
+    return success;
 }
 
 // 選択されたモードでレッスンを開始
@@ -519,25 +573,7 @@ function cancelCustomLesson() {
 
 // 入力された単語を解析
 function parseCustomWords(input) {
-    const lines = input.trim().split('\n');
-    const words = [];
-    
-    for (let line of lines) {
-        line = line.trim();
-        if (line === '') continue;
-        
-        const parts = line.split(',');
-        if (parts.length >= 2) {
-            const word = parts[0].trim();
-            const meaning = parts.slice(1).join(',').trim();
-            
-            if (word && meaning) {
-                words.push({ word, meaning });
-            }
-        }
-    }
-    
-    return words;
+    return lessonManager.parseCustomWords(input);
 }
 
 // カスタムレッスンを開始
