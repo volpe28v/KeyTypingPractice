@@ -1,4 +1,238 @@
 // Web Audio API関連の変数
+// AudioManager: 音声関連機能を管理するクラス
+class AudioManager {
+    constructor() {
+        this.audioContext = null;
+    }
+
+    // AudioContextの初期化（ユーザー操作後に実行）
+    initAudioContext() {
+        if (!this.audioContext) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('AudioContext initialized');
+            } catch (e) {
+                console.error('Failed to create AudioContext:', e);
+            }
+        }
+        return this.audioContext;
+    }
+
+    // キータイピング音を再生する関数
+    playTypingSound() {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+        
+        try {
+            const currentTime = ctx.currentTime;
+            
+            // メインのクリック音
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            // 高音の短いクリック音（カシャという音）
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(4000, currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1000, currentTime + 0.005);
+            
+            // 音量の設定（短く鋭い音）
+            gainNode.gain.setValueAtTime(0.15, currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+            
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + 0.015);
+            
+            // 追加の低音成分
+            const oscillator2 = ctx.createOscillator();
+            const gainNode2 = ctx.createGain();
+            
+            oscillator2.connect(gainNode2);
+            gainNode2.connect(ctx.destination);
+            
+            oscillator2.type = 'sine';
+            oscillator2.frequency.setValueAtTime(200, currentTime);
+            
+            gainNode2.gain.setValueAtTime(0.05, currentTime);
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.01);
+            
+            oscillator2.start(currentTime);
+            oscillator2.stop(currentTime + 0.01);
+        } catch (e) {
+            console.error('Error playing typing sound:', e);
+        }
+    }
+
+    // ミスタイプ音を再生する関数
+    playMistypeSound() {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+        
+        try {
+            const currentTime = ctx.currentTime;
+            
+            // よりわかりやすい「ポン」という音
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            // 中音域の「ポン」という音
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(400, currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, currentTime + 0.08);
+            
+            // フィルターで音を丸くする
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, currentTime);
+            
+            // 音量設定（正解音より少し大きめでわかりやすく）
+            gainNode.gain.setValueAtTime(0.2, currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.1);
+            
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + 0.1);
+            
+            // 2つ目の音を追加（二重音でより特徴的に）
+            const oscillator2 = ctx.createOscillator();
+            const gainNode2 = ctx.createGain();
+            
+            oscillator2.connect(gainNode2);
+            gainNode2.connect(ctx.destination);
+            
+            oscillator2.type = 'triangle';
+            oscillator2.frequency.setValueAtTime(300, currentTime);
+            oscillator2.frequency.exponentialRampToValueAtTime(150, currentTime + 0.08);
+            
+            gainNode2.gain.setValueAtTime(0.1, currentTime);
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
+            
+            oscillator2.start(currentTime);
+            oscillator2.stop(currentTime + 0.08);
+        } catch (e) {
+            console.error('Error playing mistype sound:', e);
+        }
+    }
+
+    // 正解時に効果音を再生する関数
+    playCorrectSound(word = "good") {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 1.2;
+            utterance.pitch = 2.0;
+            utterance.volume = 1.0;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    // 単語を発音する関数
+    speakWord(word) {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+}
+
+// AudioManagerのインスタンスを作成
+const audioManager = new AudioManager();
+// StorageManager: LocalStorage操作を管理するクラス
+class StorageManager {
+    // カスタム単語をlocalStorageから読み込み
+    loadCustomWords() {
+        const saved = localStorage.getItem('customWords');
+        if (saved) {
+            try {
+                return saved;
+            } catch (e) {
+                console.error('カスタム単語の読み込みに失敗:', e);
+                return '';
+            }
+        }
+        return '';
+    }
+
+    // カスタム単語をlocalStorageに保存
+    saveCustomWords(wordsText) {
+        try {
+            localStorage.setItem('customWords', wordsText);
+        } catch (e) {
+            console.error('カスタム単語の保存に失敗:', e);
+        }
+    }
+
+    // 複数のカスタムレッスンを保存
+    saveCustomLessons(lessons) {
+        try {
+            localStorage.setItem('customLessons', JSON.stringify(lessons));
+        } catch (e) {
+            console.error('カスタムレッスンの保存に失敗:', e);
+        }
+    }
+
+    // 複数のカスタムレッスンを読み込み
+    loadCustomLessons() {
+        try {
+            const saved = localStorage.getItem('customLessons');
+            if (saved) {
+                return JSON.parse(saved);
+            } else {
+                return [];
+            }
+        } catch (e) {
+            console.error('カスタムレッスンの読み込みに失敗:', e);
+            return [];
+        }
+    }
+
+    // タイピング記録を保存
+    saveRecords(records) {
+        try {
+            localStorage.setItem('typingRecords', JSON.stringify(records));
+        } catch (e) {
+            console.error('記録の保存に失敗:', e);
+        }
+    }
+
+    // タイピング記録を読み込み
+    loadRecords() {
+        try {
+            const savedRecords = localStorage.getItem('typingRecords');
+            if (savedRecords) {
+                const records = JSON.parse(savedRecords);
+                
+                // 古い形式のデータをクリーンアップ
+                if (records.total) {
+                    delete records.total;
+                    this.saveRecords(records);
+                }
+                
+                return records;
+            }
+            return {};
+        } catch (e) {
+            console.error('記録の読み込みに失敗:', e);
+            return {};
+        }
+    }
+}
+
+// StorageManagerのインスタンスを作成
+const storageManager = new StorageManager();
 let audioContext = null;
 
 // カスタムレッスン関連の変数
@@ -14,177 +248,41 @@ let autoProgressTimer = null;
 let progressiveStep = 0; // 現在の段階（0: 全表示, 1: 最後1文字隠す, 2: 最後2文字隠す, ...）
 let maxProgressiveSteps = 0; // 最大段階数（単語の文字数）
 
-// AudioContextの初期化（ユーザー操作後に実行）
+// レガシー関数: AudioManagerクラスへのリダイレクト
 function initAudioContext() {
-    if (!audioContext) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext initialized');
-        } catch (e) {
-            console.error('Failed to create AudioContext:', e);
-        }
-    }
-    return audioContext;
+    return audioManager.initAudioContext();
 }
 
-// キータイピング音を再生する関数
 function playTypingSound() {
-    const ctx = initAudioContext();
-    if (!ctx) return;
-    
-    try {
-        const currentTime = ctx.currentTime;
-        
-        // メインのクリック音
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        // 高音の短いクリック音（カシャという音）
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(4000, currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(1000, currentTime + 0.005);
-        
-        // 音量の設定（短く鋭い音）
-        gainNode.gain.setValueAtTime(0.15, currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
-        
-        oscillator.start(currentTime);
-        oscillator.stop(currentTime + 0.015);
-        
-        // 追加の低音成分
-        const oscillator2 = ctx.createOscillator();
-        const gainNode2 = ctx.createGain();
-        
-        oscillator2.connect(gainNode2);
-        gainNode2.connect(ctx.destination);
-        
-        oscillator2.type = 'sine';
-        oscillator2.frequency.setValueAtTime(200, currentTime);
-        
-        gainNode2.gain.setValueAtTime(0.05, currentTime);
-        gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.01);
-        
-        oscillator2.start(currentTime);
-        oscillator2.stop(currentTime + 0.01);
-    } catch (e) {
-        console.error('Error playing typing sound:', e);
-    }
+    return audioManager.playTypingSound();
 }
 
-// ミスタイプ音を再生する関数
 function playMistypeSound() {
-    const ctx = initAudioContext();
-    if (!ctx) return;
-    
-    try {
-        const currentTime = ctx.currentTime;
-        
-        // よりわかりやすい「ポン」という音
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        const filter = ctx.createBiquadFilter();
-        
-        oscillator.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        // 中音域の「ポン」という音
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(400, currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(200, currentTime + 0.08);
-        
-        // フィルターで音を丸くする
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(800, currentTime);
-        
-        // 音量設定（正解音より少し大きめでわかりやすく）
-        gainNode.gain.setValueAtTime(0.2, currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.1);
-        
-        oscillator.start(currentTime);
-        oscillator.stop(currentTime + 0.1);
-        
-        // 2つ目の音を追加（二重音でより特徴的に）
-        const oscillator2 = ctx.createOscillator();
-        const gainNode2 = ctx.createGain();
-        
-        oscillator2.connect(gainNode2);
-        gainNode2.connect(ctx.destination);
-        
-        oscillator2.type = 'triangle';
-        oscillator2.frequency.setValueAtTime(300, currentTime);
-        oscillator2.frequency.exponentialRampToValueAtTime(150, currentTime + 0.08);
-        
-        gainNode2.gain.setValueAtTime(0.1, currentTime);
-        gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
-        
-        oscillator2.start(currentTime);
-        oscillator2.stop(currentTime + 0.08);
-    } catch (e) {
-        console.error('Error playing mistype sound:', e);
-    }
+    return audioManager.playMistypeSound();
 }
 
 function speakWord(word) {
-    if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = 'en-US';
-        utterance.rate = 0.8;
-        
-        window.speechSynthesis.speak(utterance);
-    }
+    return audioManager.speakWord(word);
 }
 
 // カスタム単語をlocalStorageから読み込み
 function loadCustomWords() {
-    const saved = localStorage.getItem('customWords');
-    if (saved) {
-        try {
-            return saved;
-        } catch (e) {
-            console.error('カスタム単語の読み込みに失敗:', e);
-            return '';
-        }
-    }
-    return '';
+    return storageManager.loadCustomWords();
 }
 
 // カスタム単語をlocalStorageに保存
 function saveCustomWords(wordsText) {
-    try {
-        localStorage.setItem('customWords', wordsText);
-    } catch (e) {
-        console.error('カスタム単語の保存に失敗:', e);
-    }
+    return storageManager.saveCustomWords(wordsText);
 }
 
 // 複数のカスタムレッスンを保存
 function saveCustomLessons() {
-    try {
-        localStorage.setItem('customLessons', JSON.stringify(customLessons));
-    } catch (e) {
-        console.error('カスタムレッスンの保存に失敗:', e);
-    }
+    return storageManager.saveCustomLessons(customLessons);
 }
 
 // 複数のカスタムレッスンを読み込み
 function loadCustomLessons() {
-    try {
-        const saved = localStorage.getItem('customLessons');
-        if (saved) {
-            customLessons = JSON.parse(saved);
-        } else {
-            customLessons = [];
-        }
-    } catch (e) {
-        console.error('カスタムレッスンの読み込みに失敗:', e);
-        customLessons = [];
-    }
+    customLessons = storageManager.loadCustomLessons();
 }
 
 // 新しいレッスンを保存
@@ -495,17 +593,7 @@ function startCustomLesson() {
 
 // 正解時に効果音を再生する関数
 function playCorrectSound(word = "good") {
-    if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = 'en-US';
-        utterance.rate = 1.2; // 速度を下げて聞き取りやすくする
-        utterance.pitch = 2.0;
-        utterance.volume = 1.0;
-        
-        window.speechSynthesis.speak(utterance);
-    }
+    return audioManager.playCorrectSound(word);
 }
 
 function initGame() {
@@ -588,19 +676,11 @@ let currentWordMistake = false; // 現在の単語の入力中にミスがあっ
 let records = {};
 
 function saveRecords() {
-    localStorage.setItem('typingRecords', JSON.stringify(records));
+    return storageManager.saveRecords(records);
 }
 
 function loadRecords() {
-    const savedRecords = localStorage.getItem('typingRecords');
-    if (savedRecords) {
-        records = JSON.parse(savedRecords);
-        
-        if (records.total) {
-            delete records.total;
-            saveRecords();
-        }
-    }
+    records = storageManager.loadRecords();
 }
 
 function addRecord(levelKey, time) {
