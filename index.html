@@ -1443,20 +1443,58 @@
             }
             
             const currentWord = words[currentWordIndex].word;
-            const userInput = wordInput.value;
-            let displayHTML = '';
+            const userInput = wordInput.value.trim();
             
-            for (let i = 0; i < currentWord.length; i++) {
-                if (i < userInput.length && userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                    // 正しく入力された文字は表示
-                    displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
-                } else {
-                    // まだ入力されていない文字は黒丸
+            // 現在の表示を直接更新せず、スパン要素を個別に更新
+            const existingSpans = wordDisplay.querySelectorAll('span');
+            
+            // 既存のスパンがない場合は初期化
+            if (existingSpans.length !== currentWord.length) {
+                let displayHTML = '';
+                for (let i = 0; i < currentWord.length; i++) {
                     displayHTML += '<span style="color: #666;">●</span>';
+                }
+                wordDisplay.innerHTML = displayHTML;
+            }
+            
+            // 入力全体をチェックして最初のエラー位置を特定
+            let firstErrorIndex = -1;
+            for (let i = 0; i < userInput.length; i++) {
+                if (i >= currentWord.length || userInput[i].toLowerCase() !== currentWord[i].toLowerCase()) {
+                    firstErrorIndex = i;
+                    break;
                 }
             }
             
-            wordDisplay.innerHTML = displayHTML;
+            // 各文字の表示を個別に更新
+            const spans = wordDisplay.querySelectorAll('span');
+            
+            for (let i = 0; i < currentWord.length && i < spans.length; i++) {
+                if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+                    // エラー位置以降はすべて黒丸
+                    if (i === firstErrorIndex) {
+                        // エラー位置は赤い丸
+                        spans[i].textContent = '●';
+                        spans[i].className = 'incorrect-char';
+                        spans[i].style.color = '#ff4444';
+                    } else {
+                        // エラー位置より後は通常の黒丸
+                        spans[i].textContent = '●';
+                        spans[i].className = '';
+                        spans[i].style.color = '#666';
+                    }
+                } else if (i < userInput.length) {
+                    // 正解の文字を表示
+                    spans[i].textContent = currentWord[i];
+                    spans[i].className = 'correct-char';
+                    spans[i].style.color = '';
+                } else {
+                    // まだ入力されていない文字は黒丸
+                    spans[i].textContent = '●';
+                    spans[i].className = '';
+                    spans[i].style.color = '#666';
+                }
+            }
         }
         
         function displayWord() {
@@ -1602,6 +1640,11 @@
         }
 
         function highlightWrongChar(position) {
+            // スペル隠しモードでは何もしない（updatePartialWordDisplayで処理する）
+            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                return;
+            }
+            
             const currentWord = words[currentWordIndex].word;
             let highlightedHTML = '';
             
@@ -1628,11 +1671,21 @@
             
             if (userInput.toLowerCase() === currentWord.toLowerCase()) {
                 // 単語全体を緑色にする（全ての文字を正解状態にする）
-                let correctHTML = '';
-                for (let i = 0; i < currentWord.length; i++) {
-                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                // スペル隠しモードでは現在の表示を維持して色だけ変更
+                if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                    const spans = wordDisplay.querySelectorAll('span');
+                    spans.forEach((span, i) => {
+                        span.textContent = currentWord[i];
+                        span.className = 'correct-char';
+                        span.style.color = '';
+                    });
+                } else {
+                    let correctHTML = '';
+                    for (let i = 0; i < currentWord.length; i++) {
+                        correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    }
+                    wordDisplay.innerHTML = correctHTML;
                 }
-                wordDisplay.innerHTML = correctHTML;
                 
                 // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
                 if (!currentWordMistake) {
@@ -1665,20 +1718,26 @@
                 return;
             }
             
-            let highlightedHTML = '';
-            for (let i = 0; i < currentWord.length; i++) {
-                if (i < userInput.length) {
-                    if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                        highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+            // スペル隠しモードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
+            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                // スペル隠しモードでは何もしない（updatePartialWordDisplayで処理済み）
+            } else {
+                // 通常モードでは全文字をハイライト表示
+                let highlightedHTML = '';
+                for (let i = 0; i < currentWord.length; i++) {
+                    if (i < userInput.length) {
+                        if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
+                            highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        } else {
+                            highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                        }
                     } else {
-                        highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                        highlightedHTML += `<span>${currentWord[i]}</span>`;
                     }
-                } else {
-                    highlightedHTML += `<span>${currentWord[i]}</span>`;
                 }
+                
+                wordDisplay.innerHTML = highlightedHTML;
             }
-            
-            wordDisplay.innerHTML = highlightedHTML;
             
             highlightNextKey();
         }
@@ -1701,13 +1760,7 @@
                 if (e.key === 'Backspace') {
                     // Backspace音を再生
                     playTypingSound();
-                    
-                    // 入力後に表示を更新
-                    setTimeout(() => {
-                        updatePartialWordDisplay();
-                        highlightNextKey();
-                    }, 10);
-                    return; // 以下の処理をスキップ
+                    return; // 以下の処理をスキップ（updatePartialWordDisplayはinputイベントで処理される）
                 }
                 
                 if (validateKeyInput(e)) {
@@ -1760,11 +1813,9 @@
             }
         });
         
-        // キー入力時にも部分表示を更新（keyupで入力後に実行）
+        // キー入力時のハイライト更新のみ（部分表示更新はinputイベントで処理）
         wordInput.addEventListener('keyup', (e) => {
             if (gameActive && (e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                // 入力値が更新された後に部分表示を更新
-                updatePartialWordDisplay();
                 highlightNextKey();
             }
         });
@@ -1865,7 +1916,8 @@
         }
 
         function highlightNextKey() {
-            // 前回のハイライトをクリア
+            // 次に打つキーのハイライトを無効化（スペル学習のため）
+            // 前回のハイライトをクリアするだけで、新しいハイライトは行わない
             const highlightedKeys = document.querySelectorAll('.key.highlight');
             highlightedKeys.forEach(key => {
                 key.classList.remove('highlight');
@@ -1878,88 +1930,7 @@
                 }
             });
             
-            // 現在の単語と入力位置を取得
-            if (currentWordIndex < words.length) {
-                const currentWord = words[currentWordIndex].word;
-                const currentPosition = wordInput.value.length;
-                
-                // 入力位置が単語の長さ未満の場合
-                if (currentPosition < currentWord.length) {
-                    // 次に打つ文字を取得
-                    const nextChar = currentWord[currentPosition];
-                    
-                    // シフトキーが必要かどうか判定
-                    let requiresShift = false;
-                    let actualKey = nextChar.toLowerCase();
-                    
-                    // 大文字の場合はシフトキーが必要
-                    if (nextChar !== nextChar.toLowerCase()) {
-                        requiresShift = true;
-                    }
-                    
-                    // 特定の記号の場合、対応するキーとシフトの必要性を設定
-                    switch(nextChar) {
-                        case '?':
-                            actualKey = '/';
-                            requiresShift = true;
-                            break;
-                        case '!':
-                            actualKey = '1';
-                            requiresShift = true;
-                            break;
-                        case '<':
-                            actualKey = ',';
-                            requiresShift = true;
-                            break;
-                        case '>':
-                            actualKey = '.';
-                            requiresShift = true;
-                            break;
-                        case '\'':
-                            actualKey = '7';
-                            requiresShift = true;
-                            break;
-                        case '{':
-                        case '}':
-                        case '~':
-                        case '@':
-                        case '#':
-                        case '$':
-                        case '%':
-                        case '^':
-                        case '&':
-                        case '*':
-                        case '(':
-                        case ')':
-                        case '+':
-                            requiresShift = true;
-                            break;
-                    }
-                    
-                    // 対応するキー要素を探してハイライト
-                    const keyElement = document.querySelector(`.key[data-key="${actualKey}"]`);
-                    if (keyElement) {
-                        keyElement.classList.add('highlight');
-                        
-                        // シフト文字の場合は、シフト文字部分も強調表示
-                        if (requiresShift) {
-                            const shiftChar = keyElement.querySelector('.shift-char');
-                            if (shiftChar) {
-                                shiftChar.style.color = '#ffffff';
-                                shiftChar.style.textShadow = '0 0 5px #ffffff';
-                            }
-                        }
-                    }
-                    
-                    // シフトキーが必要な場合はシフトキーもハイライト
-                    if (requiresShift) {
-                        const shiftKey = document.querySelector(`.key[data-key="shift"]`);
-                        if (shiftKey) {
-                            shiftKey.classList.add('highlight');
-                        }
-                    }
-                }
-            }
+            // 次に打つキーのハイライトは行わない（スペル学習のため）
         }
 
         function createKeyboardRipple(keyElement, isError = false) {
