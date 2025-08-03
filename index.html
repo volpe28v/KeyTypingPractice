@@ -864,6 +864,123 @@
     <script src="level-lists.js"></script>
 
     <script>
+        // Web Audio API関連の変数
+        let audioContext = null;
+        
+        // AudioContextの初期化（ユーザー操作後に実行）
+        function initAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('AudioContext initialized');
+                } catch (e) {
+                    console.error('Failed to create AudioContext:', e);
+                }
+            }
+            return audioContext;
+        }
+        
+        // キータイピング音を再生する関数
+        function playTypingSound() {
+            const ctx = initAudioContext();
+            if (!ctx) return;
+            
+            try {
+                const currentTime = ctx.currentTime;
+                
+                // メインのクリック音
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                // 高音の短いクリック音（カシャという音）
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(4000, currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1000, currentTime + 0.005);
+                
+                // 音量の設定（短く鋭い音）
+                gainNode.gain.setValueAtTime(0.15, currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.015);
+                
+                oscillator.start(currentTime);
+                oscillator.stop(currentTime + 0.015);
+                
+                // 追加の低音成分
+                const oscillator2 = ctx.createOscillator();
+                const gainNode2 = ctx.createGain();
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(ctx.destination);
+                
+                oscillator2.type = 'sine';
+                oscillator2.frequency.setValueAtTime(200, currentTime);
+                
+                gainNode2.gain.setValueAtTime(0.05, currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.01);
+                
+                oscillator2.start(currentTime);
+                oscillator2.stop(currentTime + 0.01);
+            } catch (e) {
+                console.error('Error playing typing sound:', e);
+            }
+        }
+        
+        // ミスタイプ音を再生する関数
+        function playMistypeSound() {
+            const ctx = initAudioContext();
+            if (!ctx) return;
+            
+            try {
+                const currentTime = ctx.currentTime;
+                
+                // よりわかりやすい「ポン」という音
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                // 中音域の「ポン」という音
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, currentTime + 0.08);
+                
+                // フィルターで音を丸くする
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, currentTime);
+                
+                // 音量設定（正解音より少し大きめでわかりやすく）
+                gainNode.gain.setValueAtTime(0.2, currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.1);
+                
+                oscillator.start(currentTime);
+                oscillator.stop(currentTime + 0.1);
+                
+                // 2つ目の音を追加（二重音でより特徴的に）
+                const oscillator2 = ctx.createOscillator();
+                const gainNode2 = ctx.createGain();
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(ctx.destination);
+                
+                oscillator2.type = 'triangle';
+                oscillator2.frequency.setValueAtTime(300, currentTime);
+                oscillator2.frequency.exponentialRampToValueAtTime(150, currentTime + 0.08);
+                
+                gainNode2.gain.setValueAtTime(0.1, currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.08);
+                
+                oscillator2.start(currentTime);
+                oscillator2.stop(currentTime + 0.08);
+            } catch (e) {
+                console.error('Error playing mistype sound:', e);
+            }
+        }
+        
         function speakWord(word) {
             if (window.speechSynthesis) {
                 window.speechSynthesis.cancel();
@@ -1258,7 +1375,10 @@
         wordInput.addEventListener('keydown', (e) => {
             if (!timerStarted && gameActive) {
                 startTimer();
+                // 最初のキー入力時にAudioContextを初期化
+                initAudioContext();
             }
+            
             
             if (e.key === 'Enter') {
                 if (!gameActive) {
@@ -1268,6 +1388,11 @@
                 }
             } else if (gameActive) {
                 if (validateKeyInput(e)) {
+                    // 正しいキー入力の場合
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        playTypingSound();
+                    }
+                    
                     const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                     if (keyElement) {
                         keyElement.classList.remove('correct');
@@ -1284,6 +1409,11 @@
                     
                     setTimeout(highlightNextKey, 50);
                 } else {
+                    // 間違ったキー入力の場合
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        playMistypeSound();
+                    }
+                    
                     const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                     if (keyElement) {
                         keyElement.classList.remove('incorrect');
