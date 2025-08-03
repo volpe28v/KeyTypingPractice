@@ -1017,6 +1017,12 @@ function displayWord() {
             
             // 新しい単語を表示するたびにミス状態をリセット
             currentWordMistake = false;
+            
+            // 段階的練習モードの連続ミス変数もリセット
+            if (isCustomLesson && lessonMode === 'progressive') {
+                consecutiveMistakes = 0;
+                currentCharPosition = 0;
+            }
         } else {
             console.error('単語データが不正です:', currentWord);
             wordDisplay.innerHTML = '<span>エラー</span>';
@@ -1115,10 +1121,53 @@ function validateKeyInput(e) {
         // 現在の単語のミス状態を記録
         currentWordMistake = true;
         
+        // 段階的練習モードでの連続ミス処理
+        if (isCustomLesson && lessonMode === 'progressive') {
+            // 同じ文字位置でのミスかチェック
+            if (currentPosition === currentCharPosition) {
+                consecutiveMistakes++;
+            } else {
+                // 新しい文字位置なので連続ミス数をリセット
+                consecutiveMistakes = 1;
+                currentCharPosition = currentPosition;
+            }
+            
+            // 3回連続ミスで進捗を戻す
+            if (consecutiveMistakes >= 3) {
+                const currentWord = words[currentWordIndex].word;
+                const mistakeCharPosition = currentCharPosition; // 3回ミスした文字の位置
+                
+                // ミスした文字位置まで進捗を戻す
+                // progressiveStep = 単語の長さ - 表示する文字数
+                // ミスした文字を未入力状態で表示するには: progressiveStep = 単語の長さ - (ミスした位置 + 1)
+                // 例: apple(5文字)でl(位置3)をミスした場合 → progressiveStep = 5 - (3 + 1) = 1 → appl●が表示される
+                const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
+                progressiveStep = newProgressiveStep;
+                
+                feedback.textContent = `3回連続ミス！「${currentWord[mistakeCharPosition]}」の位置まで戻します`;
+                feedback.className = 'feedback incorrect';
+                
+                setTimeout(() => {
+                    // 入力をミスした文字位置まで戻す（ミスした文字は未入力状態）
+                    wordInput.value = currentWord.substring(0, mistakeCharPosition);
+                    consecutiveMistakes = 0; // 連続ミス数をリセット
+                    currentWordMistake = false; // ミス状態をリセット
+                    updateProgressiveDisplay();
+                    wordInput.focus();
+                }, 1000);
+            }
+        }
+        
         highlightWrongChar(currentPosition);
         
         e.preventDefault();
         return false;
+    }
+    
+    // 正解の場合は連続ミス数をリセット
+    if (isCorrect && isCustomLesson && lessonMode === 'progressive') {
+        consecutiveMistakes = 0;
+        currentCharPosition = currentPosition;
     }
     
     return true;
