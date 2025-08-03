@@ -366,6 +366,410 @@ class LessonManager {
 
 // LessonManagerのインスタンスを作成
 const lessonManager = new LessonManager(storageManager);
+
+// GameManager: ゲーム状態とロジックを管理するクラス
+class GameManager {
+    constructor(audioManager, storageManager) {
+        this.audioManager = audioManager;
+        this.storageManager = storageManager;
+        
+        // ゲーム状態
+        this.words = [];
+        this.currentWordIndex = 0;
+        this.correctCount = 0;
+        this.mistakeCount = 0;
+        this.currentLevel = 10;
+        this.gameActive = true;
+        this.timerStarted = false;
+        this.startTime = null;
+        this.endTime = null;
+        this.timerInterval = null;
+        this.currentWordMistake = false;
+        
+        // 段階的練習モード関連
+        this.progressiveStep = 0;
+        this.maxProgressiveSteps = 0;
+        this.consecutiveMistakes = 0;
+        this.currentCharPosition = 0;
+        
+        // カスタムレッスン関連
+        this.isCustomLesson = false;
+        this.lessonMode = 'full';
+        this.currentLessonIndex = 0;
+    }
+    
+    // ゲームを初期化
+    initGame(levelLists, customWords = null) {
+        if (!this.isCustomLesson) {
+            const levelData = levelLists.find(level => level.level === this.currentLevel);
+            if (levelData) {
+                const fullWordList = [...levelData.words];
+                this.shuffleArray(fullWordList);
+                this.words = fullWordList.slice(0, 10);
+            }
+        } else {
+            this.words = customWords;
+            this.shuffleArray(this.words);
+        }
+        
+        this.currentWordIndex = 0;
+        this.correctCount = 0;
+        this.mistakeCount = 0;
+        this.gameActive = true;
+        this.timerStarted = false;
+        
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    }
+    
+    // 配列をシャッフル
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+    
+    // タイマーを開始
+    startTimer() {
+        this.startTime = Date.now();
+        this.timerStarted = true;
+        return this.startTime;
+    }
+    
+    // 現在の単語を取得
+    getCurrentWord() {
+        return this.words[this.currentWordIndex];
+    }
+    
+    // 次の単語へ進む
+    nextWord() {
+        this.currentWordIndex++;
+        this.correctCount++;
+    }
+    
+    // ゲームが終了したかチェック
+    isGameComplete() {
+        return this.currentWordIndex >= this.words.length;
+    }
+    
+    // ゲームを終了
+    endGame() {
+        this.endTime = Date.now();
+        this.gameActive = false;
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        return this.endTime - this.startTime;
+    }
+    
+    // 段階的練習モードの初期化
+    initProgressiveMode(word) {
+        this.progressiveStep = 0;
+        this.maxProgressiveSteps = word.length;
+        this.consecutiveMistakes = 0;
+        this.currentCharPosition = 0;
+    }
+    
+    // 段階的練習モードを進める
+    advanceProgressiveStep() {
+        this.progressiveStep++;
+    }
+    
+    // ミスをカウント（段階的練習モードの特別処理を含む）
+    countMistake(currentPosition, visibleCharCount = null) {
+        if (this.isCustomLesson && this.lessonMode === 'progressive' && visibleCharCount !== null) {
+            // 隠されている文字でのミスのみカウント
+            if (currentPosition >= visibleCharCount) {
+                this.mistakeCount++;
+                this.currentWordMistake = true;
+                return true;
+            }
+            return false;
+        } else {
+            // 通常モードでは全てのミスをカウント
+            this.mistakeCount++;
+            this.currentWordMistake = true;
+            return true;
+        }
+    }
+    
+    // 連続ミスを処理
+    handleConsecutiveMistake(currentPosition) {
+        if (currentPosition === this.currentCharPosition) {
+            this.consecutiveMistakes++;
+        } else {
+            this.consecutiveMistakes = 1;
+            this.currentCharPosition = currentPosition;
+        }
+        return this.consecutiveMistakes;
+    }
+    
+    // 連続ミスをリセット
+    resetConsecutiveMistakes() {
+        this.consecutiveMistakes = 0;
+    }
+    
+    // 進捗を戻す（段階的練習モード）
+    revertProgress(mistakeCharPosition) {
+        const currentWord = this.getCurrentWord().word;
+        const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
+        this.progressiveStep = newProgressiveStep;
+    }
+    
+    // 新しい単語の開始時にリセット
+    resetForNewWord() {
+        this.currentWordMistake = false;
+        if (this.isCustomLesson && this.lessonMode === 'progressive') {
+            this.consecutiveMistakes = 0;
+            this.currentCharPosition = 0;
+        }
+    }
+}
+
+// GameManagerのインスタンスを作成
+const gameManager = new GameManager(audioManager, storageManager);
+
+// UIManager: UI操作を管理するクラス
+class UIManager {
+    constructor() {
+        // DOM要素のキャッシュ
+        this.wordDisplay = document.getElementById('word-display');
+        this.meaningDisplay = document.getElementById('meaning');
+        this.wordInput = document.getElementById('word-input');
+        this.feedback = document.getElementById('feedback');
+        this.progressBar = document.getElementById('progress-bar');
+        this.scoreDisplay = document.getElementById('score-display');
+        this.levelDisplay = document.getElementById('level');
+        this.levelDescDisplay = document.getElementById('level-desc');
+        this.timerDisplay = document.getElementById('timer-display');
+    }
+    
+    // タイマー表示を更新
+    updateTimerDisplay(timeMs) {
+        this.timerDisplay.textContent = this.formatTime(timeMs);
+    }
+    
+    // 時間をフォーマット
+    formatTime(timeMs) {
+        const seconds = Math.floor(timeMs / 1000);
+        const milliseconds = Math.floor((timeMs % 1000) / 10);
+        return `${seconds}.${milliseconds.toString().padStart(2, '0')}秒`;
+    }
+    
+    // プログレスバーを更新
+    updateProgressBar(currentIndex, totalCount) {
+        const progress = (currentIndex / totalCount) * 100;
+        this.progressBar.style.width = `${progress}%`;
+    }
+    
+    // レベル表示を更新
+    updateLevelDisplay(level, description) {
+        this.levelDisplay.textContent = level;
+        this.levelDescDisplay.textContent = description;
+    }
+    
+    // フィードバックを表示
+    showFeedback(message, className = '') {
+        this.feedback.textContent = message;
+        this.feedback.className = 'feedback ' + className;
+    }
+    
+    // 単語表示をクリア
+    clearWordDisplay() {
+        this.wordDisplay.innerHTML = '';
+    }
+    
+    // 意味表示を更新
+    updateMeaningDisplay(meaning, visible = true) {
+        this.meaningDisplay.textContent = meaning;
+        this.meaningDisplay.style.display = visible ? 'block' : 'none';
+    }
+    
+    // 入力フィールドをリセット
+    resetInput() {
+        this.wordInput.value = '';
+        this.wordInput.focus();
+    }
+    
+    // 入力フィールドを無効化/有効化
+    setInputEnabled(enabled) {
+        this.wordInput.disabled = !enabled;
+        if (enabled) {
+            this.wordInput.focus();
+        }
+    }
+    
+    // スコア表示を更新
+    updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount) {
+        this.scoreDisplay.textContent = `クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回`;
+        this.scoreDisplay.style.display = 'block';
+    }
+    
+    // スコア表示を隠す
+    hideScoreDisplay() {
+        this.scoreDisplay.style.display = 'none';
+    }
+    
+    // ゲーム完了時の表示
+    showGameComplete(isPerfect, mistakeCount) {
+        if (isPerfect) {
+            this.wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
+            this.showFeedback('おめでとうございます！', 'correct');
+        } else {
+            this.wordDisplay.innerHTML = 'クリア！';
+            this.showFeedback(`${mistakeCount}回のミスがありました。`);
+        }
+        this.meaningDisplay.textContent = 'Enterキーを押して再挑戦';
+        this.wordInput.placeholder = "";
+    }
+    
+    // タイトル画面の表示
+    showTitle() {
+        this.wordDisplay.innerHTML = '<span class="game-title">タイピングマスター</span>';
+        this.meaningDisplay.textContent = 'レッスンを選んでゲームスタート！';
+        this.timerDisplay.textContent = "00.00";
+        this.wordInput.value = '';
+        this.wordInput.placeholder = "";
+        this.feedback.textContent = '';
+        this.feedback.className = 'feedback';
+        this.progressBar.style.width = '0%';
+        this.scoreDisplay.style.display = 'none';
+    }
+    
+    // エラー表示
+    showError(message) {
+        this.wordDisplay.innerHTML = '<span>エラー</span>';
+        this.meaningDisplay.textContent = message;
+    }
+    
+    // 画面要素の表示/非表示
+    setElementVisibility(elementId, visible) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = visible ? 'block' : 'none';
+        }
+    }
+    
+    // 複数の画面要素の表示/非表示
+    setMultipleElementsVisibility(elementSelectors, visible) {
+        elementSelectors.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.style.display = visible ? (element.tagName === 'SPAN' || element.tagName === 'INPUT' ? 'inline-block' : 'block') : 'none';
+            }
+        });
+    }
+}
+
+// UIManagerのインスタンスを作成
+const uiManager = new UIManager();
+
+// KeyboardManager: キーボード表示と操作を管理するクラス
+class KeyboardManager {
+    constructor() {
+        this.keyboardDisplay = document.querySelector('.keyboard-display');
+        this.highlightedKeys = [];
+    }
+    
+    // キーボードアニメーションを初期化
+    initAnimation() {
+        const keys = document.querySelectorAll('.key');
+        
+        keys.forEach(key => {
+            key.style.opacity = '0';
+            key.style.transform = 'translateY(20px)';
+        });
+        
+        keys.forEach((key, index) => {
+            setTimeout(() => {
+                key.style.opacity = '1';
+                key.style.transform = 'translateY(0)';
+                key.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2)';
+            }, index * 20);
+        });
+    }
+    
+    // 次のキーをハイライト
+    highlightNextKey() {
+        // 前回のハイライトをクリアするだけで、新しいハイライトは行わない（スペル学習のため）
+        this.clearHighlights();
+    }
+    
+    // ハイライトをクリア
+    clearHighlights() {
+        const highlightedKeys = document.querySelectorAll('.key.highlight');
+        highlightedKeys.forEach(key => {
+            key.classList.remove('highlight');
+            
+            // シフト文字のスタイルをリセット
+            const shiftChar = key.querySelector('.shift-char');
+            if (shiftChar) {
+                shiftChar.style.color = '#ff00ff';
+                shiftChar.style.textShadow = 'none';
+            }
+        });
+    }
+    
+    // キーを押した時のエフェクト
+    showKeyPress(key, isCorrect = true) {
+        const keyElement = document.querySelector(`.key[data-key="${key.toLowerCase()}"]`);
+        if (!keyElement) return;
+        
+        const className = isCorrect ? 'correct' : 'incorrect';
+        keyElement.classList.remove(className);
+        void keyElement.offsetWidth; // リフローを強制
+        
+        keyElement.classList.add(className);
+        
+        this.createRippleEffect(keyElement, !isCorrect);
+        
+        setTimeout(() => {
+            keyElement.classList.remove(className);
+        }, 1000);
+    }
+    
+    // キーボードリップルエフェクト
+    createRippleEffect(keyElement, isError = false) {
+        // 既存のリップルを削除
+        const existingRipples = document.querySelectorAll('.keyboard-ripple');
+        existingRipples.forEach(ripple => ripple.remove());
+        
+        const ripple = document.createElement('div');
+        ripple.className = 'keyboard-ripple';
+        
+        const keyRect = keyElement.getBoundingClientRect();
+        const keyboardRect = this.keyboardDisplay.getBoundingClientRect();
+        
+        const keyX = keyRect.left + keyRect.width / 2 - keyboardRect.left;
+        const keyY = keyRect.top + keyRect.height / 2 - keyboardRect.top;
+        
+        ripple.style.background = isError 
+            ? `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(255, 0, 0, 0.5) 100%)`
+            : `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(0, 255, 0, 0.5) 100%)`;
+        
+        this.keyboardDisplay.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.style.opacity = '0.7';
+            ripple.style.transform = 'scale(3)';
+            ripple.style.transition = 'all 1s cubic-bezier(0, 0.5, 0.5, 1)';
+            
+            setTimeout(() => {
+                ripple.style.opacity = '0';
+                setTimeout(() => {
+                    ripple.remove();
+                }, 300);
+            }, 700);
+        }, 10);
+    }
+}
+
+// KeyboardManagerのインスタンスを作成
+const keyboardManager = new KeyboardManager();
 let audioContext = null;
 
 // カスタムレッスン関連の変数
@@ -633,22 +1037,17 @@ function playCorrectSound(word = "good") {
 }
 
 function initGame() {
-    // カスタムレッスンの場合は既にwordsが設定されているため、levelListsから取得しない
-    if (!isCustomLesson) {
-        const levelData = levelLists.find(level => level.level === currentLevel);
-        if (levelData) {
-            const fullWordList = [...levelData.words];
-            shuffleArray(fullWordList);
-            words = fullWordList.slice(0, 10);
-        }
-    } else {
-        // カスタムレッスンの場合はwordsを再シャッフル
-        shuffleArray(words);
-    }
+    // GameManagerのプロパティを先に設定
+    gameManager.isCustomLesson = isCustomLesson;
+    gameManager.lessonMode = lessonMode;
+    gameManager.currentLevel = currentLevel;
     
-    currentWordIndex = 0;
-    correctCount = 0;
-    mistakeCount = 0;
+    // GameManagerを使用してゲームを初期化
+    if (!isCustomLesson) {
+        gameManager.initGame(levelLists);
+    } else {
+        gameManager.initGame(levelLists, customWords);
+    }
     
     displayWord();
     
@@ -698,16 +1097,97 @@ function initGame() {
     }, 100);
 }
 
-let words = [];
-let currentWordIndex = 0;
-let correctCount = 0;
-let mistakeCount = 0;
-let currentLevel = 10;
-let gameActive = true;
-let timerStarted = false;
-let startTime, endTime;
-let timerInterval = null;
-let currentWordMistake = false; // 現在の単語の入力中にミスがあったかどうかを追跡
+// レガシー変数: GameManagerへのアクセサ
+// 既存のコードとの互換性を保つため、getter/setterでGameManagerのプロパティを参照
+Object.defineProperty(window, 'words', {
+    get: () => gameManager.words,
+    set: (value) => { gameManager.words = value; }
+});
+
+Object.defineProperty(window, 'currentWordIndex', {
+    get: () => gameManager.currentWordIndex,
+    set: (value) => { gameManager.currentWordIndex = value; }
+});
+
+Object.defineProperty(window, 'correctCount', {
+    get: () => gameManager.correctCount,
+    set: (value) => { gameManager.correctCount = value; }
+});
+
+Object.defineProperty(window, 'mistakeCount', {
+    get: () => gameManager.mistakeCount,
+    set: (value) => { gameManager.mistakeCount = value; }
+});
+
+Object.defineProperty(window, 'currentLevel', {
+    get: () => gameManager.currentLevel,
+    set: (value) => { gameManager.currentLevel = value; }
+});
+
+Object.defineProperty(window, 'gameActive', {
+    get: () => gameManager.gameActive,
+    set: (value) => { gameManager.gameActive = value; }
+});
+
+Object.defineProperty(window, 'timerStarted', {
+    get: () => gameManager.timerStarted,
+    set: (value) => { gameManager.timerStarted = value; }
+});
+
+Object.defineProperty(window, 'startTime', {
+    get: () => gameManager.startTime,
+    set: (value) => { gameManager.startTime = value; }
+});
+
+Object.defineProperty(window, 'endTime', {
+    get: () => gameManager.endTime,
+    set: (value) => { gameManager.endTime = value; }
+});
+
+Object.defineProperty(window, 'timerInterval', {
+    get: () => gameManager.timerInterval,
+    set: (value) => { gameManager.timerInterval = value; }
+});
+
+Object.defineProperty(window, 'currentWordMistake', {
+    get: () => gameManager.currentWordMistake,
+    set: (value) => { gameManager.currentWordMistake = value; }
+});
+
+Object.defineProperty(window, 'isCustomLesson', {
+    get: () => gameManager.isCustomLesson,
+    set: (value) => { gameManager.isCustomLesson = value; }
+});
+
+Object.defineProperty(window, 'lessonMode', {
+    get: () => gameManager.lessonMode,
+    set: (value) => { gameManager.lessonMode = value; }
+});
+
+Object.defineProperty(window, 'currentLessonIndex', {
+    get: () => gameManager.currentLessonIndex,
+    set: (value) => { gameManager.currentLessonIndex = value; }
+});
+
+Object.defineProperty(window, 'progressiveStep', {
+    get: () => gameManager.progressiveStep,
+    set: (value) => { gameManager.progressiveStep = value; }
+});
+
+Object.defineProperty(window, 'maxProgressiveSteps', {
+    get: () => gameManager.maxProgressiveSteps,
+    set: (value) => { gameManager.maxProgressiveSteps = value; }
+});
+
+Object.defineProperty(window, 'consecutiveMistakes', {
+    get: () => gameManager.consecutiveMistakes,
+    set: (value) => { gameManager.consecutiveMistakes = value; }
+});
+
+Object.defineProperty(window, 'currentCharPosition', {
+    get: () => gameManager.currentCharPosition,
+    set: (value) => { gameManager.currentCharPosition = value; }
+});
 
 let records = {};
 
@@ -741,10 +1221,9 @@ function addRecord(levelKey, time, mistakes = 0) {
     }
 }
 
+// レガシー関数: 時間をフォーマット
 function formatTime(timeMs) {
-    const seconds = Math.floor(timeMs / 1000);
-    const milliseconds = Math.floor((timeMs % 1000) / 10);
-    return `${seconds}.${milliseconds.toString().padStart(2, '0')}秒`;
+    return uiManager.formatTime(timeMs);
 }
 
 function displayBestTimes() {
@@ -780,15 +1259,16 @@ function displayBestTimes() {
     });
 }
 
-const wordDisplay = document.getElementById('word-display');
-const meaningDisplay = document.getElementById('meaning');
-const wordInput = document.getElementById('word-input');
-const feedback = document.getElementById('feedback');
-const progressBar = document.getElementById('progress-bar');
-const scoreDisplay = document.getElementById('score-display');
-const levelDisplay = document.getElementById('level');
-const levelDescDisplay = document.getElementById('level-desc');
-const timerDisplay = document.getElementById('timer-display');
+// レガシー変数: UIManagerのDOM要素への参照
+const wordDisplay = uiManager.wordDisplay;
+const meaningDisplay = uiManager.meaningDisplay;
+const wordInput = uiManager.wordInput;
+const feedback = uiManager.feedback;
+const progressBar = uiManager.progressBar;
+const scoreDisplay = uiManager.scoreDisplay;
+const levelDisplay = uiManager.levelDisplay;
+const levelDescDisplay = uiManager.levelDescDisplay;
+const timerDisplay = uiManager.timerDisplay;
 
 function updateTimer() {
     if (!gameActive) return;
@@ -811,28 +1291,14 @@ function startTimer() {
     document.getElementById('back-to-title-btn').style.display = 'block';
 }
 
+// レガシー関数: キーボードアニメーションを初期化
 function initKeyboardAnimation() {
-    const keys = document.querySelectorAll('.key');
-    
-    keys.forEach(key => {
-        key.style.opacity = '0';
-        key.style.transform = 'translateY(20px)';
-    });
-    
-    keys.forEach((key, index) => {
-        setTimeout(() => {
-            key.style.opacity = '1';
-            key.style.transform = 'translateY(0)';
-            key.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2)';
-        }, index * 20);
-    });
+    keyboardManager.initAnimation();
 }
 
+// レガシー関数: 配列をシャッフル
 function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
+    return gameManager.shuffleArray(array);
 }
 
 // 段階的練習モードの表示を更新する関数
@@ -1053,28 +1519,18 @@ function displayWord() {
         
         const accuracyRate = mistakeCount === 0 ? 100 : Math.max(0, Math.round((1 - mistakeCount / totalTypesCount) * 100));
         
-        scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回`;
-        scoreDisplay.style.display = 'block';
+        // UIManagerを使用してスコア表示を更新
+        uiManager.updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount);
         
         const isPerfect = mistakeCount === 0;
         
+        // UIManagerを使用してゲーム完了時の表示
+        uiManager.showGameComplete(isPerfect, mistakeCount);
+        
+        // 効果音を再生
         if (isPerfect) {
-            wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
-            feedback.textContent = 'おめでとうございます！';
-            feedback.className = 'feedback correct';
-            meaningDisplay.textContent = 'Enterキーを押して再挑戦';
-            wordInput.placeholder = "";
-            
-            // 全問完了時に「おめでとう」を英語で発音
             playCorrectSound("congratulations");
         } else {
-            wordDisplay.innerHTML = 'クリア！';
-            feedback.textContent = `${mistakeCount}回のミスがありました。`;
-            feedback.className = 'feedback';
-            meaningDisplay.textContent = 'Enterキーを押して再挑戦';
-            wordInput.placeholder = "";
-            
-            // ミスありでも完了をお知らせ
             playCorrectSound("complete");
         }
         
@@ -1087,9 +1543,9 @@ function displayWord() {
     }
 }
 
+// レガシー関数: プログレスバーを更新
 function updateProgressBar() {
-    const progress = (currentWordIndex / words.length) * 100;
-    progressBar.style.width = `${progress}%`;
+    uiManager.updateProgressBar(currentWordIndex, words.length);
 }
 
 function validateKeyInput(e) {
@@ -1377,19 +1833,8 @@ wordInput.addEventListener('keydown', (e) => {
                 playTypingSound();
             }
             
-            const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
-            if (keyElement) {
-                keyElement.classList.remove('correct');
-                void keyElement.offsetWidth;
-                
-                keyElement.classList.add('correct');
-                
-                createKeyboardRipple(keyElement);
-                
-                setTimeout(() => {
-                    keyElement.classList.remove('correct');
-                }, 1000);
-            }
+            // KeyboardManagerを使用してキープレスを表示
+            keyboardManager.showKeyPress(e.key, true);
             
             setTimeout(highlightNextKey, 50);
         } else {
@@ -1398,19 +1843,8 @@ wordInput.addEventListener('keydown', (e) => {
                 playMistypeSound();
             }
             
-            const keyElement = document.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
-            if (keyElement) {
-                keyElement.classList.remove('incorrect');
-                void keyElement.offsetWidth;
-                
-                keyElement.classList.add('incorrect');
-                
-                createKeyboardRipple(keyElement, true);
-                
-                setTimeout(() => {
-                    keyElement.classList.remove('incorrect');
-                }, 1000);
-            }
+            // KeyboardManagerを使用して間違ったキープレスを表示
+            keyboardManager.showKeyPress(e.key, false);
         }
     }
 });
@@ -1477,57 +1911,14 @@ function initLevelSelectors() {
     // ここでは何もする必要がない
 }
 
+// レガシー関数: 次のキーをハイライト
 function highlightNextKey() {
-    // 次に打つキーのハイライトを無効化（スペル学習のため）
-    // 前回のハイライトをクリアするだけで、新しいハイライトは行わない
-    const highlightedKeys = document.querySelectorAll('.key.highlight');
-    highlightedKeys.forEach(key => {
-        key.classList.remove('highlight');
-        
-        // シフト文字のスタイルをリセット
-        const shiftChar = key.querySelector('.shift-char');
-        if (shiftChar) {
-            shiftChar.style.color = '#ff00ff';
-            shiftChar.style.textShadow = 'none';
-        }
-    });
-    
-    // 次に打つキーのハイライトは行わない（スペル学習のため）
+    keyboardManager.highlightNextKey();
 }
 
+// レガシー関数: キーボードリップルエフェクト
 function createKeyboardRipple(keyElement, isError = false) {
-    const keyboardDisplay = document.querySelector('.keyboard-display');
-    
-    const existingRipples = document.querySelectorAll('.keyboard-ripple');
-    existingRipples.forEach(ripple => ripple.remove());
-    
-    const ripple = document.createElement('div');
-    ripple.className = 'keyboard-ripple';
-    
-    const keyRect = keyElement.getBoundingClientRect();
-    const keyboardRect = keyboardDisplay.getBoundingClientRect();
-    
-    const keyX = keyRect.left + keyRect.width / 2 - keyboardRect.left;
-    const keyY = keyRect.top + keyRect.height / 2 - keyboardRect.top;
-    
-    ripple.style.background = isError 
-        ? `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(255, 0, 0, 0.5) 100%)`
-        : `radial-gradient(circle at ${keyX}px ${keyY}px, transparent 0%, transparent 70%, rgba(0, 255, 0, 0.5) 100%)`;
-    
-    keyboardDisplay.appendChild(ripple);
-    
-    setTimeout(() => {
-        ripple.style.opacity = '0.7';
-        ripple.style.transform = 'scale(3)';
-        ripple.style.transition = 'all 1s cubic-bezier(0, 0.5, 0.5, 1)';
-        
-        setTimeout(() => {
-            ripple.style.opacity = '0';
-            setTimeout(() => {
-                ripple.remove();
-            }, 300);
-        }, 700);
-    }, 10);
+    keyboardManager.createRippleEffect(keyElement, isError);
 }
 
 function initRecords() {
@@ -1667,17 +2058,8 @@ function backToTitle() {
     gameActive = false;
     timerStarted = false;
     
-    // タイトル画面表示の状態にする
-    wordDisplay.innerHTML = '<span class="game-title">タイピングマスター</span>';
-    meaningDisplay.textContent = 'レッスンを選んでゲームスタート！';
-    timerDisplay.textContent = "00.00";
-    wordInput.value = '';
-    wordInput.placeholder = "";
-    feedback.textContent = '';
-    feedback.className = 'feedback';
-    
-    progressBar.style.width = '0%';
-    scoreDisplay.style.display = 'none';
+    // UIManagerを使用してタイトル画面を表示
+    uiManager.showTitle();
     
     // 戻るボタンを非表示
     document.getElementById('back-to-title-btn').style.display = 'none';
