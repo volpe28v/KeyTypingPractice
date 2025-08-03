@@ -770,6 +770,102 @@
             color: #ffffff;
             box-shadow: 0 0 15px rgba(255, 0, 170, 0.7);
         }
+        
+        /* カスタムレッスン設定画面のスタイル */
+        .custom-lesson-setup {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+        }
+        
+        .custom-lesson-setup h2 {
+            color: #00ffaa;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .custom-lesson-setup textarea {
+            width: 100%;
+            min-height: 200px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffaa;
+            border-radius: 5px;
+            color: #ffffff;
+            padding: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+        
+        .custom-lesson-setup textarea:focus {
+            outline: none;
+            box-shadow: 0 0 10px #00ffaa;
+        }
+        
+        .mode-selection {
+            margin-bottom: 20px;
+        }
+        
+        .mode-selection h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        
+        .mode-option {
+            margin: 10px 0;
+            color: #ffffff;
+        }
+        
+        .mode-option input[type="radio"] {
+            margin-right: 10px;
+            accent-color: #00ffaa;
+        }
+        
+        .mode-option label {
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        .custom-lesson-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .custom-lesson-buttons button {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .start-custom-btn {
+            background-color: #00ffaa;
+            color: #000;
+        }
+        
+        .start-custom-btn:hover {
+            background-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+        }
+        
+        .cancel-custom-btn {
+            background-color: #666;
+            color: #fff;
+        }
+        
+        .cancel-custom-btn:hover {
+            background-color: #888;
+        }
     </style>
 </head>
 
@@ -789,6 +885,33 @@
                 <div class="feedback" id="feedback"></div>
                 <div class="progress">
                     <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <!-- カスタムレッスン設定画面 -->
+            <div class="custom-lesson-setup" id="custom-lesson-setup">
+                <h2>カスタムレッスン設定</h2>
+                <textarea id="custom-words-input" placeholder="単語と意味を入力してください&#10;形式: 単語, 意味&#10;例:&#10;apple, りんご&#10;banana, バナナ&#10;orange, オレンジ&#10;&#10;※単語は自動的に保存されます"></textarea>
+                
+                <div class="mode-selection">
+                    <h3>学習モード</h3>
+                    <div class="mode-option">
+                        <input type="radio" id="mode-full" name="lesson-mode" value="full" checked>
+                        <label for="mode-full">発音 + 意味 + スペルを表示してスペルを入力</label>
+                    </div>
+                    <div class="mode-option">
+                        <input type="radio" id="mode-pronunciation-meaning" name="lesson-mode" value="pronunciation-meaning">
+                        <label for="mode-pronunciation-meaning">発音 + 意味を表示してスペルを入力</label>
+                    </div>
+                    <div class="mode-option">
+                        <input type="radio" id="mode-pronunciation-only" name="lesson-mode" value="pronunciation-only">
+                        <label for="mode-pronunciation-only">発音のみを表示してスペルを入力</label>
+                    </div>
+                </div>
+                
+                <div class="custom-lesson-buttons">
+                    <button class="start-custom-btn" onclick="startCustomLesson()">スタート</button>
+                    <button class="cancel-custom-btn" onclick="cancelCustomLesson()">キャンセル</button>
                 </div>
             </div>
 
@@ -866,6 +989,12 @@
     <script>
         // Web Audio API関連の変数
         let audioContext = null;
+        
+        // カスタムレッスン関連の変数
+        let customWords = [];
+        let lessonMode = 'full'; // 'full', 'pronunciation-meaning', 'pronunciation-only'
+        let isCustomLesson = false;
+        let autoProgressTimer = null;
         
         // AudioContextの初期化（ユーザー操作後に実行）
         function initAudioContext() {
@@ -993,6 +1122,127 @@
             }
         }
         
+        // カスタム単語をlocalStorageから読み込み
+        function loadCustomWords() {
+            const saved = localStorage.getItem('customWords');
+            if (saved) {
+                try {
+                    return saved;
+                } catch (e) {
+                    console.error('カスタム単語の読み込みに失敗:', e);
+                    return '';
+                }
+            }
+            return '';
+        }
+        
+        // カスタム単語をlocalStorageに保存
+        function saveCustomWords(wordsText) {
+            try {
+                localStorage.setItem('customWords', wordsText);
+            } catch (e) {
+                console.error('カスタム単語の保存に失敗:', e);
+            }
+        }
+        
+        // カスタムレッスン設定を表示
+        function showCustomLessonSetup() {
+            document.querySelector('.typing-area').style.display = 'none';
+            document.querySelector('.keyboard-display-container').style.display = 'none';
+            document.querySelector('.score-display').style.display = 'none';
+            document.getElementById('custom-lesson-setup').style.display = 'block';
+            document.getElementById('back-to-title-btn').style.display = 'none';
+            
+            // 保存された単語を読み込み、なければサンプル単語を設定
+            const savedWords = loadCustomWords();
+            if (savedWords) {
+                document.getElementById('custom-words-input').value = savedWords;
+            } else {
+                document.getElementById('custom-words-input').value = 'apple, りんご\nbanana, バナナ\norange, オレンジ\nbook, 本\nwater, 水';
+            }
+            document.getElementById('mode-full').checked = true;
+        }
+        
+        // カスタムレッスンをキャンセル
+        function cancelCustomLesson() {
+            document.getElementById('custom-lesson-setup').style.display = 'none';
+            backToTitle();
+        }
+        
+        // 入力された単語を解析
+        function parseCustomWords(input) {
+            const lines = input.trim().split('\n');
+            const words = [];
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (line === '') continue;
+                
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    const word = parts[0].trim();
+                    const meaning = parts.slice(1).join(',').trim();
+                    
+                    if (word && meaning) {
+                        words.push({ word, meaning });
+                    }
+                }
+            }
+            
+            return words;
+        }
+        
+        // カスタムレッスンを開始
+        function startCustomLesson() {
+            const input = document.getElementById('custom-words-input').value;
+            const selectedMode = document.querySelector('input[name="lesson-mode"]:checked').value;
+            
+            // 入力値をバリデーション
+            if (!input.trim()) {
+                alert('単語を入力してください。');
+                return;
+            }
+            
+            customWords = parseCustomWords(input);
+            
+            if (customWords.length === 0) {
+                alert('正しい形式で単語を入力してください。\n例: apple, りんご');
+                return;
+            }
+            
+            if (customWords.length > 50) {
+                alert('単語数は50個以下にしてください。');
+                return;
+            }
+            
+            // 単語をlocalStorageに保存
+            saveCustomWords(input);
+            
+            // モードを設定
+            lessonMode = selectedMode;
+            isCustomLesson = true;
+            
+            // レベル10でゲームを開始
+            currentLevel = 10;
+            
+            // レベルリストのカスタムレッスンに単語を設定
+            const customLevel = levelLists.find(level => level.level === 10);
+            if (customLevel) {
+                customLevel.words = customWords;
+            }
+            
+            // UIをゲームモードに変更
+            document.getElementById('custom-lesson-setup').style.display = 'none';
+            
+            // ゲーム画面の要素を表示
+            document.querySelector('.typing-area').style.display = 'block';
+            document.querySelector('.keyboard-display-container').style.display = 'block';
+            document.getElementById('back-to-title-btn').style.display = 'block';
+            document.querySelector('.level-display').style.display = 'inline-block';
+            
+            initGame();
+        }
+        
         // 正解時に効果音を再生する関数
         function playCorrectSound(word = "good") {
             if (window.speechSynthesis) {
@@ -1011,7 +1261,13 @@
         function initGame() {
             const fullWordList = [...levelLists.find(level => level.level === currentLevel).words];
             shuffleArray(fullWordList);
-            words = fullWordList.slice(0, 10);
+            
+            // カスタムレッスンの場合は全ての単語を使用、それ以外は10個まで
+            if (isCustomLesson) {
+                words = fullWordList;
+            } else {
+                words = fullWordList.slice(0, 10);
+            }
             
             currentWordIndex = 0;
             correctCount = 0;
@@ -1180,20 +1436,66 @@
             }
         }
 
+        // 部分的に表示された単語を更新する関数
+        function updatePartialWordDisplay() {
+            if (!isCustomLesson || lessonMode === 'full') {
+                return; // 通常モードでは何もしない
+            }
+            
+            const currentWord = words[currentWordIndex].word;
+            const userInput = wordInput.value;
+            let displayHTML = '';
+            
+            for (let i = 0; i < currentWord.length; i++) {
+                if (i < userInput.length && userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
+                    // 正しく入力された文字は表示
+                    displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                } else {
+                    // まだ入力されていない文字は黒丸
+                    displayHTML += '<span style="color: #666;">●</span>';
+                }
+            }
+            
+            wordDisplay.innerHTML = displayHTML;
+        }
+        
         function displayWord() {
             if (currentWordIndex < words.length) {
                 const currentWord = words[currentWordIndex];
                 
                 if (currentWord && currentWord.word) {
-                    wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
-                    meaningDisplay.textContent = currentWord.meaning;
+                    // カスタムレッスンのモードに応じて単語表示を制御
+                    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                        // 発音のみまたは発音+意味モード：黒丸で単語を非表示
+                        let hiddenHTML = '';
+                        for (let i = 0; i < currentWord.word.length; i++) {
+                            hiddenHTML += '<span style="color: #666;">●</span>';
+                        }
+                        wordDisplay.innerHTML = hiddenHTML;
+                    } else {
+                        // 通常モード：単語を表示
+                        wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                    }
+                    
+                    // モードに応じて意味表示を制御
+                    if (isCustomLesson && lessonMode === 'pronunciation-only') {
+                        meaningDisplay.style.display = 'none';
+                    } else {
+                        meaningDisplay.textContent = currentWord.meaning;
+                        meaningDisplay.style.display = 'block';
+                    }
+                    
                     feedback.textContent = '';
                     feedback.className = 'feedback';
+                    
+                    // 入力フィールドは全モードで表示
+                    wordInput.style.display = 'inline-block';
                     wordInput.value = '';
                     wordInput.focus();
                     
                     speakWord(currentWord.word);
                     
+                    // キーボードハイライトを表示
                     highlightNextKey();
                     
                     // 新しい単語を表示するたびにミス状態をリセット
@@ -1266,6 +1568,11 @@
                 return true;
             }
             
+            // Backspaceキーの処理
+            if (e.key === 'Backspace') {
+                return true; // Backspaceは常に許可
+            }
+            
             const currentWord = words[currentWordIndex].word;
             const currentPosition = wordInput.value.length;
             
@@ -1312,8 +1619,12 @@
         }
 
         function checkInputRealtime() {
+            
             const currentWord = words[currentWordIndex].word;
             const userInput = wordInput.value.trim();
+            
+            // カスタムレッスンの非表示モードでの部分表示更新
+            updatePartialWordDisplay();
             
             if (userInput.toLowerCase() === currentWord.toLowerCase()) {
                 // 単語全体を緑色にする（全ての文字を正解状態にする）
@@ -1379,7 +1690,6 @@
                 initAudioContext();
             }
             
-            
             if (e.key === 'Enter') {
                 if (!gameActive) {
                     if (currentWordIndex >= words.length) {
@@ -1387,6 +1697,19 @@
                     }
                 }
             } else if (gameActive) {
+                // Backspaceの特別な処理
+                if (e.key === 'Backspace') {
+                    // Backspace音を再生
+                    playTypingSound();
+                    
+                    // 入力後に表示を更新
+                    setTimeout(() => {
+                        updatePartialWordDisplay();
+                        highlightNextKey();
+                    }, 10);
+                    return; // 以下の処理をスキップ
+                }
+                
                 if (validateKeyInput(e)) {
                     // 正しいキー入力の場合
                     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1434,6 +1757,15 @@
         wordInput.addEventListener('input', () => {
             if (gameActive) {
                 checkInputRealtime();
+            }
+        });
+        
+        // キー入力時にも部分表示を更新（keyupで入力後に実行）
+        wordInput.addEventListener('keyup', (e) => {
+            if (gameActive && (e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                // 入力値が更新された後に部分表示を更新
+                updatePartialWordDisplay();
+                highlightNextKey();
             }
         });
 
@@ -1508,6 +1840,16 @@
                             s.classList.remove('active');
                         }
                     });
+                    
+                    // カスタムレッスンの場合は設定画面を表示
+                    if (selectedLevel === 10) {
+                        showCustomLessonSetup();
+                        return;
+                    }
+                    
+                    // 通常のレベルの場合
+                    isCustomLesson = false;
+                    lessonMode = 'full';
                     
                     // レベル表示を表示
                     document.querySelector('.level-display').style.display = 'inline-block';
@@ -1738,6 +2080,10 @@
                 }
             }
             
+            // カスタムレッスンのクリーンアップ
+            isCustomLesson = false;
+            lessonMode = 'full';
+            
             // タイマーをリセット
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -1771,6 +2117,15 @@
             
             // レベル表示を非表示
             document.querySelector('.level-display').style.display = 'none';
+            
+            // カスタムレッスン設定画面を非表示
+            document.getElementById('custom-lesson-setup').style.display = 'none';
+            
+            // UIをリセット
+            document.querySelector('.typing-area').style.display = 'block';
+            document.querySelector('.keyboard-display-container').style.display = 'block';
+            document.getElementById('word-input').style.display = 'inline-block';
+            document.getElementById('meaning').style.display = 'block';
             
             // 記録を表示
             showRecords();

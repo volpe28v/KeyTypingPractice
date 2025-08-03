@@ -430,6 +430,11 @@ const levelLists = [
         { word: "Need more coffee.", meaning: "コーヒーが必要です。" },
         { word: "Documentation updated.", meaning: "ドキュメント更新完了。" }
         ]
+    },
+    {
+        level: 10,
+        description: "カスタムレッスン",
+        words: []  // カスタム単語はユーザーが入力時に設定
     }
 
 ];
