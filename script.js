@@ -581,6 +581,7 @@ class UIManager {
         this.levelDisplay = document.getElementById('level');
         this.levelDescDisplay = document.getElementById('level-desc');
         this.timerDisplay = document.getElementById('timer-display');
+        this.replayAudioBtn = document.getElementById('replay-audio-btn');
     }
     
     // タイマー表示を更新
@@ -669,6 +670,7 @@ class UIManager {
         this.meaningDisplay.textContent = 'レッスンを選んでゲームスタート！';
         this.timerDisplay.textContent = "00.00";
         this.timerDisplay.style.display = 'none'; // タイトル画面ではタイマー表示を非表示
+        this.replayAudioBtn.style.display = 'none'; // タイトル画面では音声再生ボタンを非表示
         this.wordInput.value = '';
         this.wordInput.placeholder = "";
         this.feedback.textContent = '';
@@ -837,6 +839,16 @@ function playMistypeSound() {
 
 function speakWord(word) {
     return audioManager.speakWord(word);
+}
+
+// 現在の単語の発音を再生する関数
+function replayCurrentWord() {
+    if (gameActive && currentWordIndex < words.length) {
+        const currentWord = words[currentWordIndex];
+        if (currentWord && currentWord.word) {
+            speakWord(currentWord.word);
+        }
+    }
 }
 
 // カスタム単語をlocalStorageから読み込み
@@ -1488,6 +1500,9 @@ function updatePartialWordDisplay() {
 function displayWord() {
     if (currentWordIndex < words.length) {
         const currentWord = words[currentWordIndex];
+        
+        // 音声再生ボタンを表示
+        uiManager.replayAudioBtn.style.display = 'block';
         
         if (currentWord && currentWord.word) {
             // 段階的練習モードの初期化

@@ -149,6 +149,31 @@ body {
     min-width: 1.2rem;
 }
 
+.replay-audio-btn {
+    background-color: rgba(0, 255, 170, 0.2);
+    border: 2px solid #00ffaa;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    color: #00ffaa;
+    cursor: pointer;
+    margin: 10px auto;
+    display: block;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+}
+
+.replay-audio-btn:hover {
+    background-color: rgba(0, 255, 170, 0.4);
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.6);
+    transform: scale(1.1);
+}
+
+.replay-audio-btn:active {
+    transform: scale(0.95);
+}
+
 .meaning {
     font-size: 1.2rem;
     margin-bottom: 20px;
