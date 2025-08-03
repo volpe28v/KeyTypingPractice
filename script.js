@@ -362,6 +362,41 @@ class LessonManager {
         alert('単語リストを更新しました！');
         return true;
     }
+
+    // レッスンを削除
+    deleteLesson(lessonId, customLessons, updateLessonListCallback) {
+        const lessonIndex = customLessons.findIndex(lesson => lesson.id === lessonId);
+        if (lessonIndex === -1) {
+            alert('削除対象のレッスンが見つかりません。');
+            return false;
+        }
+        
+        const lessonName = customLessons[lessonIndex].name;
+        
+        // 確認ダイアログを表示
+        if (!confirm(`「${lessonName}」を削除しますか？\nこの操作は取り消せません。`)) {
+            return false;
+        }
+        
+        // レッスンを配列から削除
+        customLessons.splice(lessonIndex, 1);
+        
+        // ローカルストレージに保存
+        this.storageManager.saveCustomLessons(customLessons);
+        
+        // 記録も削除
+        const records = this.storageManager.loadRecords();
+        delete records[`lesson${lessonId}`];
+        this.storageManager.saveRecords(records);
+        
+        // レッスン一覧を更新
+        if (updateLessonListCallback) {
+            updateLessonListCallback();
+        }
+        
+        alert(`レッスン「${lessonName}」を削除しました。`);
+        return true;
+    }
 }
 
 // LessonManagerのインスタンスを作成
@@ -625,6 +660,7 @@ class UIManager {
         }
         this.meaningDisplay.textContent = 'Enterキーを押して再挑戦';
         this.wordInput.placeholder = "";
+        // タイマー表示は結果表示（スコア表示）のみで表示するため、ここでは表示しない
     }
     
     // タイトル画面の表示
@@ -632,6 +668,7 @@ class UIManager {
         this.wordDisplay.innerHTML = '<span class="game-title">タイピングマスター</span>';
         this.meaningDisplay.textContent = 'レッスンを選んでゲームスタート！';
         this.timerDisplay.textContent = "00.00";
+        this.timerDisplay.style.display = 'none'; // タイトル画面ではタイマー表示を非表示
         this.wordInput.value = '';
         this.wordInput.placeholder = "";
         this.feedback.textContent = '';
@@ -969,6 +1006,24 @@ function cancelLessonMode() {
     backToTitle();
 }
 
+// 選択されたレッスンを削除
+function deleteSelectedLesson() {
+    if (!selectedLessonForMode) {
+        alert('削除対象のレッスンが選択されていません。');
+        return;
+    }
+    
+    const { lesson } = selectedLessonForMode;
+    const success = lessonManager.deleteLesson(lesson.id, customLessons, updateLessonList);
+    
+    if (success) {
+        // 削除成功時はレッスンモード選択画面を閉じてタイトルに戻る
+        selectedLessonForMode = null;
+        document.getElementById('lesson-mode-selection').style.display = 'none';
+        backToTitle();
+    }
+}
+
 // カスタムレッスンをキャンセル
 function cancelCustomLesson() {
     document.getElementById('custom-lesson-setup').style.display = 'none';
@@ -1283,8 +1338,12 @@ function startTimer() {
     timerStarted = true;
     timerInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        timerDisplay.textContent = formatTime(elapsedTime);
+        // ゲーム中はタイマー表示を更新しない（表示は非表示のまま）
+        // timerDisplay.textContent = formatTime(elapsedTime);
     }, 10);
+    
+    // タイマー表示を非表示にする
+    timerDisplay.style.display = 'none';
     
     hideRecords();
     
@@ -1503,6 +1562,8 @@ function displayWord() {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+        
+        // タイマー表示は結果表示（スコア表示）のみで行うため、ここでは更新しない
         
         // レッスンごとに記録を保存
         if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
