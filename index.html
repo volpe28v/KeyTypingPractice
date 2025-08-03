@@ -907,6 +907,10 @@
                         <input type="radio" id="mode-pronunciation-only" name="lesson-mode" value="pronunciation-only">
                         <label for="mode-pronunciation-only">発音のみを表示してスペルを入力</label>
                     </div>
+                    <div class="mode-option">
+                        <input type="radio" id="mode-progressive" name="lesson-mode" value="progressive">
+                        <label for="mode-progressive">段階的練習（スペル全表示→徐々に隠す→全隠し）</label>
+                    </div>
                 </div>
                 
                 <div class="custom-lesson-buttons">
@@ -992,9 +996,13 @@
         
         // カスタムレッスン関連の変数
         let customWords = [];
-        let lessonMode = 'full'; // 'full', 'pronunciation-meaning', 'pronunciation-only'
+        let lessonMode = 'full'; // 'full', 'pronunciation-meaning', 'pronunciation-only', 'progressive'
         let isCustomLesson = false;
         let autoProgressTimer = null;
+        
+        // 段階的練習モード関連の変数
+        let progressiveStep = 0; // 現在の段階（0: 全表示, 1: 最後1文字隠す, 2: 最後2文字隠す, ...）
+        let maxProgressiveSteps = 0; // 最大段階数（単語の文字数）
         
         // AudioContextの初期化（ユーザー操作後に実行）
         function initAudioContext() {
@@ -1436,10 +1444,74 @@
             }
         }
 
+        // 段階的練習モードの表示を更新する関数
+        function updateProgressiveDisplay() {
+            const currentWord = words[currentWordIndex].word;
+            const userInput = wordInput.value.trim();
+            let displayHTML = '';
+            
+            // 表示する文字数を計算（全体 - 隠す文字数）
+            const visibleCharCount = Math.max(0, currentWord.length - progressiveStep);
+            
+            // 入力でエラーがあるかチェック
+            let firstErrorIndex = -1;
+            for (let i = 0; i < userInput.length; i++) {
+                if (i >= currentWord.length || userInput[i].toLowerCase() !== currentWord[i].toLowerCase()) {
+                    firstErrorIndex = i;
+                    break;
+                }
+            }
+            
+            for (let i = 0; i < currentWord.length; i++) {
+                if (i < visibleCharCount) {
+                    // 常に表示する部分（入力に応じてスタイル変更）
+                    if (i < userInput.length) {
+                        if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+                            if (i === firstErrorIndex) {
+                                displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            } else {
+                                displayHTML += `<span>${currentWord[i]}</span>`;
+                            }
+                        } else {
+                            displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        }
+                    } else {
+                        displayHTML += `<span>${currentWord[i]}</span>`;
+                    }
+                } else {
+                    // 隠し部分
+                    if (i < userInput.length) {
+                        // 入力済みの文字は隠し部分でも表示
+                        if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+                            if (i === firstErrorIndex) {
+                                displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            } else {
+                                displayHTML += '<span style="color: #666;">●</span>';
+                            }
+                        } else {
+                            // 正解の文字は緑色で表示
+                            displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        }
+                    } else {
+                        // 未入力の文字は黒丸
+                        displayHTML += '<span style="color: #666;">●</span>';
+                    }
+                }
+            }
+            
+            wordDisplay.innerHTML = displayHTML;
+        }
+        
         // 部分的に表示された単語を更新する関数
         function updatePartialWordDisplay() {
             if (!isCustomLesson || lessonMode === 'full') {
                 return; // 通常モードでは何もしない
+            }
+            
+            // 段階的練習モードの場合は専用関数を使用
+            if (lessonMode === 'progressive') {
+                updateProgressiveDisplay();
+                return;
             }
             
             const currentWord = words[currentWordIndex].word;
@@ -1502,8 +1574,21 @@
                 const currentWord = words[currentWordIndex];
                 
                 if (currentWord && currentWord.word) {
+                    // 段階的練習モードの初期化
+                    if (isCustomLesson && lessonMode === 'progressive') {
+                        progressiveStep = 0;
+                        maxProgressiveSteps = currentWord.word.length;
+                        
+                        // 入力フィールドを確実にクリア
+                        wordInput.value = '';
+                        
+                        updateProgressiveDisplay();
+                        
+                        // 最初の段階でも発音
+                        speakWord(currentWord.word);
+                    }
                     // カスタムレッスンのモードに応じて単語表示を制御
-                    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                    else if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
                         // 発音のみまたは発音+意味モード：黒丸で単語を非表示
                         let hiddenHTML = '';
                         for (let i = 0; i < currentWord.word.length; i++) {
@@ -1521,6 +1606,11 @@
                     } else {
                         meaningDisplay.textContent = currentWord.meaning;
                         meaningDisplay.style.display = 'block';
+                        
+                        // 段階的練習モードの場合は現在の進行状況も表示
+                        if (isCustomLesson && lessonMode === 'progressive') {
+                            meaningDisplay.textContent = `${currentWord.meaning} (段階的練習: ${progressiveStep}/${maxProgressiveSteps})`;
+                        }
                     }
                     
                     feedback.textContent = '';
@@ -1531,7 +1621,10 @@
                     wordInput.value = '';
                     wordInput.focus();
                     
-                    speakWord(currentWord.word);
+                    // 段階的練習モード以外では発音（段階的練習は上で既に発音済み）
+                    if (!(isCustomLesson && lessonMode === 'progressive')) {
+                        speakWord(currentWord.word);
+                    }
                     
                     // キーボードハイライトを表示
                     highlightNextKey();
@@ -1640,8 +1733,8 @@
         }
 
         function highlightWrongChar(position) {
-            // スペル隠しモードでは何もしない（updatePartialWordDisplayで処理する）
-            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+            // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理する）
+            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive')) {
                 return;
             }
             
@@ -1670,57 +1763,122 @@
             updatePartialWordDisplay();
             
             if (userInput.toLowerCase() === currentWord.toLowerCase()) {
-                // 単語全体を緑色にする（全ての文字を正解状態にする）
-                // スペル隠しモードでは現在の表示を維持して色だけ変更
-                if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
-                    const spans = wordDisplay.querySelectorAll('span');
-                    spans.forEach((span, i) => {
-                        span.textContent = currentWord[i];
-                        span.className = 'correct-char';
-                        span.style.color = '';
-                    });
-                } else {
+                // 段階的練習モードの処理
+                if (isCustomLesson && lessonMode === 'progressive') {
+                    // 全文字を緑色で表示
                     let correctHTML = '';
                     for (let i = 0; i < currentWord.length; i++) {
                         correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                     }
                     wordDisplay.innerHTML = correctHTML;
-                }
-                
-                // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
-                if (!currentWordMistake) {
-                    feedback.textContent = 'Excellent!';
-                    // 正解効果音を再生（ミスなし）
-                    playCorrectSound("excellent");
-                } else {
-                    feedback.textContent = 'Good!';
-                    // 正解効果音を再生（ミスあり）
-                    playCorrectSound("good");
-                }
-                feedback.className = 'feedback correct';
-                
-                // 遅延を追加して、緑色の状態を見えるようにする
-                setTimeout(() => {
-                    currentWordIndex++;
-                    correctCount++;
                     
-                    updateProgressBar();
-                    displayWord();
-                }, 500); // 500ミリ秒の遅延
+                    // 段階を進める
+                    progressiveStep++;
+                    
+                    if (progressiveStep <= maxProgressiveSteps) {
+                        // まだ段階が残っている場合
+                        feedback.textContent = `ステップ ${progressiveStep}/${maxProgressiveSteps} クリア！`;
+                        feedback.className = 'feedback correct';
+                        
+                        // 正解効果音を再生
+                        if (!currentWordMistake) {
+                            playCorrectSound("excellent");
+                        } else {
+                            playCorrectSound("good");
+                        }
+                        
+                        // 遅延後に次の段階へ
+                        setTimeout(() => {
+                            wordInput.value = '';
+                            currentWordMistake = false; // ミス状態をリセット
+                            updateProgressiveDisplay();
+                            
+                            // 段階が変わったら発音
+                            speakWord(currentWord);
+                            
+                            wordInput.focus();
+                        }, 1000);
+                    } else {
+                        // 全段階完了（最後の段階は全隠し状態での成功）
+                        feedback.textContent = 'Complete!';
+                        feedback.className = 'feedback correct';
+                        
+                        // 正解効果音を再生
+                        if (!currentWordMistake) {
+                            playCorrectSound("excellent");
+                        } else {
+                            playCorrectSound("good");
+                        }
+                        
+                        // 遅延後に次の単語へ
+                        setTimeout(() => {
+                            currentWordIndex++;
+                            correctCount++;
+                            
+                            // 入力フィールドをクリア
+                            wordInput.value = '';
+                            
+                            updateProgressBar();
+                            displayWord();
+                        }, 1500);
+                    }
+                }
+                // その他のモードの処理
+                else {
+                    // 単語全体を緑色にする（全ての文字を正解状態にする）
+                    // スペル隠しモードでは現在の表示を維持して色だけ変更
+                    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
+                        const spans = wordDisplay.querySelectorAll('span');
+                        spans.forEach((span, i) => {
+                            span.textContent = currentWord[i];
+                            span.className = 'correct-char';
+                            span.style.color = '';
+                        });
+                    } else {
+                        let correctHTML = '';
+                        for (let i = 0; i < currentWord.length; i++) {
+                            correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        }
+                        wordDisplay.innerHTML = correctHTML;
+                    }
+                    
+                    // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
+                    if (!currentWordMistake) {
+                        feedback.textContent = 'Excellent!';
+                        // 正解効果音を再生（ミスなし）
+                        playCorrectSound("excellent");
+                    } else {
+                        feedback.textContent = 'Good!';
+                        // 正解効果音を再生（ミスあり）
+                        playCorrectSound("good");
+                    }
+                    feedback.className = 'feedback correct';
+                    
+                    // 遅延を追加して、緑色の状態を見えるようにする
+                    setTimeout(() => {
+                        currentWordIndex++;
+                        correctCount++;
+                        
+                        updateProgressBar();
+                        displayWord();
+                    }, 500); // 500ミリ秒の遅延
+                }
                 
-                // 入力フィールドを一時的に無効化して、連続入力を防止
-                wordInput.disabled = true;
-                setTimeout(() => {
-                    wordInput.disabled = false;
-                    wordInput.focus(); // フォーカスを再設定
-                }, 500);
+                // 段階的練習モード以外では入力フィールドを一時的に無効化
+                if (!(isCustomLesson && lessonMode === 'progressive')) {
+                    wordInput.disabled = true;
+                    setTimeout(() => {
+                        wordInput.disabled = false;
+                        wordInput.focus(); // フォーカスを再設定
+                    }, 500);
+                }
                 
                 return;
             }
             
-            // スペル隠しモードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
-            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
-                // スペル隠しモードでは何もしない（updatePartialWordDisplayで処理済み）
+            // スペル隠しモードと段階的練習モードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
+            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive')) {
+                // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理済み）
             } else {
                 // 通常モードでは全文字をハイライト表示
                 let highlightedHTML = '';
