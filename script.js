@@ -1116,20 +1116,25 @@ function validateKeyInput(e) {
     const isCorrect = expectedChar === inputChar;
     
     if (!isCorrect && e.key !== 'Shift') {
-        mistakeCount++;
-        
-        // 現在の単語のミス状態を記録
-        currentWordMistake = true;
-        
-        // 段階的練習モードでの連続ミス処理
+        // 段階的練習モードの場合、表示されている文字のミスはカウントしない
         if (isCustomLesson && lessonMode === 'progressive') {
-            // 同じ文字位置でのミスかチェック
-            if (currentPosition === currentCharPosition) {
-                consecutiveMistakes++;
-            } else {
-                // 新しい文字位置なので連続ミス数をリセット
-                consecutiveMistakes = 1;
-                currentCharPosition = currentPosition;
+            const currentWord = words[currentWordIndex].word;
+            const visibleCharCount = Math.max(0, currentWord.length - progressiveStep);
+            
+            // 隠されている文字でのミスのみカウント
+            if (currentPosition >= visibleCharCount) {
+                mistakeCount++;
+                currentWordMistake = true;
+                
+                // 連続ミス処理
+                // 同じ文字位置でのミスかチェック
+                if (currentPosition === currentCharPosition) {
+                    consecutiveMistakes++;
+                } else {
+                    // 新しい文字位置なので連続ミス数をリセット
+                    consecutiveMistakes = 1;
+                    currentCharPosition = currentPosition;
+                }
             }
             
             // 3回連続ミスで進捗を戻す
@@ -1156,6 +1161,10 @@ function validateKeyInput(e) {
                     wordInput.focus();
                 }, 1000);
             }
+        } else {
+            // 通常モードでは全てのミスをカウント
+            mistakeCount++;
+            currentWordMistake = true;
         }
         
         highlightWrongChar(currentPosition);
