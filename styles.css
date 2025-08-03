@@ -1,0 +1,1049 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #0a0a1a;
+    color: #00ffaa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.main-container {
+    display: flex;
+    width: 90%;
+    max-width: 1200px;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.game-container {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.records-sidebar {
+    flex: 1;
+    max-width: 400px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+    margin-left: 10px;
+}
+
+.game-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #00ffaa;
+    color: #00ffaa;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.records-sidebar h2 {
+    color: #ff00ff;
+    font-size: 1.3rem;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 1px solid #00ffaa;
+    padding-bottom: 5px;
+}
+
+.records-sidebar h3 {
+    color: #ff00ff;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-size: 1.1rem;
+}
+
+.records-sidebar ol {
+    color: #ffcc00;
+    margin-left: 15px;
+    padding-left: 10px;
+    font-size: 0.9rem;
+}
+
+.records-sidebar li {
+    margin-bottom: 3px;
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .records-sidebar {
+        margin-top: 20px;
+        position: static;
+        max-width: 100%;
+        margin-left: 0;
+    }
+    
+    .game-container {
+        width: 100%;
+    }
+
+    .level-record {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .level-record h3 {
+        margin: 0;
+        flex: 1;
+    }
+
+    .best-time-display {
+        flex: 1;
+        text-align: right;
+    }
+}
+
+.level-display {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #ff00ff;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.typing-area {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    position: relative;
+}
+
+.word-display {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #ffffff;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+}
+
+.word-display span {
+    display: inline-block;
+    min-width: 1.2rem;
+}
+
+.meaning {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #ffcc00;
+}
+
+.timer-display {
+    font-size: 1.5rem;
+    text-align: center;
+    color: #ff00ff;
+    margin-bottom: 15px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    padding: 5px 10px;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.input-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+#word-input {
+    width: 80%;
+    padding: 10px;
+    font-size: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #00ffaa;
+    border-radius: 5px;
+    color: #ffffff;
+    text-align: center;
+}
+
+#word-input:focus {
+    outline: none;
+    box-shadow: 0 0 10px #00ffaa;
+}
+
+.feedback {
+    height: 30px;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.correct {
+    color: #00ff00;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.incorrect {
+    color: #ff0000;
+}
+
+.progress {
+    width: 100%;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00ffaa, #00aaff);
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 10px;
+}
+
+.score-display {
+    font-size: 1.3rem;
+    margin-top: 20px;
+    color: #ffcc00;
+    display: none;
+    text-align: center;
+    padding: 10px 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+.race-track {
+    width: 100%;
+    height: 300px;
+    background-color: #222233;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #00ffaa;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.track {
+    width: 90%;
+    height: 90%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.car {
+    width: 30px;
+    height: 20px;
+    background-color: #ff0066;
+    position: absolute;
+    border-radius: 5px;
+    transform-origin: center;
+    transition: transform 0.1s;
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(255, 0, 102, 0.7);
+}
+
+.car::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 20%, rgba(255, 255, 255, 0.8) 50%, transparent 80%);
+    animation: carLight 1s infinite;
+}
+
+@keyframes carLight {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
+}
+
+.instructions {
+    margin-top: 20px;
+    text-align: center;
+    color: #aaaaaa;
+    font-size: 0.9rem;
+}
+
+.game-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ff0000;
+    font-size: 3rem;
+    display: none;
+}
+
+.restart-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #ff0066;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.restart-btn:hover {
+    background-color: #ff3385;
+}
+
+.back-to-title-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #333344;
+    color: #00ffaa;
+    border: 1px solid #00ffaa;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: none;
+}
+
+.back-to-title-btn:hover {
+    background-color: #00ffaa;
+    color: #000000;
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.7);
+}
+
+.records-container {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    display: none;
+}
+
+.records-container h3 {
+    color: #ff00ff;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 1.2rem;
+}
+
+.records-container ol {
+    color: #ffcc00;
+    margin-left: 20px;
+    padding-left: 20px;
+}
+
+.records-container li {
+    margin-bottom: 5px;
+}
+
+.clear-records {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.clear-records-btn {
+    margin-top: 15px;
+    background-color: #222233;
+    border: 1px solid #444455;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.clear-records-btn:hover {
+    background-color: #ff0044;
+    box-shadow: 0 0 8px rgba(255, 0, 102, 0.7);
+}
+
+.correct-char {
+    color: #00ff00;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.incorrect-char {
+    color: #ff0000;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.level-selector {
+    cursor: pointer;
+    transition: color 0.3s;
+    position: relative;
+    display: inline-block;
+}
+
+.level-selector:hover {
+    color: #00ffaa;
+}
+
+.level-selector::after {
+    content: '👆';
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.level-selector:hover::after {
+    opacity: 1;
+}
+
+.level-selector.active {
+    color: #00ffaa;
+    text-shadow: 0 0 5px #00ffaa;
+}
+
+.level-selector.active::after {
+    content: '✓';
+    opacity: 1;
+}
+
+.keyboard-display-container {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    animation: keyboardPulse 2s infinite alternate;
+}
+
+.keyboard-display {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+}
+
+.second-row {
+    padding-left: 20px;
+}
+
+.third-row {
+    padding-left: 40px;
+}
+
+.key {
+    width: 40px;
+    height: 40px;
+    background-color: #222233;
+    border: 1px solid #444455;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #ffffff;
+    box-shadow: 0 2px 0 #111122;
+    user-select: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.key[data-key="."], .key[data-key="?"], .key[data-key="'"], .key[data-key="!"], .key[data-key=","] {
+    background-color: #2a2a3a;
+}
+
+.key::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border-radius: 5px;
+    z-index: -1;
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.key::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -2;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.key.highlight {
+    background-color: #ff00ff;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+    transform: translateY(2px) scale(1.1);
+    border-color: #ff66ff;
+    animation: highlightPulse 1.5s infinite alternate;
+}
+
+@keyframes highlightPulse {
+    0% {
+        box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+    }
+    100% {
+        box-shadow: 0 0 25px rgba(255, 0, 255, 0.9);
+    }
+}
+
+.key.highlight::before {
+    background-color: #ff00ff;
+    box-shadow: 0 0 20px 5px rgba(255, 0, 255, 0.7);
+    opacity: 0.5;
+}
+
+.key.correct {
+    background-color: #00ff00;
+    color: #000000;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+    transform: translateY(4px) scale(1.2);
+    z-index: 10;
+}
+
+.key.correct::before {
+    background-color: #00ff00;
+    box-shadow: 0 0 20px 5px rgba(0, 255, 0, 0.7);
+    opacity: 0.7;
+    animation: keyPressTrail 1.5s ease-out;
+}
+
+.key.correct::after {
+    width: 100px;
+    height: 100px;
+    opacity: 0.8;
+    animation: keyPressGlow 1s ease-out;
+}
+
+.key.incorrect {
+    background-color: #ff0000;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+    transform: translateY(4px) scale(1.2);
+    z-index: 10;
+}
+
+.key.incorrect::before {
+    background-color: #ff0000;
+    box-shadow: 0 0 20px 5px rgba(255, 0, 0, 0.7);
+    opacity: 0.7;
+    animation: keyPressTrail 1.5s ease-out;
+}
+
+.key.incorrect::after {
+    width: 100px;
+    height: 100px;
+    opacity: 0.8;
+    animation: keyPressGlow 1s ease-out;
+}
+
+@keyframes keyPressTrail {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+@keyframes keyPressGlow {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        width: 150px;
+        height: 150px;
+        opacity: 0;
+    }
+}
+
+.space-key {
+    width: 200px;
+}
+
+@media (max-width: 768px) {
+    .keyboard-display {
+        padding: 10px;
+    }
+    
+    .key {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .space-key {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .key {
+        width: 25px;
+        height: 25px;
+        font-size: 0.8rem;
+    }
+    
+    .space-key {
+        width: 120px;
+    }
+}
+
+.keyboard-ripple {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: radial-gradient(circle, transparent 0%, transparent 70%, rgba(0, 255, 170, 0.5) 100%);
+    opacity: 0;
+    z-index: -1;
+    transform: scale(0);
+}
+
+.level-record {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px dotted rgba(0, 255, 170, 0.3);
+    padding-bottom: 6px;
+}
+
+.level-record h3 {
+    margin: 0;
+    width: auto;
+    flex: 2;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.best-time-display {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    color: #ffcc00;
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: right;
+    width: auto;
+    flex: 1;
+    margin-left: 10px;
+}
+
+.best-time-display li {
+    margin: 0;
+    padding: 0;
+}
+
+.new-record-message {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50px) scale(0.8);
+    background-color: rgba(255, 204, 0, 0.9);
+    color: #000000;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+}
+
+.shift-key {
+    width: 70px;
+    background-color: #333344;
+}
+
+/* 数字キー行のスタイル */
+.number-row {
+    margin-bottom: 8px;
+}
+
+/* 数字キーと特殊キーのスタイル */
+.key[data-key="0"], .key[data-key="1"], .key[data-key="2"], .key[data-key="3"], 
+.key[data-key="4"], .key[data-key="5"], .key[data-key="6"], .key[data-key="7"], 
+.key[data-key="8"], .key[data-key="9"], .key[data-key="."], .key[data-key="/"], 
+.key[data-key=","], .key[data-key="-"] {
+    background-color: #2a2a3a;
+}
+
+/* キー上の文字表示スタイル */
+.shift-char {
+    display: block;
+    font-size: 1.2rem;
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    color: #ff00ff;
+}
+
+/* シフト必要文字がハイライトされたときのスタイル */
+.key.highlight .shift-char {
+    color: #ffffff;
+    text-shadow: 0 0 5px #ffffff;
+}
+
+/* シフトキーがハイライトされたときの特別なスタイル */
+.key.shift-key.highlight {
+    background-color: #ff00aa;
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 0, 170, 0.7);
+}
+
+/* レッスンモード選択画面のスタイル */
+.lesson-mode-selection {
+    display: none;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+}
+
+.lesson-mode-selection h2 {
+    color: #00ffaa;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.lesson-mode-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.lesson-mode-buttons button {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.start-lesson-btn {
+    background-color: #00ffaa;
+    color: #000;
+}
+
+.start-lesson-btn:hover {
+    background-color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+}
+
+.cancel-lesson-btn {
+    background-color: #666;
+    color: #fff;
+}
+
+.cancel-lesson-btn:hover {
+    background-color: #888;
+}
+
+.lesson-words-edit {
+    margin-bottom: 20px;
+}
+
+.lesson-words-edit h3 {
+    color: #00ffaa;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.edit-toggle {
+    color: #ffcc00;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: normal;
+    transition: color 0.3s;
+}
+
+.edit-toggle:hover {
+    color: #ffffff;
+}
+
+.words-display {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #555;
+    border-radius: 5px;
+    padding: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #ffffff;
+    line-height: 1.4;
+}
+
+.words-display .word-item {
+    margin-bottom: 3px;
+}
+
+.words-edit-area {
+    width: 100%;
+    min-height: 150px;
+    max-height: 200px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #00ffaa;
+    border-radius: 5px;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.words-edit-area:focus {
+    outline: none;
+    border-color: #ffcc00;
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+.words-edit-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.save-words-btn, .cancel-words-edit-btn {
+    padding: 8px 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-words-btn {
+    background-color: #00ffaa;
+    color: #000;
+}
+
+.save-words-btn:hover {
+    background-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+}
+
+.cancel-words-edit-btn {
+    background-color: #666;
+    color: #fff;
+}
+
+.cancel-words-edit-btn:hover {
+    background-color: #888;
+}
+
+/* カスタムレッスン設定画面のスタイル */
+.custom-lesson-setup {
+    display: none;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffaa;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+}
+
+.custom-lesson-setup h2 {
+    color: #00ffaa;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.lesson-name-input {
+    margin-bottom: 15px;
+}
+
+.lesson-name-input label {
+    display: block;
+    color: #00ffaa;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.lesson-name-input input {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #00ffaa;
+    border-radius: 5px;
+    color: #ffffff;
+    padding: 8px 10px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.lesson-name-input input:focus {
+    outline: none;
+    border-color: #ffcc00;
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+.custom-lesson-setup textarea {
+    width: 100%;
+    min-height: 200px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #00ffaa;
+    border-radius: 5px;
+    color: #ffffff;
+    padding: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 20px;
+    resize: vertical;
+}
+
+.custom-lesson-setup textarea:focus {
+    outline: none;
+    box-shadow: 0 0 10px #00ffaa;
+}
+
+.mode-selection {
+    margin-bottom: 20px;
+}
+
+.mode-selection h3 {
+    color: #ffcc00;
+    margin-bottom: 10px;
+}
+
+.mode-option {
+    margin: 10px 0;
+    color: #ffffff;
+}
+
+.mode-option input[type="radio"] {
+    margin-right: 10px;
+    accent-color: #00ffaa;
+}
+
+.mode-option label {
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.custom-lesson-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.custom-lesson-buttons button {
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-lesson-btn {
+    background-color: #ff00ff;
+    color: #fff;
+}
+
+.save-lesson-btn:hover {
+    background-color: #ff44ff;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+}
+
+.start-custom-btn {
+    background-color: #00ffaa;
+    color: #000;
+}
+
+.start-custom-btn:hover {
+    background-color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+}
+
+.cancel-custom-btn {
+    background-color: #666;
+    color: #fff;
+}
+
+.cancel-custom-btn:hover {
+    background-color: #888;
+}
