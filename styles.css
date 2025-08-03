@@ -136,7 +136,7 @@ body {
 }
 
 .word-display {
-    font-size: 2rem;
+    font-size: 3rem;
     margin-bottom: 10px;
     text-align: center;
     color: #ffffff;
@@ -181,16 +181,18 @@ body {
     width: 80%;
     padding: 10px;
     font-size: 1.5rem;
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid #00ffaa;
+    background-color: transparent;
+    border: none;
     border-radius: 5px;
-    color: #ffffff;
+    color: transparent;
     text-align: center;
+    outline: none;
+    caret-color: transparent;
 }
 
 #word-input:focus {
     outline: none;
-    box-shadow: 0 0 10px #00ffaa;
+    box-shadow: none;
 }
 
 .feedback {

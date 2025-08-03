@@ -719,15 +719,22 @@ function loadRecords() {
     records = storageManager.loadRecords();
 }
 
-function addRecord(levelKey, time) {
+function addRecord(levelKey, time, mistakes = 0) {
     if (!records[levelKey]) {
         records[levelKey] = [];
     }
     
-    const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey]) : Infinity;
+    const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey].map(r => r.time || r)) : Infinity;
+    
+    // 新しい記録オブジェクトを作成（後方互換性のため時間のみの古い形式もサポート）
+    const newRecord = {
+        time: time,
+        mistakes: mistakes,
+        date: new Date().toLocaleDateString()
+    };
     
     if (time < currentBestTime) {
-        records[levelKey] = [time];
+        records[levelKey] = [newRecord];
         saveRecords();
         
         showNewRecordMessage();
@@ -750,9 +757,18 @@ function displayBestTimes() {
             lessonRecordsList.innerHTML = '';
             
             if (lessonRecords.length > 0) {
-                const fastestTime = Math.min(...lessonRecords);
+                // 新しい記録形式と古い記録形式を統一的に処理
+                const bestRecord = lessonRecords.reduce((best, current) => {
+                    const currentTime = current.time || current; // 新形式または古形式
+                    const bestTime = best.time || best;
+                    return currentTime < bestTime ? current : best;
+                });
+                
                 const li = document.createElement('li');
-                li.textContent = formatTime(fastestTime);
+                const recordTime = bestRecord.time || bestRecord;
+                const recordMistakes = bestRecord.mistakes !== undefined ? bestRecord.mistakes : 0;
+                
+                li.innerHTML = `${formatTime(recordTime)}<br><small style="color: #999;">ミス:${recordMistakes}回</small>`;
                 lessonRecordsList.appendChild(li);
             } else {
                 const li = document.createElement('li');
@@ -1019,9 +1035,9 @@ function displayWord() {
         // レッスンごとに記録を保存
         if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
             const lessonId = customLessons[currentLessonIndex].id;
-            addRecord(`lesson${lessonId}`, elapsedTime);
+            addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount);
         } else {
-            addRecord(`level${currentLevel}`, elapsedTime);
+            addRecord(`level${currentLevel}`, elapsedTime, mistakeCount);
         }
         
         let totalTypesCount = 0;
@@ -1031,7 +1047,7 @@ function displayWord() {
         
         const accuracyRate = mistakeCount === 0 ? 100 : Math.max(0, Math.round((1 - mistakeCount / totalTypesCount) * 100));
         
-        scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}%`;
+        scoreDisplay.textContent = `クリアタイム: ${formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回`;
         scoreDisplay.style.display = 'block';
         
         const isPerfect = mistakeCount === 0;
