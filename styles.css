@@ -861,6 +861,29 @@ body {
     background-color: #888;
 }
 
+.lesson-title-section {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.lesson-name-edit-input {
+    width: 100%;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid #00ffaa;
+    border-radius: 5px;
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: inherit;
+    transition: all 0.3s;
+}
+
+.lesson-name-edit-input:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+}
+
 .lesson-words-edit {
     margin-bottom: 20px;
 }

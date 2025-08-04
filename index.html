@@ -30,7 +30,10 @@
             
             <!-- レッスンモード選択画面 -->
             <div class="lesson-mode-selection" id="lesson-mode-selection" style="display: none;">
-                <h2 id="selected-lesson-name">レッスン名</h2>
+                <div class="lesson-title-section">
+                    <h2 id="selected-lesson-name">レッスン名</h2>
+                    <input type="text" id="lesson-name-edit-input" class="lesson-name-edit-input" style="display: none;" />
+                </div>
                 
                 <div class="lesson-words-edit">
                     <h3>単語リスト <span class="edit-toggle" onclick="toggleWordsEdit()">[編集]</span></h3>

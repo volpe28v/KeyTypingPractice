@@ -982,6 +982,8 @@ function toggleWordsEdit() {
     const wordsEditArea = document.getElementById('words-edit-area');
     const wordsEditControls = document.getElementById('words-edit-controls');
     const editToggle = document.querySelector('.edit-toggle');
+    const lessonNameH2 = document.getElementById('selected-lesson-name');
+    const lessonNameInput = document.getElementById('lesson-name-edit-input');
     
     if (wordsEditArea.style.display === 'none') {
         // 編集モードに切り替え
@@ -989,6 +991,11 @@ function toggleWordsEdit() {
         wordsEditArea.style.display = 'block';
         wordsEditControls.style.display = 'flex';
         editToggle.textContent = '[キャンセル]';
+        
+        // タイトル編集も有効化
+        lessonNameH2.style.display = 'none';
+        lessonNameInput.style.display = 'block';
+        lessonNameInput.value = selectedLessonForMode.lesson.name;
         
         // 現在の単語リストをテキストエリアに設定
         const lesson = selectedLessonForMode.lesson;
@@ -1012,17 +1019,35 @@ function resetWordsEditMode() {
     const wordsEditArea = document.getElementById('words-edit-area');
     const wordsEditControls = document.getElementById('words-edit-controls');
     const editToggle = document.querySelector('.edit-toggle');
+    const lessonNameH2 = document.getElementById('selected-lesson-name');
+    const lessonNameInput = document.getElementById('lesson-name-edit-input');
     
     wordsDisplay.style.display = 'block';
     wordsEditArea.style.display = 'none';
     wordsEditControls.style.display = 'none';
     editToggle.textContent = '[編集]';
+    
+    // タイトル編集も元に戻す
+    lessonNameH2.style.display = 'block';
+    lessonNameInput.style.display = 'none';
 }
 
 // 単語編集を保存
 function saveWordsEdit() {
+    // タイトルも一緒に保存
+    const newLessonName = document.getElementById('lesson-name-edit-input').value.trim();
+    if (!newLessonName) {
+        alert('レッスン名を入力してください。');
+        return false;
+    }
+    
+    // レッスン名を更新
+    selectedLessonForMode.lesson.name = newLessonName;
+    
     const success = lessonManager.saveWordsEdit(selectedLessonForMode, customLessons, updateLessonList);
     if (success) {
+        // 保存成功時はタイトル表示も更新
+        document.getElementById('selected-lesson-name').textContent = newLessonName;
         resetWordsEditMode();
     }
     return success;
@@ -2226,6 +2251,9 @@ function updateLessonList() {
     
     newLessonRecord.appendChild(newLessonTitle);
     recordsSidebar.insertBefore(newLessonRecord, clearButton);
+    
+    // 記録を表示（重要：この行が欠けていた）
+    displayBestTimes();
 }
 
 function generateLevelRecords() {
