@@ -1120,12 +1120,24 @@ function startCustomLesson() {
         return;
     }
     
+    // レッスンとして保存
+    const saveSuccess = saveNewLesson();
+    if (!saveSuccess) {
+        // 保存に失敗した場合でも、ゲームは開始できるようにする
+        console.warn('レッスンの保存に失敗しましたが、ゲームを開始します。');
+    }
+    
     // 単語をlocalStorageに保存
     saveCustomWords(input);
     
     // モードを設定
     lessonMode = selectedMode;
     isCustomLesson = true;
+    
+    // 保存したレッスンのインデックスを設定
+    if (saveSuccess && customLessons.length > 0) {
+        currentLessonIndex = customLessons.length - 1;
+    }
     
     // レベル10でゲームを開始
     currentLevel = 10;
@@ -1189,6 +1201,13 @@ function initGame() {
     
     gameActive = true;
     timerStarted = false;
+    
+    // フォーカスを確実に設定（少し遅延させて確実性を高める）
+    setTimeout(() => {
+        if (gameActive && !wordInput.disabled) {
+            wordInput.focus();
+        }
+    }, 100);
     
     timerDisplay.textContent = "00.00";
     
@@ -2013,7 +2032,46 @@ window.addEventListener('load', () => {
     backToTitle();
     
     showRecords();
+    
+    // ゲーム中にフォーカスを維持するためのイベントリスナーを追加
+    setupFocusManagement();
 });
+
+// フォーカス管理のセットアップ
+function setupFocusManagement() {
+    // ゲーム画面クリック時にフォーカスを戻す
+    document.addEventListener('click', (e) => {
+        if (gameActive && !wordInput.disabled) {
+            // 一部の要素（ボタンなど）をクリックした場合は除外
+            const clickedElement = e.target;
+            const isInteractiveElement = clickedElement.tagName === 'BUTTON' || 
+                                       clickedElement.tagName === 'INPUT' || 
+                                       clickedElement.tagName === 'SELECT' ||
+                                       clickedElement.classList.contains('level-selector') ||
+                                       clickedElement.classList.contains('clear-records-btn');
+            
+            if (!isInteractiveElement) {
+                wordInput.focus();
+            }
+        }
+    });
+    
+    // ウィンドウフォーカス時にも入力フィールドにフォーカスを戻す
+    window.addEventListener('focus', () => {
+        if (gameActive && !wordInput.disabled) {
+            wordInput.focus();
+        }
+    });
+    
+    // visibility change時にもフォーカスを戻す（タブ切り替え対応）
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && gameActive && !wordInput.disabled) {
+            setTimeout(() => {
+                wordInput.focus();
+            }, 100);
+        }
+    });
+}
 
 function clearRecords() {
     if (confirm('すべての記録をクリアしますか？')) {
