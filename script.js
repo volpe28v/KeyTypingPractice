@@ -1803,6 +1803,9 @@ function checkInputRealtime() {
             }
             wordDisplay.innerHTML = correctHTML;
             
+            // 入力フィールドを即座に無効化して連打を防ぐ
+            wordInput.disabled = true;
+            
             // 段階を進める
             progressiveStep++;
             
@@ -1827,6 +1830,8 @@ function checkInputRealtime() {
                     // 段階が変わったら発音
                     speakWord(currentWord);
                     
+                    // 入力フィールドを再有効化
+                    wordInput.disabled = false;
                     wordInput.focus();
                 }, 1000);
             } else {
@@ -1851,6 +1856,10 @@ function checkInputRealtime() {
                     
                     updateProgressBar();
                     displayWord();
+                    
+                    // 入力フィールドを再有効化
+                    wordInput.disabled = false;
+                    wordInput.focus();
                 }, 1500);
             }
         }
@@ -1975,7 +1984,7 @@ wordInput.addEventListener('keydown', (e) => {
 });
 
 wordInput.addEventListener('input', () => {
-    if (gameActive) {
+    if (gameActive && !wordInput.disabled) {
         checkInputRealtime();
     }
 });
