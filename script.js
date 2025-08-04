@@ -924,6 +924,10 @@ function saveNewLesson() {
 
 // カスタムレッスン設定を表示
 function showCustomLessonSetup() {
+    // 既に開いているレッスンモード選択画面を閉じる
+    document.getElementById('lesson-mode-selection').style.display = 'none';
+    selectedLessonForMode = null;
+    
     document.querySelector('.typing-area').style.display = 'none';
     document.querySelector('.keyboard-display-container').style.display = 'none';
     document.querySelector('.score-display').style.display = 'none';
