@@ -925,13 +925,14 @@ function saveNewLesson() {
 // カスタムレッスン設定を表示
 function showCustomLessonSetup() {
     // 既に開いているレッスンモード選択画面を閉じる
-    document.getElementById('lesson-mode-selection').style.display = 'none';
+    hideModal('lesson-mode-selection');
     selectedLessonForMode = null;
     
     document.querySelector('.typing-area').style.display = 'none';
     document.querySelector('.keyboard-display-container').style.display = 'none';
     document.querySelector('.score-display').style.display = 'none';
-    document.getElementById('custom-lesson-setup').style.display = 'block';
+    showModal('custom-lesson-setup');
+    
     document.getElementById('back-to-title-btn').style.display = 'none';
     
     // 入力フィールドをクリア（新規作成モード）
@@ -954,10 +955,11 @@ function showLessonModeSelection(lessonIndex) {
     document.querySelector('.typing-area').style.display = 'none';
     document.querySelector('.keyboard-display-container').style.display = 'none';
     document.querySelector('.score-display').style.display = 'none';
-    document.getElementById('custom-lesson-setup').style.display = 'none';
+    hideModal('custom-lesson-setup');
     
     // レッスンモード選択画面を表示
-    document.getElementById('lesson-mode-selection').style.display = 'block';
+    showModal('lesson-mode-selection');
+    
     document.getElementById('selected-lesson-name').textContent = lesson.name;
     document.getElementById('back-to-title-btn').style.display = 'none';
     
@@ -1076,7 +1078,7 @@ function startSelectedLesson() {
     words = customWords;
     
     // UIをゲームモードに変更
-    document.getElementById('lesson-mode-selection').style.display = 'none';
+    hideModal('lesson-mode-selection');
     
     // ゲーム画面の要素を表示
     document.querySelector('.typing-area').style.display = 'block';
@@ -1088,7 +1090,7 @@ function startSelectedLesson() {
 
 // レッスンモード選択をキャンセル
 function cancelLessonMode() {
-    document.getElementById('lesson-mode-selection').style.display = 'none';
+    hideModal('lesson-mode-selection');
     selectedLessonForMode = null;
     backToTitle();
 }
@@ -1106,14 +1108,14 @@ function deleteSelectedLesson() {
     if (success) {
         // 削除成功時はレッスンモード選択画面を閉じてタイトルに戻る
         selectedLessonForMode = null;
-        document.getElementById('lesson-mode-selection').style.display = 'none';
+        hideModal('lesson-mode-selection');
         backToTitle();
     }
 }
 
 // カスタムレッスンをキャンセル
 function cancelCustomLesson() {
-    document.getElementById('custom-lesson-setup').style.display = 'none';
+    hideModal('custom-lesson-setup');
     backToTitle();
 }
 
@@ -1174,7 +1176,7 @@ function startCustomLesson() {
     }
     
     // UIをゲームモードに変更
-    document.getElementById('custom-lesson-setup').style.display = 'none';
+    hideModal('custom-lesson-setup');
     
     // ゲーム画面の要素を表示
     document.querySelector('.typing-area').style.display = 'block';
@@ -2062,6 +2064,23 @@ window.addEventListener('load', () => {
     setupFocusManagement();
 });
 
+// 画面表示/非表示のヘルパー関数
+function showModal(elementId) {
+    const element = document.getElementById(elementId);
+    element.style.display = 'block';
+    setTimeout(() => {
+        element.classList.add('show');
+    }, 10);
+}
+
+function hideModal(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.remove('show');
+    setTimeout(() => {
+        element.style.display = 'none';
+    }, 400); // アニメーション完了を待つ
+}
+
 // フォーカス管理のセットアップ
 function setupFocusManagement() {
     // ゲーム画面クリック時にフォーカスを戻す
@@ -2298,10 +2317,10 @@ function backToTitle() {
     document.querySelector('.level-display').style.display = 'none';
     
     // カスタムレッスン設定画面を非表示
-    document.getElementById('custom-lesson-setup').style.display = 'none';
+    hideModal('custom-lesson-setup');
     
     // レッスンモード選択画面を非表示
-    document.getElementById('lesson-mode-selection').style.display = 'none';
+    hideModal('lesson-mode-selection');
     
     // UIをリセット
     document.querySelector('.typing-area').style.display = 'block';

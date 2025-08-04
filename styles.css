@@ -1,3 +1,7 @@
+html {
+    overflow: hidden; /* スクロールバーを完全に非表示 */
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -9,13 +13,15 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    overflow-x: hidden;
+    max-height: 100vh; /* 画面の高さを超えないよう制限 */
+    overflow: hidden;
 }
 
 .main-container {
     display: flex;
     width: 90%;
     max-width: 1200px;
+    max-height: calc(100vh - 40px); /* 上下マージンを考慮 */
     gap: 30px;
     margin-top: 20px;
 }
@@ -30,15 +36,20 @@ body {
 .records-sidebar {
     flex: 1;
     max-width: 400px;
-    background-color: rgba(0, 0, 0, 0.7);
+    max-height: calc(100vh - 80px); /* 画面からはみ出さないよう制限 */
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(10, 10, 26, 0.9));
     border: 2px solid #00ffaa;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
-    height: fit-content;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 
+        0 8px 32px rgba(0, 255, 170, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: sticky;
     top: 20px;
     margin-left: 10px;
+    backdrop-filter: blur(10px);
+    overflow-y: auto; /* 内容が多い場合は内部でスクロール */
 }
 
 .game-title {
@@ -83,6 +94,7 @@ body {
     .main-container {
         flex-direction: column;
         gap: 20px;
+        width: 95%;
     }
     
     .records-sidebar {
@@ -90,10 +102,33 @@ body {
         position: static;
         max-width: 100%;
         margin-left: 0;
+        padding: 20px;
     }
     
     .game-container {
         width: 100%;
+    }
+
+    /* ボタンのモバイル最適化 */
+    .btn {
+        min-width: 44px; /* タッチターゲットサイズ確保 */
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+
+    .btn-group {
+        gap: 12px;
+        justify-content: center;
+    }
+
+    /* カードコンポーネントのモバイル調整 */
+    .lesson-mode-selection,
+    .custom-lesson-setup {
+        max-width: 100%;
+        margin: 10px;
+        padding: 20px;
+        border-radius: 12px;
     }
 
     .level-record {
@@ -444,13 +479,35 @@ body {
 
 .level-selector {
     cursor: pointer;
-    transition: color 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     display: inline-block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.level-selector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 170, 0.1), transparent);
+    transition: left 0.5s;
+    z-index: -1;
 }
 
 .level-selector:hover {
-    color: #00ffaa;
+    color: #ffffff;
+    transform: translateX(3px);
+    background: rgba(0, 255, 170, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 255, 170, 0.2);
+}
+
+.level-selector:hover::before {
+    left: 100%;
 }
 
 .level-selector::after {
@@ -466,8 +523,10 @@ body {
 }
 
 .level-selector.active {
-    color: #00ffaa;
-    text-shadow: 0 0 5px #00ffaa;
+    color: #ffffff;
+    background: rgba(0, 255, 170, 0.1);
+    text-shadow: 0 0 10px #00ffaa;
+    box-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
 }
 
 .level-selector.active::after {
@@ -701,13 +760,13 @@ body {
 }
 
 .level-record {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px dotted rgba(0, 255, 170, 0.3);
-    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+    padding-bottom: 8px;
 }
 
 .level-record h3 {
@@ -797,17 +856,121 @@ body {
     box-shadow: 0 0 15px rgba(255, 0, 170, 0.7);
 }
 
+/* ======== 統一ボタンスタイル ======== */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    min-width: 120px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+.btn:not(:disabled):active {
+    transform: translateY(0);
+}
+
+/* プライマリボタン（メインアクション） */
+.btn-primary {
+    background: linear-gradient(135deg, #00ffaa 0%, #00aaff 100%);
+    color: #000000;
+    box-shadow: 0 4px 15px rgba(0, 255, 170, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(0, 255, 170, 0.4);
+    background: linear-gradient(135deg, #00ff88 0%, #0088ff 100%);
+}
+
+/* セカンダリボタン（補助アクション） */
+.btn-secondary {
+    background: rgba(127, 140, 141, 0.2);
+    color: #ffffff;
+    border: 2px solid #7f8c8d;
+}
+
+.btn-secondary:hover {
+    background: rgba(127, 140, 141, 0.3);
+    border-color: #95a5a6;
+    box-shadow: 0 4px 15px rgba(127, 140, 141, 0.2);
+}
+
+/* 危険ボタン（削除アクション） */
+.btn-danger {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+
+.btn-danger:hover {
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+    background: linear-gradient(135deg, #ff6b7a 0%, #ff5252 100%);
+}
+
+/* 警告ボタン（編集など） */
+.btn-warning {
+    background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 100%);
+    color: #000000;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
+}
+
+.btn-warning:hover {
+    box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
+    background: linear-gradient(135deg, #ffdd22 0%, #ffbb00 100%);
+}
+
+/* ボタングループ */
+.btn-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
 /* レッスンモード選択画面のスタイル */
 .lesson-mode-selection {
     display: none;
     width: 100%;
-    max-width: 600px;
+    max-width: 650px;
     margin: 0 auto;
-    background-color: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(10, 10, 26, 0.9));
     border: 2px solid #00ffaa;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 
+        0 8px 32px rgba(0, 255, 170, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lesson-mode-selection.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 .lesson-mode-selection h2 {
@@ -818,47 +981,23 @@ body {
 
 .lesson-mode-buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 25px;
+    flex-wrap: wrap;
 }
 
-.lesson-mode-buttons button {
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
+/* 既存のボタンクラスを新しい体系に統合 */
 .start-lesson-btn {
-    background-color: #00ffaa;
-    color: #000;
-}
-
-.start-lesson-btn:hover {
-    background-color: #00ff88;
-    box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+    /* 新しいbtn-primaryクラスを適用 */
 }
 
 .delete-lesson-btn {
-    background-color: #ff4444;
-    color: #fff;
-}
-
-.delete-lesson-btn:hover {
-    background-color: #ff6666;
-    box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+    /* 新しいbtn-dangerクラスを適用 */
 }
 
 .cancel-lesson-btn {
-    background-color: #666;
-    color: #fff;
-}
-
-.cancel-lesson-btn:hover {
-    background-color: #888;
+    /* 新しいbtn-secondaryクラスを適用 */
 }
 
 .lesson-title-section {
@@ -885,7 +1024,7 @@ body {
 }
 
 .lesson-words-edit {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .lesson-words-edit h3 {
@@ -952,45 +1091,44 @@ body {
     justify-content: flex-end;
 }
 
-.save-words-btn, .cancel-words-edit-btn {
-    padding: 8px 15px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.words-edit-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
 }
 
 .save-words-btn {
-    background-color: #00ffaa;
-    color: #000;
-}
-
-.save-words-btn:hover {
-    background-color: #00ff88;
-    box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+    /* 新しいbtn btn-primaryクラスを適用 */
 }
 
 .cancel-words-edit-btn {
-    background-color: #666;
-    color: #fff;
-}
-
-.cancel-words-edit-btn:hover {
-    background-color: #888;
+    /* 新しいbtn btn-secondaryクラスを適用 */
 }
 
 /* カスタムレッスン設定画面のスタイル */
 .custom-lesson-setup {
     display: none;
     width: 100%;
-    max-width: 600px;
+    max-width: 650px;
     margin: 0 auto;
-    background-color: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(10, 10, 26, 0.9));
     border: 2px solid #00ffaa;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 0 20px rgba(0, 255, 170, 0.3);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 
+        0 8px 32px rgba(0, 255, 170, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-lesson-setup.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
 .custom-lesson-setup h2 {
@@ -1072,44 +1210,21 @@ body {
 
 .custom-lesson-buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
+    margin-top: 25px;
+    flex-wrap: wrap;
 }
 
-.custom-lesson-buttons button {
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
+/* 既存のボタンクラスを新しい体系に統合 */
 .save-lesson-btn {
-    background-color: #ff00ff;
-    color: #fff;
-}
-
-.save-lesson-btn:hover {
-    background-color: #ff44ff;
-    box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    /* 警告色（保存アクション）: btn btn-warning */
 }
 
 .start-custom-btn {
-    background-color: #00ffaa;
-    color: #000;
-}
-
-.start-custom-btn:hover {
-    background-color: #00ff88;
-    box-shadow: 0 0 15px rgba(0, 255, 170, 0.5);
+    /* プライマリ色（開始アクション）: btn btn-primary */
 }
 
 .cancel-custom-btn {
-    background-color: #666;
-    color: #fff;
-}
-
-.cancel-custom-btn:hover {
-    background-color: #888;
+    /* セカンダリ色（キャンセル）: btn btn-secondary */
 }

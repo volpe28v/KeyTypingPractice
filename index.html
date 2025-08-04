@@ -39,9 +39,9 @@
                     <h3>単語リスト <span class="edit-toggle" onclick="toggleWordsEdit()">[編集]</span></h3>
                     <div id="words-display" class="words-display"></div>
                     <textarea id="words-edit-area" class="words-edit-area" style="display: none;" placeholder="単語, 意味の形式で入力してください"></textarea>
-                    <div id="words-edit-controls" class="words-edit-controls" style="display: none;">
-                        <button class="save-words-btn" onclick="saveWordsEdit()">保存</button>
-                        <button class="cancel-words-edit-btn" onclick="cancelWordsEdit()">キャンセル</button>
+                    <div id="words-edit-controls" class="words-edit-controls btn-group" style="display: none;">
+                        <button class="btn btn-primary save-words-btn" onclick="saveWordsEdit()">保存</button>
+                        <button class="btn btn-secondary cancel-words-edit-btn" onclick="cancelWordsEdit()">キャンセル</button>
                     </div>
                 </div>
                 
@@ -61,10 +61,10 @@
                     </div>
                 </div>
                 
-                <div class="lesson-mode-buttons">
-                    <button class="start-lesson-btn" onclick="startSelectedLesson()">スタート</button>
-                    <button class="delete-lesson-btn" onclick="deleteSelectedLesson()">削除</button>
-                    <button class="cancel-lesson-btn" onclick="cancelLessonMode()">キャンセル</button>
+                <div class="lesson-mode-buttons btn-group">
+                    <button class="btn btn-primary start-lesson-btn" onclick="startSelectedLesson()">スタート</button>
+                    <button class="btn btn-danger delete-lesson-btn" onclick="deleteSelectedLesson()">削除</button>
+                    <button class="btn btn-secondary cancel-lesson-btn" onclick="cancelLessonMode()">キャンセル</button>
                 </div>
             </div>
 
@@ -95,10 +95,10 @@
                     </div>
                 </div>
                 
-                <div class="custom-lesson-buttons">
-                    <button class="save-lesson-btn" onclick="saveNewLesson()">レッスンとして保存</button>
-                    <button class="start-custom-btn" onclick="startCustomLesson()">すぐにスタート</button>
-                    <button class="cancel-custom-btn" onclick="cancelCustomLesson()">キャンセル</button>
+                <div class="custom-lesson-buttons btn-group">
+                    <button class="btn btn-warning save-lesson-btn" onclick="saveNewLesson()">レッスンとして保存</button>
+                    <button class="btn btn-primary start-custom-btn" onclick="startCustomLesson()">すぐにスタート</button>
+                    <button class="btn btn-secondary cancel-custom-btn" onclick="cancelCustomLesson()">キャンセル</button>
                 </div>
             </div>
 
