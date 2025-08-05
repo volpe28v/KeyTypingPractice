@@ -108,6 +108,16 @@ body {
     .game-container {
         width: 100%;
     }
+    
+    /* 小学生向けにモバイルでも文字を大きく */
+    .word-display {
+        font-size: 3.5rem;
+        letter-spacing: 2px;
+    }
+    
+    .meaning {
+        font-size: 1.5rem;
+    }
 
     /* ボタンのモバイル最適化 */
     .btn {
@@ -171,17 +181,17 @@ body {
 }
 
 .word-display {
-    font-size: 4rem;
+    font-size: 5rem;
     margin-bottom: 10px;
     text-align: center;
     color: #ffffff;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     transition: all 0.3s ease;
 }
 
 .word-display span {
     display: inline-block;
-    min-width: 1.2rem;
+    min-width: 1.5rem;
 }
 
 .replay-audio-btn {
@@ -210,10 +220,11 @@ body {
 }
 
 .meaning {
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     margin-bottom: 20px;
     text-align: center;
     color: #ffcc00;
+    font-weight: bold;
 }
 
 .timer-display {
