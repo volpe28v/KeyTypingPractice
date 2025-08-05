@@ -1370,8 +1370,6 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
         records[levelKey] = [];
     }
     
-    const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey].map(r => r.time || r)) : Infinity;
-    
     // 正確率を計算（正解タイプ数 ÷ (正解タイプ数 + ミスタイプ数) × 100）
     const accuracy = mistakes === 0 ? 100 : Math.round((totalTypes / (totalTypes + mistakes)) * 100);
     
@@ -1384,7 +1382,38 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
         date: new Date().toLocaleDateString()
     };
     
-    if (time < currentBestTime) {
+    // 既存の最良記録を取得
+    let shouldSaveNewRecord = false;
+    
+    if (records[levelKey].length === 0) {
+        // 記録がない場合は新記録として保存
+        shouldSaveNewRecord = true;
+    } else {
+        // 既存記録から最良記録を取得（正確率優先、同じ場合は時間優先）
+        const currentBestRecord = records[levelKey].reduce((best, current) => {
+            const currentAccuracy = current.accuracy !== undefined ? current.accuracy : 100;
+            const bestAccuracy = best.accuracy !== undefined ? best.accuracy : 100;
+            const currentTime = current.time || current;
+            const bestTime = best.time || best;
+            
+            if (currentAccuracy > bestAccuracy) {
+                return current;
+            } else if (currentAccuracy === bestAccuracy && currentTime < bestTime) {
+                return current;
+            }
+            return best;
+        });
+        
+        const currentBestAccuracy = currentBestRecord.accuracy !== undefined ? currentBestRecord.accuracy : 100;
+        const currentBestTime = currentBestRecord.time || currentBestRecord;
+        
+        // 新記録の判定：正確率が高い、または正確率が同じで時間が短い場合
+        if (accuracy > currentBestAccuracy || (accuracy === currentBestAccuracy && time < currentBestTime)) {
+            shouldSaveNewRecord = true;
+        }
+    }
+    
+    if (shouldSaveNewRecord) {
         records[levelKey] = [newRecord];
         saveRecords();
         
@@ -1407,11 +1436,19 @@ function displayBestTimes() {
             lessonRecordsList.innerHTML = '';
             
             if (lessonRecords.length > 0) {
-                // 新しい記録形式と古い記録形式を統一的に処理
+                // 新しい記録形式と古い記録形式を統一的に処理（正確率優先、同じ場合は時間優先）
                 const bestRecord = lessonRecords.reduce((best, current) => {
-                    const currentTime = current.time || current; // 新形式または古形式
+                    const currentAccuracy = current.accuracy !== undefined ? current.accuracy : 100;
+                    const bestAccuracy = best.accuracy !== undefined ? best.accuracy : 100;
+                    const currentTime = current.time || current;
                     const bestTime = best.time || best;
-                    return currentTime < bestTime ? current : best;
+                    
+                    if (currentAccuracy > bestAccuracy) {
+                        return current;
+                    } else if (currentAccuracy === bestAccuracy && currentTime < bestTime) {
+                        return current;
+                    }
+                    return best;
                 });
                 
                 const li = document.createElement('li');
