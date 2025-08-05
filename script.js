@@ -1418,7 +1418,7 @@ function displayBestTimes() {
                 const recordTime = bestRecord.time || bestRecord;
                 const recordAccuracy = bestRecord.accuracy !== undefined ? bestRecord.accuracy : 100;
                 
-                li.innerHTML = `<span style="color: #00ff00; font-size: 1.1rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: #999;">${formatTime(recordTime)}</small>`;
+                li.innerHTML = `<span style="color: var(--color-success); font-size: 1.2rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: var(--text-muted);">${formatTime(recordTime)}</small>`;
                 lessonRecordsList.appendChild(li);
             } else {
                 const li = document.createElement('li');
@@ -2223,9 +2223,9 @@ function updateLessonList() {
         newLessonRecord.className = 'level-record';
         
         const newLessonTitle = document.createElement('h3');
-        newLessonTitle.className = 'level-selector';
+        newLessonTitle.className = 'level-selector create-lesson-btn';
         newLessonTitle.textContent = '+ 新しいレッスンを作成';
-        newLessonTitle.style.color = '#ffcc00';
+        // CSSクラスでスタイリングするため、inline styleを削除
         newLessonTitle.addEventListener('click', showCustomLessonSetup);
         
         newLessonRecord.appendChild(newLessonTitle);
@@ -2270,9 +2270,9 @@ function updateLessonList() {
     newLessonRecord.className = 'level-record';
     
     const newLessonTitle = document.createElement('h3');
-    newLessonTitle.className = 'level-selector';
+    newLessonTitle.className = 'level-selector create-lesson-btn';
     newLessonTitle.textContent = '+ 新しいレッスンを作成';
-    newLessonTitle.style.color = '#ffcc00';
+    // CSSクラスでスタイリングするため、inline styleを削除
     newLessonTitle.addEventListener('click', showCustomLessonSetup);
     
     newLessonRecord.appendChild(newLessonTitle);
