@@ -1365,17 +1365,22 @@ function loadRecords() {
     records = storageManager.loadRecords();
 }
 
-function addRecord(levelKey, time, mistakes = 0) {
+function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
     if (!records[levelKey]) {
         records[levelKey] = [];
     }
     
     const currentBestTime = records[levelKey].length > 0 ? Math.min(...records[levelKey].map(r => r.time || r)) : Infinity;
     
+    // 正確率を計算（正解タイプ数 ÷ (正解タイプ数 + ミスタイプ数) × 100）
+    const accuracy = mistakes === 0 ? 100 : Math.round((totalTypes / (totalTypes + mistakes)) * 100);
+    
     // 新しい記録オブジェクトを作成（後方互換性のため時間のみの古い形式もサポート）
     const newRecord = {
         time: time,
         mistakes: mistakes,
+        accuracy: accuracy,
+        totalTypes: totalTypes,
         date: new Date().toLocaleDateString()
     };
     
@@ -1411,9 +1416,9 @@ function displayBestTimes() {
                 
                 const li = document.createElement('li');
                 const recordTime = bestRecord.time || bestRecord;
-                const recordMistakes = bestRecord.mistakes !== undefined ? bestRecord.mistakes : 0;
+                const recordAccuracy = bestRecord.accuracy !== undefined ? bestRecord.accuracy : 100;
                 
-                li.innerHTML = `${formatTime(recordTime)}<br><small style="color: #999;">ミス:${recordMistakes}回</small>`;
+                li.innerHTML = `<span style="color: #00ff00; font-size: 1.1rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: #999;">${formatTime(recordTime)}</small>`;
                 lessonRecordsList.appendChild(li);
             } else {
                 const li = document.createElement('li');
@@ -1679,20 +1684,22 @@ function displayWord() {
         
         // タイマー表示は結果表示（スコア表示）のみで行うため、ここでは更新しない
         
-        // レッスンごとに記録を保存
-        if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
-            const lessonId = customLessons[currentLessonIndex].id;
-            addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount);
-        } else {
-            addRecord(`level${currentLevel}`, elapsedTime, mistakeCount);
-        }
-        
+        // 総タイプ数を計算
         let totalTypesCount = 0;
         words.forEach(word => {
             totalTypesCount += word.word.length;
         });
         
-        const accuracyRate = mistakeCount === 0 ? 100 : Math.max(0, Math.round((1 - mistakeCount / totalTypesCount) * 100));
+        // 正確率を計算（正解タイプ数 ÷ (正解タイプ数 + ミスタイプ数) × 100）
+        const accuracyRate = mistakeCount === 0 ? 100 : Math.round((totalTypesCount / (totalTypesCount + mistakeCount)) * 100);
+        
+        // レッスンごとに記録を保存（正確率計算のための総タイプ数も渡す）
+        if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
+            const lessonId = customLessons[currentLessonIndex].id;
+            addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount, totalTypesCount);
+        } else {
+            addRecord(`level${currentLevel}`, elapsedTime, mistakeCount, totalTypesCount);
+        }
         
         // UIManagerを使用してスコア表示を更新
         uiManager.updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount);
