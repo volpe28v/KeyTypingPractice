@@ -1280,6 +1280,9 @@ function initGame() {
     gameActive = true;
     timerStarted = false;
     
+    // レッスン開始直後から戻るボタンを表示
+    document.getElementById('back-to-title-btn').style.display = 'block';
+    
     // フォーカスを確実に設定（少し遅延させて確実性を高める）
     setTimeout(() => {
         if (gameActive && !wordInput.disabled) {
@@ -1295,9 +1298,6 @@ function initGame() {
     }
     
     hideRecords();
-    
-    document.getElementById('back-to-title-btn').style.display = 'none';
-    
     
     initLevelSelectors();
     
@@ -1545,6 +1545,7 @@ function startTimer() {
     
     hideRecords();
     
+    // レッスン開始直後から戻るボタンを表示
     document.getElementById('back-to-title-btn').style.display = 'block';
 }
 
