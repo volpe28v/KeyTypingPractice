@@ -694,10 +694,15 @@ class UIManager {
         }
     }
     
+    // スコア文字列を生成（共通メソッド）
+    generateScoreText(elapsedTime, accuracyRate, mistakeCount) {
+        return `正確率: ${accuracyRate}% | ミス: ${mistakeCount}回 | クリアタイム: ${this.formatTime(elapsedTime)}`;
+    }
+    
     // スコア表示を更新
     updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount) {
         this.scoreDisplay.innerHTML = `
-            <div>クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回</div>
+            <div>${this.generateScoreText(elapsedTime, accuracyRate, mistakeCount)}</div>
         `;
         this.scoreDisplay.style.display = 'block';
     }
@@ -717,7 +722,7 @@ class UIManager {
             this.showFeedback(`${mistakeCount}回のミスがありました。`);
         }
         this.meaningDisplay.innerHTML = `
-            <div>クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回</div>
+            <div>${this.generateScoreText(elapsedTime, accuracyRate, mistakeCount)}</div>
             <div style="margin-top: 10px; font-size: 0.8em; color: #90a4ae;">Enter: もう一度 | Escape: レッスン選択に戻る</div>
         `;
         // クリア時はmeaningDisplayを強制的に表示する
