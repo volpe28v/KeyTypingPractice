@@ -29,6 +29,12 @@
     --shadow-light: 0 2px 8px rgba(84, 110, 122, 0.1);
     --shadow-medium: 0 4px 16px rgba(84, 110, 122, 0.15);
     --shadow-strong: 0 8px 24px rgba(84, 110, 122, 0.2);
+    
+    /* レイアウト間隔 - 統一管理 */
+    --layout-gap: 30px; /* メインコンテナの間隔 */
+    --layout-padding: 20px; /* 標準的な内部間隔 */
+    --layout-margin: 25px; /* カード内部の余白 */
+    --viewport-margin: 20px; /* ビューポート周りの余白 */
 }
 
 html {
@@ -54,9 +60,9 @@ body {
     display: flex;
     width: 90%;
     max-width: 1200px;
-    max-height: calc(100vh - 40px); /* 上下マージンを考慮 */
-    gap: 30px;
-    margin-top: 20px;
+    max-height: calc(100vh - calc(var(--viewport-margin) * 2));
+    gap: var(--layout-gap);
+    align-items: flex-start;
 }
 
 .game-container {
@@ -69,26 +75,25 @@ body {
 .records-sidebar {
     flex: 1;
     max-width: 400px;
-    max-height: calc(100vh - 80px); /* 画面からはみ出さないよう制限 */
+    max-height: calc(100vh - calc(var(--viewport-margin) * 3));
     background: var(--bg-card);
     border: 2px solid var(--color-primary);
     border-radius: 20px;
-    padding: 25px;
+    padding: var(--layout-margin);
     box-shadow: var(--shadow-medium);
     position: sticky;
-    top: 20px;
-    margin-left: 10px;
+    top: var(--viewport-margin);
     backdrop-filter: blur(10px);
-    overflow-y: auto; /* 内容が多い場合は内部でスクロール */
+    overflow-y: auto;
 }
 
 .game-title {
     font-size: 3rem;
-    margin-bottom: 20px;
+    margin-bottom: var(--layout-padding);
     color: var(--color-primary);
     letter-spacing: 1px;
     text-align: center;
-    margin-top: 20px;
+    margin-top: 0;
     font-weight: bold;
     text-shadow: none;
 }
@@ -126,16 +131,14 @@ body {
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;
-        gap: 20px;
+        gap: var(--layout-padding);
         width: 95%;
     }
     
     .records-sidebar {
-        margin-top: 20px;
         position: static;
         max-width: 100%;
-        margin-left: 0;
-        padding: 20px;
+        padding: var(--layout-padding);
     }
     
     .game-container {
@@ -191,18 +194,6 @@ body {
     }
 }
 
-.level-display {
-    font-size: 1.8rem;
-    margin-bottom: 15px;
-    color: var(--color-primary);
-    text-align: center;
-    background-color: var(--bg-card);
-    padding: 12px 20px;
-    border-radius: 12px;
-    display: inline-block;
-    border: 2px solid var(--color-primary);
-    font-weight: 600;
-}
 
 .typing-area {
     width: 100%;
@@ -264,19 +255,7 @@ body {
 }
 
 .timer-display {
-    font-size: 1.8rem;
-    text-align: center;
-    color: var(--color-primary);
-    margin-bottom: 15px;
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    background-color: var(--bg-secondary);
-    border: 2px solid var(--color-primary);
-    border-radius: 12px;
-    padding: 8px 15px;
-    display: inline-block;
-    margin-left: auto;
-    margin-right: auto;
+    display: none !important;
 }
 
 .input-area {

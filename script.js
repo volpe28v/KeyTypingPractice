@@ -594,8 +594,6 @@ class UIManager {
         this.feedback = document.getElementById('feedback');
         this.progressBar = document.getElementById('progress-bar');
         this.scoreDisplay = document.getElementById('score-display');
-        this.levelDisplay = document.getElementById('level');
-        this.levelDescDisplay = document.getElementById('level-desc');
         this.timerDisplay = document.getElementById('timer-display');
         this.replayAudioBtn = document.getElementById('replay-audio-btn');
     }
@@ -618,11 +616,6 @@ class UIManager {
         this.progressBar.style.width = `${progress}%`;
     }
     
-    // レベル表示を更新
-    updateLevelDisplay(level, description) {
-        this.levelDisplay.textContent = level;
-        this.levelDescDisplay.textContent = description;
-    }
     
     // フィードバックを表示
     showFeedback(message, className = '') {
@@ -728,11 +721,11 @@ class UIManager {
     
     // タイトル画面の表示
     showTitle() {
-        this.wordDisplay.innerHTML = '<span class="game-title">タイピングマスター</span>';
-        this.meaningDisplay.textContent = 'レッスンを選んでゲームスタート！';
+        this.wordDisplay.innerHTML = '';
+        this.meaningDisplay.textContent = '左のサイドバーからレッスンを選択してください';
         this.timerDisplay.textContent = "00.00";
-        this.timerDisplay.style.display = 'none'; // タイトル画面ではタイマー表示を非表示
-        this.replayAudioBtn.style.display = 'none'; // タイトル画面では音声再生ボタンを非表示
+        this.timerDisplay.style.display = 'none';
+        this.replayAudioBtn.style.display = 'none';
         this.wordInput.value = '';
         this.wordInput.placeholder = "";
         this.feedback.textContent = '';
@@ -1252,7 +1245,6 @@ function startCustomLesson() {
     document.querySelector('.typing-area').style.display = 'block';
     document.querySelector('.keyboard-display-container').style.display = 'block';
     document.getElementById('back-to-title-btn').style.display = 'block';
-    document.querySelector('.level-display').style.display = 'inline-block';
     
     initGame();
 }
@@ -1279,17 +1271,6 @@ function initGame() {
     
     updateProgressBar();
     scoreDisplay.style.display = 'none';
-    // レベル表示の処理
-    if (!isCustomLesson) {
-        const levelData = levelLists.find(level => level.level === currentLevel);
-        if (levelData) {
-            levelDisplay.textContent = currentLevel;
-            levelDescDisplay.textContent = levelData.description;
-        }
-    } else {
-        // カスタムレッスンの場合はレベル表示を隠す
-        document.querySelector('.level-display').style.display = 'none';
-    }
     wordInput.value = '';
     wordInput.focus();
     
@@ -1317,10 +1298,6 @@ function initGame() {
     
     document.getElementById('back-to-title-btn').style.display = 'none';
     
-    // レベル表示を表示（カスタムレッスンでない場合のみ）
-    if (!isCustomLesson) {
-        document.querySelector('.level-display').style.display = 'inline-block';
-    }
     
     initLevelSelectors();
     
@@ -1544,8 +1521,6 @@ const wordInput = uiManager.wordInput;
 const feedback = uiManager.feedback;
 const progressBar = uiManager.progressBar;
 const scoreDisplay = uiManager.scoreDisplay;
-const levelDisplay = uiManager.levelDisplay;
-const levelDescDisplay = uiManager.levelDescDisplay;
 const timerDisplay = uiManager.timerDisplay;
 
 function updateTimer() {
@@ -1560,8 +1535,8 @@ function startTimer() {
     startTime = Date.now();
     timerStarted = true;
     timerInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
         // ゲーム中はタイマー表示を更新しない（表示は非表示のまま）
+        // const elapsedTime = Date.now() - startTime;
         // timerDisplay.textContent = formatTime(elapsedTime);
     }, 10);
     
@@ -2173,8 +2148,16 @@ window.addEventListener('load', () => {
     
     initLevelSelectors();
     
-    // initGame()の代わりにbackToTitle()を呼び出す
-    backToTitle();
+    // カスタムレッスンがある場合は最初のレッスンを自動選択、ない場合はタイトル表示
+    if (customLessons.length > 0) {
+        // 最初のレッスンを自動選択してモード選択画面を表示
+        setTimeout(() => {
+            showLessonModeSelection(0);
+        }, 100);
+    } else {
+        // カスタムレッスンがない場合はタイトル画面を表示
+        backToTitle();
+    }
     
     showRecords();
     
@@ -2400,14 +2383,10 @@ function generateLevelRecords() {
 // タイトルに戻る機能
 function backToTitle() {
     if (gameActive && timerStarted) {
-        if (!confirm('現在のゲームを中断してタイトル画面に戻りますか？')) {
+        if (!confirm('現在のゲームを中断してレッスン選択に戻りますか？')) {
             return;
         }
     }
-    
-    // カスタムレッスンのクリーンアップ
-    isCustomLesson = false;
-    lessonMode = 'full';
     
     // タイマーをリセット
     if (timerInterval) {
@@ -2419,26 +2398,8 @@ function backToTitle() {
     gameActive = false;
     timerStarted = false;
     
-    // UIManagerを使用してタイトル画面を表示
-    uiManager.showTitle();
-    
     // 戻るボタンを非表示
     document.getElementById('back-to-title-btn').style.display = 'none';
-    
-    // すべてのレベルセレクターから選択状態を解除
-    const levelSelectors = document.querySelectorAll('.level-selector');
-    levelSelectors.forEach(selector => {
-        selector.classList.remove('active');
-    });
-    
-    // レベル表示を非表示
-    document.querySelector('.level-display').style.display = 'none';
-    
-    // カスタムレッスン設定画面を非表示
-    hideModal('custom-lesson-setup');
-    
-    // レッスンモード選択画面を非表示
-    hideModal('lesson-mode-selection');
     
     // UIをリセット
     document.querySelector('.typing-area').style.display = 'block';
@@ -2451,6 +2412,19 @@ function backToTitle() {
     
     // キーボードをリセット
     initKeyboardAnimation();
+    
+    // 現在のレッスンが選択されている場合は、そのレッスンのモード選択画面を表示
+    if (selectedLessonForMode && selectedLessonForMode.index !== undefined) {
+        showLessonModeSelection(selectedLessonForMode.index);
+    } else {
+        // レッスンが選択されていない場合は、最初のレッスンを選択
+        if (customLessons.length > 0) {
+            showLessonModeSelection(0);
+        } else {
+            // カスタムレッスンがない場合のみタイトル表示
+            uiManager.showTitle();
+        }
+    }
 }
 
 // 戻るボタンにイベントリスナーを追加
