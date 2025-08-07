@@ -696,7 +696,9 @@ class UIManager {
     
     // スコア表示を更新
     updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount) {
-        this.scoreDisplay.textContent = `クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回`;
+        this.scoreDisplay.innerHTML = `
+            <div>クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回</div>
+        `;
         this.scoreDisplay.style.display = 'block';
     }
     
@@ -706,7 +708,7 @@ class UIManager {
     }
     
     // ゲーム完了時の表示
-    showGameComplete(isPerfect, mistakeCount) {
+    showGameComplete(isPerfect, mistakeCount, elapsedTime, accuracyRate) {
         if (isPerfect) {
             this.wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
             this.showFeedback('おめでとうございます！', 'correct');
@@ -714,9 +716,17 @@ class UIManager {
             this.wordDisplay.innerHTML = 'クリア！';
             this.showFeedback(`${mistakeCount}回のミスがありました。`);
         }
-        this.meaningDisplay.textContent = 'Enterキーを押して再挑戦';
+        this.meaningDisplay.innerHTML = `
+            <div>クリアタイム: ${this.formatTime(elapsedTime)} | 正確率: ${accuracyRate}% | ミス: ${mistakeCount}回</div>
+            <div style="margin-top: 10px; font-size: 0.8em; color: #90a4ae;">Enter: もう一度 | Escape: レッスン選択に戻る</div>
+        `;
+        // クリア時はmeaningDisplayを強制的に表示する
+        this.meaningDisplay.style.display = 'block';
         this.wordInput.placeholder = "";
-        // タイマー表示は結果表示（スコア表示）のみで表示するため、ここでは表示しない
+        // スコア表示エリアは非表示にする
+        this.scoreDisplay.style.display = 'none';
+        // 発音ボタンを非表示にする
+        this.replayAudioBtn.style.display = 'none';
     }
     
     // タイトル画面の表示
@@ -1795,13 +1805,10 @@ function displayWord(playAudio = true) {
             addRecord(`level${currentLevel}`, elapsedTime, mistakeCount, totalTypesCount);
         }
         
-        // UIManagerを使用してスコア表示を更新
-        uiManager.updateScoreDisplay(elapsedTime, accuracyRate, mistakeCount);
-        
         const isPerfect = mistakeCount === 0;
         
         // UIManagerを使用してゲーム完了時の表示
-        uiManager.showGameComplete(isPerfect, mistakeCount);
+        uiManager.showGameComplete(isPerfect, mistakeCount, elapsedTime, accuracyRate);
         
         // 効果音を再生
         if (isPerfect) {
@@ -1810,12 +1817,16 @@ function displayWord(playAudio = true) {
             playCorrectSound("complete");
         }
         
-        showRecords();
+        // クリア後はレッスンリストを非表示にする
+        hideRecords();
         
         gameActive = false;
         
         wordInput.value = '';
         wordInput.focus();
+        
+        // クリア後のキーボードイベントを設定
+        setupClearScreenKeyEvents();
     }
 }
 
@@ -2396,6 +2407,12 @@ function backToTitle() {
         }
     }
     
+    // クリア画面のキーイベントを削除
+    if (clearScreenKeyHandler) {
+        document.removeEventListener('keydown', clearScreenKeyHandler);
+        clearScreenKeyHandler = null;
+    }
+    
     // タイマーをリセット
     if (timerInterval) {
         clearInterval(timerInterval);
@@ -2437,3 +2454,54 @@ function backToTitle() {
 
 // 戻るボタンにイベントリスナーを追加
 document.getElementById('back-to-title-btn').addEventListener('click', backToTitle);
+
+// クリア後のキーボードイベント管理
+let clearScreenKeyHandler = null;
+
+function setupClearScreenKeyEvents() {
+    // 既存のイベントリスナーを削除
+    if (clearScreenKeyHandler) {
+        document.removeEventListener('keydown', clearScreenKeyHandler);
+    }
+    
+    clearScreenKeyHandler = function(event) {
+        if (event.key === 'Enter') {
+            // エンターキーで同じレッスンをリスタート
+            event.preventDefault();
+            restartCurrentLesson();
+        } else if (event.key === 'Escape') {
+            // エスケープキーでレッスン選択画面に戻る
+            event.preventDefault();
+            backToTitle();
+        }
+    };
+    
+    document.addEventListener('keydown', clearScreenKeyHandler);
+}
+
+function restartCurrentLesson() {
+    // クリア画面のキーイベントを削除
+    if (clearScreenKeyHandler) {
+        document.removeEventListener('keydown', clearScreenKeyHandler);
+        clearScreenKeyHandler = null;
+    }
+    
+    // 同じレッスンを再開
+    if (selectedLessonForMode && selectedLessonForMode.lesson) {
+        // カスタムレッスンの場合
+        const { lesson, index } = selectedLessonForMode;
+        currentLessonIndex = index;
+        customWords = lesson.words;
+        isCustomLesson = true;
+        
+        // 現在のモードでゲーム開始
+        hideModal('lesson-mode-selection');
+        
+        // ゲーム画面の要素を表示
+        document.querySelector('.typing-area').style.display = 'block';
+        document.querySelector('.keyboard-display-container').style.display = 'block';
+        document.getElementById('back-to-title-btn').style.display = 'block';
+        
+        initGame();
+    }
+}
