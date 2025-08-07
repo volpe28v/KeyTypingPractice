@@ -1061,11 +1061,6 @@ body {
     box-shadow: var(--shadow-light);
 }
 
-.mode-btn:hover {
-    background: var(--color-primary-dark);
-    box-shadow: var(--shadow-medium);
-    transform: translateY(-2px);
-}
 
 .mode-btn:active {
     transform: translateY(0);
@@ -1077,12 +1072,10 @@ body {
     box-shadow: var(--shadow-medium);
 }
 
-.mode-btn[data-mode="progressive"] {
+.mode-btn:hover {
     background: var(--color-success);
-}
-
-.mode-btn[data-mode="progressive"]:hover {
-    background: #4caf50;
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
 }
 
 /* レッスンモード選択画面のスタイル */

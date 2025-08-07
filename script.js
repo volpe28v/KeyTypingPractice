@@ -986,9 +986,8 @@ function showLessonModeSelection(lessonIndex) {
     document.getElementById('selected-lesson-name').textContent = lesson.name;
     document.getElementById('back-to-title-btn').style.display = 'none';
     
-    // デフォルトでLv1（反復練習）を選択状態に
+    // モードボタンの選択状態をリセット
     document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('selected'));
-    document.querySelector('[data-mode="progressive"]').classList.add('selected');
     
     // 単語リストを表示
     displayWordsInSelection(lesson);
