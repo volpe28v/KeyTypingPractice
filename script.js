@@ -134,7 +134,7 @@ class AudioManager {
         }
     }
 
-    // 単語を発音する関数
+    // 単語を発音する関数（英語）
     speakWord(word) {
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
@@ -142,6 +142,22 @@ class AudioManager {
             const utterance = new SpeechSynthesisUtterance(word);
             utterance.lang = 'en-US';
             utterance.rate = 0.8;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+    
+    // 日本語を音声で読み上げる
+    speakJapanese(text) {
+        if (!text || text.trim() === '') return;
+        
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
             
             window.speechSynthesis.speak(utterance);
         }
@@ -892,7 +908,14 @@ function replayCurrentWord() {
     if (gameActive && currentWordIndex < words.length) {
         const currentWord = words[currentWordIndex];
         if (currentWord && currentWord.word) {
-            speakWord(currentWord.word);
+            // モードに応じて音声を再生
+            if (isCustomLesson && lessonMode === 'japanese-reading') {
+                // 日本語読み上げモード：日本語の意味を読み上げ
+                audioManager.speakJapanese(currentWord.meaning);
+            } else {
+                // その他のモード：英語発音
+                speakWord(currentWord.word);
+            }
         }
     }
 }
@@ -1660,8 +1683,8 @@ function displayWord() {
                 speakWord(currentWord.word);
             }
             // カスタムレッスンのモードに応じて単語表示を制御
-            else if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
-                // 発音のみまたは発音+意味モード：黒丸で単語を非表示
+            else if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'japanese-reading')) {
+                // 発音のみ、発音+意味、日本語読み上げモード：黒丸で単語を非表示
                 let hiddenHTML = '';
                 for (let i = 0; i < currentWord.word.length; i++) {
                     hiddenHTML += '<span style="color: #666;">●</span>';
@@ -1688,8 +1711,12 @@ function displayWord() {
             wordInput.value = '';
             wordInput.focus();
             
-            // 段階的練習モード以外では発音（段階的練習は上で既に発音済み）
-            if (!(isCustomLesson && lessonMode === 'progressive')) {
+            // モードに応じて音声再生を制御
+            if (isCustomLesson && lessonMode === 'japanese-reading') {
+                // 日本語読み上げモード：日本語の意味を読み上げ
+                audioManager.speakJapanese(currentWord.meaning);
+            } else if (!(isCustomLesson && lessonMode === 'progressive')) {
+                // 段階的練習モード以外では英語発音（段階的練習は上で既に発音済み）
                 speakWord(currentWord.word);
             }
             
@@ -1859,7 +1886,7 @@ function validateKeyInput(e) {
 
 function highlightWrongChar(position) {
     // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理する）
-    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive')) {
+    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive' || lessonMode === 'japanese-reading')) {
         return;
     }
     
@@ -2011,7 +2038,7 @@ function checkInputRealtime() {
     }
     
     // スペル隠しモードと段階的練習モードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
-    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive')) {
+    if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive' || lessonMode === 'japanese-reading')) {
         // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理済み）
     } else {
         // 通常モードでは全文字をハイライト表示
