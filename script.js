@@ -658,32 +658,81 @@ class UIManager {
             this.wordInput.style.imeMode = 'disabled';
         });
         
-        // 日本語入力を検出して警告
+            // 日本語入力制御用の状態管理
+        this.isComposing = false;
+        
+        // 日本語入力開始時の制御
         this.wordInput.addEventListener('compositionstart', (e) => {
+            this.isComposing = true;
+            this.showInputModeWarning();
+            // 入力チェックを一時停止（グローバル変数を直接制御）
+            const originalGameActive = gameActive;
+            gameActive = false;
+            // compositionend後にゲーム状態を復元
+            this.pendingGameActive = originalGameActive;
+        });
+        
+        // 日本語入力終了時の制御
+        this.wordInput.addEventListener('compositionend', (e) => {
+            this.isComposing = false;
+            // 日本語入力された内容を完全にクリア
+            this.wordInput.value = '';
+            // ゲーム状態を復元
+            if (this.pendingGameActive !== undefined) {
+                gameActive = this.pendingGameActive;
+                this.pendingGameActive = undefined;
+            }
+            // 警告を継続表示
             this.showInputModeWarning();
         });
         
-        // 全角文字の入力を検出
+        // 全角文字の入力を即座に除去
         this.wordInput.addEventListener('input', (e) => {
+            // 日本語入力中は処理しない（compositionendで処理）
+            if (this.isComposing) {
+                return;
+            }
+            
             const value = e.target.value;
             // 全角文字（ひらがな、カタカナ、漢字、全角英数字）を検出
             if (/[^\x00-\x7F]/.test(value)) {
                 this.showInputModeWarning();
-                // 全角文字を削除
+                // 全角文字を即座に削除
                 e.target.value = value.replace(/[^\x00-\x7F]/g, '');
+            }
+        });
+        
+        // キーボードイベントでIME関連キーをブロック
+        this.wordInput.addEventListener('keydown', (e) => {
+            // 半角/全角キー、変換キーなどをブロック
+            if (e.key === 'Convert' || e.key === 'NonConvert' || 
+                e.key === 'Zenkaku' || e.key === 'Hankaku' ||
+                e.key === 'KanaMode' || e.key === 'Alphanumeric') {
+                e.preventDefault();
+                this.showInputModeWarning();
             }
         });
     }
     
     // 入力モード警告を表示
     showInputModeWarning() {
-        this.showFeedback('日本語モードになっています。英数字モードに切り替えてください', 'incorrect');
+        this.showFeedback('❌ 日本語モードが検出されました。半角英数字モードに切り替えてください', 'incorrect');
+        
+        // 音声フィードバック（ミスタイプ音を再生）
+        audioManager.playMistypeSound();
+        
+        // 入力フィールドの背景を一時的に赤くする
+        this.wordInput.style.backgroundColor = '#ffebee';
+        setTimeout(() => {
+            this.wordInput.style.backgroundColor = '';
+        }, 500);
+        
         setTimeout(() => {
             if (this.feedback.textContent.includes('日本語モード')) {
                 this.feedback.textContent = '';
                 this.feedback.className = 'feedback';
             }
-        }, 3000);
+        }, 4000); // 表示時間を延長
     }
     
     // 入力フィールドを無効化/有効化
@@ -2032,6 +2081,11 @@ function highlightWrongChar(position) {
 }
 
 function checkInputRealtime() {
+    
+    // 日本語入力中は処理を無視
+    if (uiManager.isComposing) {
+        return;
+    }
     
     const currentWord = words[currentWordIndex].word;
     const userInput = wordInput.value.trim();
