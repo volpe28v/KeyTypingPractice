@@ -47,26 +47,15 @@
                 
                 <div class="mode-selection">
                     <h3>学習モード</h3>
-                    <div class="mode-option">
-                        <input type="radio" id="lesson-mode-progressive" name="saved-lesson-mode" value="progressive" checked>
-                        <label for="lesson-mode-progressive">段階的練習（スペル全表示→徐々に隠す→全隠し）</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="lesson-mode-pronunciation-meaning" name="saved-lesson-mode" value="pronunciation-meaning">
-                        <label for="lesson-mode-pronunciation-meaning">発音 + 意味を表示してスペルを入力</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="lesson-mode-pronunciation-only" name="saved-lesson-mode" value="pronunciation-only">
-                        <label for="lesson-mode-pronunciation-only">発音のみを表示してスペルを入力</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="lesson-mode-japanese-reading" name="saved-lesson-mode" value="japanese-reading">
-                        <label for="lesson-mode-japanese-reading">日本語読み上げでスペルを入力</label>
+                    <div class="mode-buttons">
+                        <button class="mode-btn" data-mode="progressive" onclick="startLessonWithMode('progressive')">Lv1: 反復練習</button>
+                        <button class="mode-btn" data-mode="pronunciation-meaning" onclick="startLessonWithMode('pronunciation-meaning')">Lv2: 発音＋日本語</button>
+                        <button class="mode-btn" data-mode="pronunciation-only" onclick="startLessonWithMode('pronunciation-only')">Lv3: 発音のみ</button>
+                        <button class="mode-btn" data-mode="japanese-reading" onclick="startLessonWithMode('japanese-reading')">Lv4: 日本語のみ</button>
                     </div>
                 </div>
                 
                 <div class="lesson-mode-buttons btn-group">
-                    <button class="btn btn-primary start-lesson-btn" onclick="startSelectedLesson()">スタート</button>
                     <button class="btn btn-danger delete-lesson-btn" onclick="deleteSelectedLesson()">削除</button>
                     <button class="btn btn-secondary cancel-lesson-btn" onclick="cancelLessonMode()">キャンセル</button>
                 </div>
@@ -85,21 +74,11 @@
                 
                 <div class="mode-selection">
                     <h3>学習モード</h3>
-                    <div class="mode-option">
-                        <input type="radio" id="mode-progressive" name="lesson-mode" value="progressive" checked>
-                        <label for="mode-progressive">段階的練習（スペル全表示→徐々に隠す→全隠し）</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="mode-pronunciation-meaning" name="lesson-mode" value="pronunciation-meaning">
-                        <label for="mode-pronunciation-meaning">発音 + 意味を表示してスペルを入力</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="mode-pronunciation-only" name="lesson-mode" value="pronunciation-only">
-                        <label for="mode-pronunciation-only">発音のみを表示してスペルを入力</label>
-                    </div>
-                    <div class="mode-option">
-                        <input type="radio" id="mode-japanese-reading" name="lesson-mode" value="japanese-reading">
-                        <label for="mode-japanese-reading">日本語読み上げでスペルを入力</label>
+                    <div class="mode-buttons">
+                        <button class="mode-btn" data-mode="progressive" onclick="selectCustomMode('progressive')">Lv1: 反復練習</button>
+                        <button class="mode-btn" data-mode="pronunciation-meaning" onclick="selectCustomMode('pronunciation-meaning')">Lv2: 発音＋日本語</button>
+                        <button class="mode-btn" data-mode="pronunciation-only" onclick="selectCustomMode('pronunciation-only')">Lv3: 発音のみ</button>
+                        <button class="mode-btn" data-mode="japanese-reading" onclick="selectCustomMode('japanese-reading')">Lv4: 日本語のみ</button>
                     </div>
                 </div>
                 

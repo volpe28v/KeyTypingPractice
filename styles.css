@@ -1038,6 +1038,53 @@ body {
     margin-top: 20px;
 }
 
+/* モードボタン */
+.mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.mode-btn {
+    background: var(--color-primary);
+    color: var(--text-white);
+    border: none;
+    padding: 15px 20px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    position: relative;
+    box-shadow: var(--shadow-light);
+}
+
+.mode-btn:hover {
+    background: var(--color-primary-dark);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.mode-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-light);
+}
+
+.mode-btn.selected {
+    background: var(--color-success);
+    box-shadow: var(--shadow-medium);
+}
+
+.mode-btn[data-mode="progressive"] {
+    background: var(--color-success);
+}
+
+.mode-btn[data-mode="progressive"]:hover {
+    background: #4caf50;
+}
+
 /* レッスンモード選択画面のスタイル */
 .lesson-mode-selection {
     display: none;

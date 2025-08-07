@@ -986,8 +986,9 @@ function showLessonModeSelection(lessonIndex) {
     document.getElementById('selected-lesson-name').textContent = lesson.name;
     document.getElementById('back-to-title-btn').style.display = 'none';
     
-    // デフォルトで段階的練習を選択
-    document.getElementById('lesson-mode-progressive').checked = true;
+    // デフォルトでLv1（反復練習）を選択状態に
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('selected'));
+    document.querySelector('[data-mode="progressive"]').classList.add('selected');
     
     // 単語リストを表示
     displayWordsInSelection(lesson);
@@ -1079,6 +1080,38 @@ function saveWordsEdit() {
 }
 
 // 選択されたモードでレッスンを開始
+// モードボタンクリックでレッスンを開始
+function startLessonWithMode(mode) {
+    if (!selectedLessonForMode) {
+        alert('レッスンが選択されていません。');
+        return;
+    }
+    
+    const { lesson, index } = selectedLessonForMode;
+    
+    currentLessonIndex = index;
+    
+    // カスタム単語を設定
+    customWords = lesson.words;
+    
+    // モードを設定
+    lessonMode = mode;
+    isCustomLesson = true;
+    
+    // カスタム単語でゲーム開始
+    words = customWords;
+    
+    // UIをゲームモードに変更
+    hideModal('lesson-mode-selection');
+    
+    // ゲーム画面の要素を表示
+    document.querySelector('.typing-area').style.display = 'block';
+    document.querySelector('.keyboard-display-container').style.display = 'block';
+    document.getElementById('back-to-title-btn').style.display = 'block';
+    
+    initGame();
+}
+
 function startSelectedLesson() {
     if (!selectedLessonForMode) {
         alert('レッスンが選択されていません。');
@@ -1147,10 +1180,25 @@ function parseCustomWords(input) {
     return lessonManager.parseCustomWords(input);
 }
 
+// カスタムレッスン用の選択モード変数
+let selectedCustomMode = 'progressive';
+
+// カスタムモードを選択
+function selectCustomMode(mode) {
+    selectedCustomMode = mode;
+    
+    // 全てのボタンの選択状態をリセット
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // 選択されたボタンに選択状態を適用
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('selected');
+}
+
 // カスタムレッスンを開始
 function startCustomLesson() {
     const input = document.getElementById('custom-words-input').value;
-    const selectedMode = document.querySelector('input[name="lesson-mode"]:checked').value;
     
     // 入力値をバリデーション
     if (!input.trim()) {
@@ -1181,7 +1229,7 @@ function startCustomLesson() {
     saveCustomWords(input);
     
     // モードを設定
-    lessonMode = selectedMode;
+    lessonMode = selectedCustomMode;
     isCustomLesson = true;
     
     // 保存したレッスンのインデックスを設定
