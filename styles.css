@@ -332,13 +332,15 @@ body {
     color: var(--color-success);
     display: none;
     text-align: center;
-    padding: 10px 15px;
+    padding: 20px var(--layout-gap);
     background-color: var(--bg-card);
     border: 2px solid var(--color-success);
     border-radius: 12px;
     transition: all 0.3s ease;
     font-weight: bold;
     line-height: 1.4;
+    margin-left: var(--layout-padding);
+    margin-right: var(--layout-padding);
 }
 
 .race-track {

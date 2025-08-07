@@ -1267,7 +1267,10 @@ function initGame() {
         gameManager.initGame(levelLists, customWords);
     }
     
-    displayWord();
+    // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし）
+    setTimeout(() => {
+        displayWord(false); // 初回は音声を鳴らさない
+    }, 1000);
     
     updateProgressBar();
     scoreDisplay.style.display = 'none';
@@ -1684,7 +1687,7 @@ function updatePartialWordDisplay() {
     }
 }
 
-function displayWord() {
+function displayWord(playAudio = true) {
     if (currentWordIndex < words.length) {
         const currentWord = words[currentWordIndex];
         
@@ -1702,8 +1705,10 @@ function displayWord() {
                 
                 updateProgressiveDisplay();
                 
-                // 最初の段階でも発音
-                speakWord(currentWord.word);
+                // 最初の段階でも発音（playAudio=trueの場合のみ）
+                if (playAudio) {
+                    speakWord(currentWord.word);
+                }
             }
             // カスタムレッスンのモードに応じて単語表示を制御
             else if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'japanese-reading')) {
@@ -1734,13 +1739,15 @@ function displayWord() {
             wordInput.value = '';
             wordInput.focus();
             
-            // モードに応じて音声再生を制御
-            if (isCustomLesson && lessonMode === 'japanese-reading') {
-                // 日本語読み上げモード：日本語の意味を読み上げ
-                audioManager.speakJapanese(currentWord.meaning);
-            } else if (!(isCustomLesson && lessonMode === 'progressive')) {
-                // 段階的練習モード以外では英語発音（段階的練習は上で既に発音済み）
-                speakWord(currentWord.word);
+            // モードに応じて音声再生を制御（playAudio=falseの場合は音声なし）
+            if (playAudio) {
+                if (isCustomLesson && lessonMode === 'japanese-reading') {
+                    // 日本語読み上げモード：日本語の意味を読み上げ
+                    audioManager.speakJapanese(currentWord.meaning);
+                } else if (!(isCustomLesson && lessonMode === 'progressive')) {
+                    // 段階的練習モード以外では英語発音（段階的練習は上で既に発音済み）
+                    speakWord(currentWord.word);
+                }
             }
             
             // キーボードハイライトを表示
