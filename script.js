@@ -1282,9 +1282,9 @@ function initGame() {
         gameManager.initGame(levelLists, customWords);
     }
     
-    // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし）
+    // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし、入力もクリアしない）
     setTimeout(() => {
-        displayWord(false); // 初回は音声を鳴らさない
+        displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
     }, 1000);
     
     updateProgressBar();
@@ -1702,7 +1702,7 @@ function updatePartialWordDisplay() {
     }
 }
 
-function displayWord(playAudio = true) {
+function displayWord(playAudio = true, clearInput = true) {
     if (currentWordIndex < words.length) {
         const currentWord = words[currentWordIndex];
         
@@ -1715,8 +1715,10 @@ function displayWord(playAudio = true) {
                 progressiveStep = 0;
                 maxProgressiveSteps = currentWord.word.length;
                 
-                // 入力フィールドを確実にクリア
-                wordInput.value = '';
+                // 入力フィールドを確実にクリア（clearInputがtrueの場合のみ）
+                if (clearInput) {
+                    wordInput.value = '';
+                }
                 
                 updateProgressiveDisplay();
                 
@@ -1751,7 +1753,9 @@ function displayWord(playAudio = true) {
             
             // 入力フィールドは全モードで表示
             wordInput.style.display = 'inline-block';
-            wordInput.value = '';
+            if (clearInput) {
+                wordInput.value = '';
+            }
             wordInput.focus();
             
             // モードに応じて音声再生を制御（playAudio=falseの場合は音声なし）
