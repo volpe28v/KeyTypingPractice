@@ -2316,8 +2316,8 @@ window.addEventListener('load', () => {
             showLessonModeSelection(newestLesson);
         }, 100);
     } else {
-        // カスタムレッスンがない場合はタイトル画面を表示
-        backToTitle();
+        // カスタムレッスンがない場合は新しいレッスンを追加画面を表示
+        showCustomLessonSetup();
     }
     
     showRecords();
@@ -2581,8 +2581,8 @@ function backToTitle() {
         if (customLessons.length > 0) {
             showLessonModeSelection(0);
         } else {
-            // カスタムレッスンがない場合のみタイトル表示
-            uiManager.showTitle();
+            // カスタムレッスンがない場合は新しいレッスンを追加画面を表示
+            showCustomLessonSetup();
         }
     }
 }
