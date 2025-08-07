@@ -1188,7 +1188,7 @@ body {
 
 .lesson-name-edit-input {
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     background-color: var(--bg-secondary);
     border: 2px solid var(--border-color);
     border-radius: 8px;
@@ -1197,6 +1197,7 @@ body {
     font-weight: bold;
     font-family: inherit;
     transition: all 0.3s;
+    box-sizing: border-box;
 }
 
 .lesson-name-edit-input:focus {
@@ -1254,10 +1255,11 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
-    padding: 12px;
+    padding: 12px 15px;
     font-size: 1.1rem;
     font-family: inherit;
     resize: vertical;
+    box-sizing: border-box;
 }
 
 .words-edit-area:focus {
@@ -1334,9 +1336,10 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
-    padding: 10px 12px;
+    padding: 12px 15px;
     font-size: 1.1rem;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .lesson-name-input input:focus {
@@ -1352,11 +1355,12 @@ body {
     border: 2px solid var(--border-color);
     border-radius: 8px;
     color: var(--text-primary);
-    padding: 12px;
+    padding: 12px 15px;
     font-size: 1.1rem;
     font-family: inherit;
     margin-bottom: 20px;
     resize: vertical;
+    box-sizing: border-box;
 }
 
 .custom-lesson-setup textarea:focus {
