@@ -718,8 +718,7 @@ class UIManager {
             this.wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
             this.showFeedback('おめでとうございます！', 'correct');
         } else {
-            this.wordDisplay.innerHTML = 'クリア！';
-            this.showFeedback(`${mistakeCount}回のミスがありました。`);
+            this.wordDisplay.innerHTML = '<span style="color: #66bb6a; font-size: 1.2em;">クリア！</span>';
         }
         this.meaningDisplay.innerHTML = `
             <div>${this.generateScoreText(elapsedTime, accuracyRate, mistakeCount)}</div>
