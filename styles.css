@@ -162,7 +162,7 @@ body {
 
     .btn-group {
         gap: 12px;
-        justify-content: center;
+        justify-content: flex-end;
     }
 
     /* カードコンポーネントのモバイル調整 */
@@ -1032,10 +1032,15 @@ body {
 .btn-group {
     display: flex;
     gap: 15px;
-    justify-content: center;
+    justify-content: flex-end;
     align-items: center;
     flex-wrap: wrap;
     margin-top: 20px;
+}
+
+/* レッスンモードボタングループは右寄せ */
+.lesson-mode-buttons {
+    text-align: right;
 }
 
 /* モードボタン */
@@ -1076,6 +1081,59 @@ body {
     background: var(--color-success);
     box-shadow: var(--shadow-medium);
     transform: translateY(-2px);
+}
+
+/* 削除ボタン - 目立たないスタイル */
+.btn-delete-lesson {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 400;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    margin-left: auto;
+}
+
+.btn-delete-lesson:hover {
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--text-white);
+    box-shadow: var(--shadow-light);
+    transform: translateY(-1px);
+}
+
+/* 編集・キャンセル用の控えめなホバー */
+.edit-toggle:hover {
+    background-color: var(--bg-surface);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-light);
+    transform: translateY(-1px);
+}
+
+/* 保存ボタンは緑色で表示 */
+.save-words-btn {
+    background: var(--color-success) !important;
+}
+
+.save-words-btn:hover {
+    background: #4caf50 !important;
+}
+
+/* 単語リストヘッダー */
+.words-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.words-list-header h3 {
+    margin: 0;
 }
 
 /* レッスンモード選択画面のスタイル */

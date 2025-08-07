@@ -1015,7 +1015,7 @@ function toggleWordsEdit() {
         wordsDisplay.style.display = 'none';
         wordsEditArea.style.display = 'block';
         wordsEditControls.style.display = 'flex';
-        editToggle.textContent = '[キャンセル]';
+        editToggle.textContent = 'キャンセル';
         
         // タイトル編集も有効化
         lessonNameH2.style.display = 'none';
@@ -1050,7 +1050,7 @@ function resetWordsEditMode() {
     wordsDisplay.style.display = 'block';
     wordsEditArea.style.display = 'none';
     wordsEditControls.style.display = 'none';
-    editToggle.textContent = '[編集]';
+    editToggle.textContent = '編集';
     
     // タイトル編集も元に戻す
     lessonNameH2.style.display = 'block';
