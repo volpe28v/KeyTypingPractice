@@ -62,7 +62,7 @@
 
             <!-- カスタムレッスン設定画面 -->
             <div class="custom-lesson-setup" id="custom-lesson-setup">
-                <h2>カスタムレッスン設定</h2>
+                <h2>新しいレッスンを追加</h2>
                 
                 <div class="lesson-name-input">
                     <label for="lesson-name-input">レッスン名（任意）:</label>
@@ -71,20 +71,19 @@
                 
                 <textarea id="custom-words-input" placeholder="単語と意味を入力してください&#10;形式: 単語, 意味&#10;例:&#10;apple, りんご&#10;banana, バナナ&#10;orange, オレンジ&#10;&#10;※レッスンとして保存されます"></textarea>
                 
+                <div class="custom-lesson-buttons btn-group">
+                    <button class="btn btn-success save-lesson-btn" onclick="saveNewLessonOnly()">保存</button>
+                    <button class="btn btn-secondary cancel-custom-btn" onclick="cancelCustomLesson()">キャンセル</button>
+                </div>
+                
                 <div class="mode-selection">
                     <h3>学習モード</h3>
                     <div class="mode-buttons">
-                        <button class="mode-btn" data-mode="progressive" onclick="selectCustomMode('progressive')">Lv1: 反復練習</button>
-                        <button class="mode-btn" data-mode="pronunciation-meaning" onclick="selectCustomMode('pronunciation-meaning')">Lv2: 発音＋日本語</button>
-                        <button class="mode-btn" data-mode="pronunciation-only" onclick="selectCustomMode('pronunciation-only')">Lv3: 発音のみ</button>
-                        <button class="mode-btn" data-mode="japanese-reading" onclick="selectCustomMode('japanese-reading')">Lv4: 日本語のみ</button>
+                        <button class="mode-btn" data-mode="progressive" onclick="saveAndStartLesson('progressive')">Lv1: 反復練習</button>
+                        <button class="mode-btn" data-mode="pronunciation-meaning" onclick="saveAndStartLesson('pronunciation-meaning')">Lv2: 発音＋日本語</button>
+                        <button class="mode-btn" data-mode="pronunciation-only" onclick="saveAndStartLesson('pronunciation-only')">Lv3: 発音のみ</button>
+                        <button class="mode-btn" data-mode="japanese-reading" onclick="saveAndStartLesson('japanese-reading')">Lv4: 日本語のみ</button>
                     </div>
-                </div>
-                
-                <div class="custom-lesson-buttons btn-group">
-                    <button class="btn btn-warning save-lesson-btn" onclick="saveNewLesson()">レッスンとして保存</button>
-                    <button class="btn btn-primary start-custom-btn" onclick="startCustomLesson()">すぐにスタート</button>
-                    <button class="btn btn-secondary cancel-custom-btn" onclick="cancelCustomLesson()">キャンセル</button>
                 </div>
             </div>
 

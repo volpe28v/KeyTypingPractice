@@ -85,6 +85,8 @@ body {
     top: var(--viewport-margin);
     backdrop-filter: blur(10px);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .game-title {
@@ -482,11 +484,12 @@ body {
 
 .clear-records {
     margin-top: 20px;
-    text-align: center;
+    text-align: right;
 }
 
 .clear-records-btn {
     margin-top: 15px;
+    margin-left: auto;
     background-color: transparent;
     border: 1px solid var(--text-muted);
     color: var(--text-muted);
@@ -496,7 +499,7 @@ body {
     font-size: 0.8rem;
     font-weight: 400;
     width: auto;
-    display: inline-block;
+    display: block;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1007,6 +1010,18 @@ body {
 .btn-warning:hover {
     box-shadow: var(--shadow-medium);
     background: var(--color-primary);
+}
+
+/* 成功ボタン（保存など） - 緑色 */
+.btn-success {
+    background: var(--color-success);
+    color: var(--text-white);
+    box-shadow: var(--shadow-light);
+}
+
+.btn-success:hover {
+    box-shadow: var(--shadow-medium);
+    background: #4caf50;
 }
 
 /* ボタングループ */

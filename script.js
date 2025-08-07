@@ -953,6 +953,82 @@ function saveNewLesson() {
     return lessonManager.saveNewLesson(customLessons, updateLessonList);
 }
 
+// 新しいレッスンを保存のみ（学習開始なし）
+function saveNewLessonOnly() {
+    const success = lessonManager.saveNewLesson(customLessons, updateLessonList);
+    if (success) {
+        // 入力フィールドをクリア
+        document.getElementById('lesson-name-input').value = '';
+        document.getElementById('custom-words-input').value = '';
+        
+        // モーダルを閉じてタイトル画面に戻る
+        hideModal('custom-lesson-setup');
+        backToTitle();
+    }
+}
+
+// 新しいレッスンを保存して指定モードで開始
+function saveAndStartLesson(mode) {
+    const input = document.getElementById('custom-words-input').value;
+    
+    // 入力値をバリデーション
+    if (!input.trim()) {
+        alert('単語を入力してください。');
+        return;
+    }
+    
+    // まずレッスンを保存
+    const success = lessonManager.saveNewLesson(customLessons, updateLessonList);
+    if (!success) {
+        return; // 保存に失敗した場合は終了
+    }
+    
+    // 保存されたレッスンの中から最新のものを取得
+    const newestLesson = customLessons.reduce((max, lesson, index, array) => 
+        lesson.id > array[max].id ? index : max, 0
+    );
+    
+    // カスタム単語を解析
+    customWords = parseCustomWords(input);
+    
+    if (customWords.length === 0) {
+        alert('有効な単語が入力されていません。正しい形式で入力してください。');
+        return;
+    }
+    
+    // レッスンモードを設定
+    lessonMode = mode;
+    isCustomLesson = true;
+    currentLessonIndex = newestLesson;
+    
+    // 入力フィールドをクリア
+    document.getElementById('lesson-name-input').value = '';
+    document.getElementById('custom-words-input').value = '';
+    
+    // UIをゲームモードに変更
+    hideModal('custom-lesson-setup');
+    
+    // ゲーム画面の要素を表示
+    document.querySelector('.typing-area').style.display = 'block';
+    document.querySelector('.keyboard-display-container').style.display = 'block';
+    document.getElementById('back-to-title-btn').style.display = 'block';
+    
+    // レベル10でゲームを開始（カスタムレッスン用）
+    currentLevel = 10;
+    
+    // レベルリストのカスタムレッスンに単語を設定
+    const customLevel = levelLists.find(level => level.level === 10);
+    if (customLevel) {
+        customLevel.words = customWords;
+    }
+    
+    // サイドバーを非表示にする
+    hideRecords();
+    
+    // ゲーム初期化と開始
+    initGame();
+}
+
 // カスタムレッスン設定を表示
 function showCustomLessonSetup() {
     // 既に開いているレッスンモード選択画面を閉じる
@@ -2176,11 +2252,15 @@ window.addEventListener('load', () => {
     
     initLevelSelectors();
     
-    // カスタムレッスンがある場合は最初のレッスンを自動選択、ない場合はタイトル表示
+    // カスタムレッスンがある場合は一番新しいレッスンを自動選択、ない場合はタイトル表示
     if (customLessons.length > 0) {
-        // 最初のレッスンを自動選択してモード選択画面を表示
+        // 一番新しいレッスン（最大ID）のインデックスを取得
+        const newestLesson = customLessons.reduce((max, lesson, index, array) => 
+            lesson.id > array[max].id ? index : max, 0
+        );
+        // 一番新しいレッスンを自動選択してモード選択画面を表示
         setTimeout(() => {
-            showLessonModeSelection(0);
+            showLessonModeSelection(newestLesson);
         }, 100);
     } else {
         // カスタムレッスンがない場合はタイトル画面を表示
@@ -2339,24 +2419,30 @@ function updateLessonList() {
     const existingRecords = recordsSidebar.querySelectorAll('.level-record');
     existingRecords.forEach(record => record.remove());
     
-    // 保存されたレッスンがない場合は新規作成ボタンのみ表示
+    // 新規作成ボタンを最上位に追加
+    const newLessonRecord = document.createElement('div');
+    newLessonRecord.className = 'level-record';
+    
+    const newLessonTitle = document.createElement('h3');
+    newLessonTitle.className = 'level-selector create-lesson-btn';
+    newLessonTitle.textContent = '+ 新しいレッスンを作成';
+    newLessonTitle.addEventListener('click', showCustomLessonSetup);
+    
+    newLessonRecord.appendChild(newLessonTitle);
+    recordsSidebar.insertBefore(newLessonRecord, clearButton);
+    
+    // 保存されたレッスンがない場合はここで終了
     if (customLessons.length === 0) {
-        const newLessonRecord = document.createElement('div');
-        newLessonRecord.className = 'level-record';
-        
-        const newLessonTitle = document.createElement('h3');
-        newLessonTitle.className = 'level-selector create-lesson-btn';
-        newLessonTitle.textContent = '+ 新しいレッスンを作成';
-        // CSSクラスでスタイリングするため、inline styleを削除
-        newLessonTitle.addEventListener('click', showCustomLessonSetup);
-        
-        newLessonRecord.appendChild(newLessonTitle);
-        recordsSidebar.insertBefore(newLessonRecord, clearButton);
         return;
     }
     
-    // 保存されたレッスンを表示
-    customLessons.forEach((lesson, index) => {
+    // カスタムレッスンを新しい順（ID降順）で表示
+    const sortedLessons = [...customLessons].sort((a, b) => b.id - a.id);
+    
+    sortedLessons.forEach((lesson) => {
+        // 元のインデックスを取得（showLessonModeSelectionで使用するため）
+        const originalIndex = customLessons.findIndex(l => l.id === lesson.id);
+        
         const levelRecord = document.createElement('div');
         levelRecord.className = 'level-record';
         
@@ -2373,7 +2459,7 @@ function updateLessonList() {
                     return;
                 }
             }
-            showLessonModeSelection(index);
+            showLessonModeSelection(originalIndex);
         });
         
         const recordsList = document.createElement('ol');
@@ -2387,20 +2473,7 @@ function updateLessonList() {
         recordsSidebar.insertBefore(levelRecord, clearButton);
     });
     
-    // 新規作成ボタンを追加
-    const newLessonRecord = document.createElement('div');
-    newLessonRecord.className = 'level-record';
-    
-    const newLessonTitle = document.createElement('h3');
-    newLessonTitle.className = 'level-selector create-lesson-btn';
-    newLessonTitle.textContent = '+ 新しいレッスンを作成';
-    // CSSクラスでスタイリングするため、inline styleを削除
-    newLessonTitle.addEventListener('click', showCustomLessonSetup);
-    
-    newLessonRecord.appendChild(newLessonTitle);
-    recordsSidebar.insertBefore(newLessonRecord, clearButton);
-    
-    // 記録を表示（重要：この行が欠けていた）
+    // 記録を表示
     displayBestTimes();
 }
 
