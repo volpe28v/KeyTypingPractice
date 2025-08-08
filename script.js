@@ -447,6 +447,11 @@ class GameManager {
         this.isCustomLesson = false;
         this.lessonMode = 'full';
         this.currentLessonIndex = 0;
+        
+        // Lv0: 単語学習モード関連
+        this.vocabularyLearningCount = 0;
+        this.vocabularyLearningMaxCount = 5;
+        this.vocabularyLearningIsJapanese = false;
     }
     
     // ゲームを初期化
@@ -578,6 +583,13 @@ class GameManager {
             this.consecutiveMistakes = 0;
             this.currentCharPosition = 0;
         }
+    }
+
+    
+    // Lv0: 単語学習モード用のリセット
+    resetVocabularyLearning() {
+        this.vocabularyLearningCount = 0;
+        this.vocabularyLearningIsJapanese = false;
     }
 }
 
@@ -933,10 +945,7 @@ let audioContext = null;
 let customWords = [];
 let lessonMode = 'full'; // 'full', 'vocabulary-learning', 'pronunciation-meaning', 'pronunciation-only', 'progressive'
 
-// Lv0: 単語学習モード用の変数
-let vocabularyLearningCount = 0; // 現在の単語を何回聞いたかのカウンター
-const vocabularyLearningMaxCount = 5; // 次の単語に進むまでの回数
-let vocabularyLearningIsJapanese = false; // 次に読み上げるのが日本語かどうか
+// Lv0: 単語学習モード用の変数 → GameManagerに移行済み
 let customLessons = []; // 複数のカスタムレッスンを保存
 let currentLessonIndex = 0; // 現在選択されているレッスンのインデックス
 let selectedLessonForMode = null; // モード選択画面で選択されたレッスン
@@ -1549,6 +1558,22 @@ Object.defineProperty(window, 'currentCharPosition', {
     set: (value) => { gameManager.currentCharPosition = value; }
 });
 
+// Lv0: 単語学習モード用のアクセサー
+Object.defineProperty(window, 'vocabularyLearningCount', {
+    get: () => gameManager.vocabularyLearningCount,
+    set: (value) => { gameManager.vocabularyLearningCount = value; }
+});
+
+Object.defineProperty(window, 'vocabularyLearningMaxCount', {
+    get: () => gameManager.vocabularyLearningMaxCount,
+    set: (value) => { gameManager.vocabularyLearningMaxCount = value; }
+});
+
+Object.defineProperty(window, 'vocabularyLearningIsJapanese', {
+    get: () => gameManager.vocabularyLearningIsJapanese,
+    set: (value) => { gameManager.vocabularyLearningIsJapanese = value; }
+});
+
 let records = {};
 
 function saveRecords() {
@@ -1857,8 +1882,7 @@ function displayWord(playAudio = true, clearInput = true) {
                 wordInput.style.display = 'none';
                 
                 // カウンターと状態をリセット
-                vocabularyLearningCount = 0;
-                vocabularyLearningIsJapanese = false;
+                gameManager.resetVocabularyLearning();
                 
                 // 発音を再生（最初は英語）
                 if (playAudio) {
