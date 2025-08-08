@@ -952,9 +952,7 @@ let selectedLessonForMode = null; // モード選択画面で選択されたレ�
 let isCustomLesson = false;
 let autoProgressTimer = null;
 
-// 段階的練習モード関連の変数
-let progressiveStep = 0; // 現在の段階（0: 全表示, 1: 最後1文字隠す, 2: 最後2文字隠す, ...）
-let maxProgressiveSteps = 0; // 最大段階数（単語の文字数）
+// 段階的練習モード関連の変数 → GameManagerに移行済み
 
 // レガシー関数: AudioManagerクラスへのリダイレクト
 function initAudioContext() {
