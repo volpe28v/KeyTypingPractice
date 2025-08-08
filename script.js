@@ -1960,12 +1960,25 @@ function displayWord(playAudio = true, clearInput = true) {
             // Lv0モード用の完了メッセージを表示
             wordDisplay.innerHTML = '<span style="color: #00ff41; font-size: 1.5em;">🎉 単語学習完了！</span>';
             meaningDisplay.textContent = '全ての単語を学習しました。お疲れさまでした！';
-            feedback.textContent = 'Enterキーで再開、Escapeキーでレッスン選択画面に戻ります';
+            feedback.textContent = 'Escapeキーでレッスン選択画面に戻ります';
             
             // 効果音を再生
             playCorrectSound("congratulations");
             
-            // 記録は保存しない（学習モードのため）
+            // ゲームを非アクティブにして自動再開を防ぐ
+            gameActive = false;
+            
+            // 音声再生ボタンを非表示
+            uiManager.replayAudioBtn.style.display = 'none';
+            
+            // 入力フィールドの値をクリア
+            wordInput.value = '';
+            
+            // レッスン選択用のキーイベントのみ設定
+            setupVocabularyLearningCompleteKeyEvents();
+            
+            // Lv0モード専用処理のため、後続の共通処理をスキップ
+            return;
         } else {
             // 通常モードの完了処理
             endTime = Date.now();
@@ -2738,6 +2751,25 @@ function setupClearScreenKeyEvents() {
             event.preventDefault();
             backToTitle();
         }
+    };
+    
+    document.addEventListener('keydown', clearScreenKeyHandler);
+}
+
+// Lv0: 単語学習モード完了時専用のキーイベント処理
+function setupVocabularyLearningCompleteKeyEvents() {
+    // 既存のイベントリスナーを削除
+    if (clearScreenKeyHandler) {
+        document.removeEventListener('keydown', clearScreenKeyHandler);
+    }
+    
+    clearScreenKeyHandler = function(event) {
+        if (event.key === 'Escape') {
+            // エスケープキーでレッスン選択画面に戻る
+            event.preventDefault();
+            backToTitle();
+        }
+        // Enterキーでの再開は無効（何も処理しない）
     };
     
     document.addEventListener('keydown', clearScreenKeyHandler);
