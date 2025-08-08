@@ -837,6 +837,9 @@ class UIManager {
 // UIManagerのインスタンスを作成
 const uiManager = new UIManager();
 
+// LevelManagerのインスタンスを作成（レベルクラスが読み込まれた後に初期化）
+let levelManager = null;
+
 // KeyboardManager: キーボード表示と操作を管理するクラス
 class KeyboardManager {
     constructor() {
@@ -1400,7 +1403,17 @@ function playCorrectSound(word = "good") {
     return audioManager.playCorrectSound(word);
 }
 
+// LevelManagerの初期化（レベルクラスが利用可能になった後）
+function initializeLevelManager() {
+    if (!levelManager) {
+        levelManager = new LevelManager(gameManager, audioManager, uiManager);
+    }
+}
+
 function initGame() {
+    // LevelManagerを初期化
+    initializeLevelManager();
+    
     // GameManagerのプロパティを先に設定
     gameManager.isCustomLesson = isCustomLesson;
     gameManager.lessonMode = lessonMode;
