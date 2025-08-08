@@ -941,16 +941,11 @@ class KeyboardManager {
 const keyboardManager = new KeyboardManager();
 let audioContext = null;
 
-// カスタムレッスン関連の変数
-let customWords = [];
-let lessonMode = 'full'; // 'full', 'vocabulary-learning', 'pronunciation-meaning', 'pronunciation-only', 'progressive'
-
-// Lv0: 単語学習モード用の変数 → GameManagerに移行済み
+// カスタムレッスン関連の変数 → GameManagerに移行済み
+let customWords = []; // LessonManagerで管理される単語データ
 let customLessons = []; // 複数のカスタムレッスンを保存
-let currentLessonIndex = 0; // 現在選択されているレッスンのインデックス
 let selectedLessonForMode = null; // モード選択画面で選択されたレッスン
-let isCustomLesson = false;
-let autoProgressTimer = null;
+let autoProgressTimer = null; // 自動進行タイマー（UI制御用）
 
 // 段階的練習モード関連の変数 → GameManagerに移行済み
 
