@@ -76,8 +76,7 @@ class JapaneseReadingLevel {
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake();
             
-            // ミス時のヒント表示
-            this.showHint(currentWord, currentPosition);
+            // 日本語のみモードではヒント表示しない（難易度維持のため）
         }
 
         return isCorrect;

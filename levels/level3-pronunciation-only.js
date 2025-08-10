@@ -76,8 +76,7 @@ class PronunciationOnlyLevel {
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake();
             
-            // ミス時は正しい文字をヒントとして短時間表示
-            this.showHint(currentWord, currentPosition);
+            // 発音のみモードではヒント表示しない（最高難易度のため）
         }
 
         return isCorrect;
