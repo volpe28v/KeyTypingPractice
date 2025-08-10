@@ -26,6 +26,12 @@ class VocabularyLearningLevel {
         // 入力フィールドを非表示
         this.uiManager.wordInput.style.display = 'none';
 
+        // Lv1の選択肢表示を非表示にする
+        const hiddenLettersContainer = document.getElementById('hidden-letters-container');
+        if (hiddenLettersContainer) {
+            hiddenLettersContainer.style.display = 'none';
+        }
+
         // カウンターと状態をリセット
         this.gameManager.resetVocabularyLearning();
 

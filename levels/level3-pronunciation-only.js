@@ -22,6 +22,12 @@ class PronunciationOnlyLevel {
         this.uiManager.meaningDisplay.style.display = 'none';
         this.uiManager.wordInput.style.display = 'inline-block';
 
+        // Lv1の選択肢表示を非表示にする
+        const hiddenLettersContainer = document.getElementById('hidden-letters-container');
+        if (hiddenLettersContainer) {
+            hiddenLettersContainer.style.display = 'none';
+        }
+
         // 発音を再生
         if (playAudio) {
             this.audioManager.speakWord(word.word);

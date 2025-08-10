@@ -22,6 +22,12 @@ class JapaneseReadingLevel {
         this.uiManager.meaningDisplay.style.display = 'block';
         this.uiManager.wordInput.style.display = 'inline-block';
 
+        // Lv1の選択肢表示を非表示にする
+        const hiddenLettersContainer = document.getElementById('hidden-letters-container');
+        if (hiddenLettersContainer) {
+            hiddenLettersContainer.style.display = 'none';
+        }
+
         // 日本語を読み上げ
         if (playAudio) {
             this.audioManager.speakJapanese(word.meaning);

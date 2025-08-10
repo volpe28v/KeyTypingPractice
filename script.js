@@ -735,34 +735,15 @@ function updateLetterChoiceButtons(userInput, currentWord) {
 const gameManager = new GameManager(audioManager, storageManager);
 
 // Level 0 (vocabulary-learning) のインスタンス
-let level0Instance = null;
-let level1Instance = null;
-let level2Instance = null;
-let level3Instance = null;
-let level4Instance = null;
+// 個別レベルインスタンス変数は削除済み（LevelManagerで統一管理）
+// LevelManagerインスタンス（多態性によるレベル管理）
+let levelManager = null;
 
 // Level インスタンスを初期化する関数
 function initializeLevelInstances() {
-    // UIManager と AudioManager が初期化された後に呼び出す
-    if (typeof VocabularyLearningLevel !== 'undefined' && uiManager && audioManager) {
-        level0Instance = new VocabularyLearningLevel(gameManager, audioManager, uiManager);
-    }
-    
-    if (typeof ProgressiveLearningLevel !== 'undefined' && uiManager && audioManager) {
-        level1Instance = new ProgressiveLearningLevel(gameManager, audioManager, uiManager);
-    }
-    
-    if (typeof PronunciationMeaningLevel !== 'undefined' && uiManager && audioManager) {
-        level2Instance = new PronunciationMeaningLevel(gameManager, audioManager, uiManager);
-    }
-    
-    if (typeof PronunciationOnlyLevel !== 'undefined' && uiManager && audioManager) {
-        level3Instance = new PronunciationOnlyLevel(gameManager, audioManager, uiManager);
-    }
-    
-    if (typeof JapaneseReadingLevel !== 'undefined' && uiManager && audioManager) {
-        level4Instance = new JapaneseReadingLevel(gameManager, audioManager, uiManager);
-    }
+    // 個別レベルインスタンスは削除済み
+    // LevelManagerで統一管理されているため、この関数は不要
+    console.log('initializeLevelInstances: 個別インスタンス初期化は不要（LevelManager使用）');
 }
 
 // UIManager: UI操作を管理するクラス
@@ -1009,8 +990,7 @@ const uiManager = new UIManager();
 // レベルインスタンスを初期化
 initializeLevelInstances();
 
-// LevelManagerのインスタンスを作成（レベルクラスが読み込まれた後に初期化）
-let levelManager = null;
+
 
 // KeyboardManager: キーボード表示と操作を管理するクラス
 class KeyboardManager {
@@ -1603,7 +1583,7 @@ function initGame() {
     
 
     
-    initKeyboardAnimation();
+    keyboardManager.initAnimation();
     
     setTimeout(() => {
         if (words.length > 0) {
@@ -1864,10 +1844,6 @@ function startTimer() {
     document.getElementById('back-to-title-btn').style.display = 'block';
 }
 
-// レガシー関数: キーボードアニメーションを初期化
-function initKeyboardAnimation() {
-    keyboardManager.initAnimation();
-}
 
 // レガシー関数: 配列をシャッフル
 
@@ -2011,137 +1987,45 @@ function displayWord(playAudio = true, clearInput = true) {
         uiManager.replayAudioBtn.style.display = 'block';
         
         if (currentWord && currentWord.word) {
-            // Lv0: 単語学習モードの初期化
-            if (isCustomLesson && lessonMode === 'vocabulary-learning') {
-                if (level0Instance) {
-                    level0Instance.initializeWord(currentWord, playAudio, clearInput);
+            // レベルマネージャーでのレベル設定と多態性による初期化
+            if (isCustomLesson) {
+                // LevelManagerでレベルを設定
+                if (levelManager && levelManager.setLevel(lessonMode)) {
+                    // 多態性による単語初期化（フォールバックなし）
+                    levelManager.initializeWord(currentWord, playAudio, clearInput);
                 } else {
-                    // フォールバック: 従来のロジック（level0Instance が利用できない場合）
-                    // 単語を通常表示
+                    // LevelManagerが利用できない場合の最小限フォールバック
+                    console.warn('LevelManager not available, using fallback');
                     wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
-                    
-                    // 意味を表示
                     meaningDisplay.textContent = currentWord.meaning;
                     meaningDisplay.style.display = 'block';
-                    
-                    // 入力フィールドを非表示
-                    wordInput.style.display = 'none';
-                    
-                    // カウンターと状態をリセット
-                    gameManager.resetVocabularyLearning();
-                    
-                    // 発音を再生（最初は英語）
-                    if (playAudio) {
-                        audioManager.speakWord(currentWord.word);
-                    }
-                    
-                    // フィードバック表示を更新
-                    feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
-                    feedback.className = 'feedback';
-                    
-                    // 進捗バーを更新
-                    uiManager.updateProgressBar(currentWordIndex, words.length);
-                }
-                
-            }
-            // 段階的練習モードの初期化
-            else if (isCustomLesson && lessonMode === 'progressive') {
-                if (level1Instance) {
-                    level1Instance.initializeWord(currentWord, playAudio, clearInput);
-                } else {
-                    // フォールバック: 従来のロジック（level1Instanceが利用できない場合）
-                    // 全文字表示からスタート
-                    progressiveStep = 0;
-                    maxProgressiveSteps = currentWord.word.length;
-                    
-                    // 入力フィールドを確実にクリア（clearInputがtrueの場合のみ）
+                    wordInput.style.display = 'inline-block';
                     if (clearInput) {
                         wordInput.value = '';
                     }
-                    
-                    if (level1Instance) {
-                    level1Instance.updateDisplay();
-                } else {
-                    updateProgressiveDisplay();
-                }
-                    
-                    // 最初の段階でも発音（playAudio=trueの場合のみ）
                     if (playAudio) {
                         audioManager.speakWord(currentWord.word);
                     }
-                }
-            }
-            // Level2-4: 各レベル専用の処理に委譲
-            else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
-                if (level2Instance) {
-                    level2Instance.initializeWord(currentWord, playAudio, clearInput);
-                } else {
-                    // フォールバック: 従来のロジック
-                    let hiddenHTML = '';
-                    for (let i = 0; i < currentWord.word.length; i++) {
-                        hiddenHTML += '<span style="color: #666;">●</span>';
-                    }
-                    wordDisplay.innerHTML = hiddenHTML;
-                    meaningDisplay.textContent = currentWord.meaning;
-                    meaningDisplay.style.display = 'block';
-                }
-            }
-            else if (isCustomLesson && lessonMode === 'pronunciation-only') {
-                if (level3Instance) {
-                    level3Instance.initializeWord(currentWord, playAudio, clearInput);
-                } else {
-                    // フォールバック: 従来のロジック
-                    let hiddenHTML = '';
-                    for (let i = 0; i < currentWord.word.length; i++) {
-                        hiddenHTML += '<span style="color: #666;">●</span>';
-                    }
-                    wordDisplay.innerHTML = hiddenHTML;
-                    meaningDisplay.style.display = 'none';
-                }
-            }
-            else if (isCustomLesson && lessonMode === 'japanese-reading') {
-                if (level4Instance) {
-                    level4Instance.initializeWord(currentWord, playAudio, clearInput);
-                } else {
-                    // フォールバック: 従来のロジック
-                    let hiddenHTML = '';
-                    for (let i = 0; i < currentWord.word.length; i++) {
-                        hiddenHTML += '<span style="color: #666;">●</span>';
-                    }
-                    wordDisplay.innerHTML = hiddenHTML;
-                    meaningDisplay.textContent = currentWord.meaning;
-                    meaningDisplay.style.display = 'block';
                 }
             } else {
                 // 通常モード：単語を表示
                 wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
-            }
-            
-            // 通常モードまたはフォールバック時のみ意味表示を制御
-            if (!isCustomLesson || (lessonMode !== 'pronunciation-only' && lessonMode !== 'pronunciation-meaning' && lessonMode !== 'japanese-reading' && lessonMode !== 'vocabulary-learning' && lessonMode !== 'progressive')) {
                 meaningDisplay.textContent = currentWord.meaning;
                 meaningDisplay.style.display = 'block';
-            }
-            
-            feedback.textContent = '';
-            feedback.className = 'feedback';
-            
-            // 通常モードまたはフォールバック時のみ入力フィールドとフィードバックを制御
-            if (!isCustomLesson || (lessonMode !== 'pronunciation-only' && lessonMode !== 'pronunciation-meaning' && lessonMode !== 'japanese-reading' && lessonMode !== 'vocabulary-learning' && lessonMode !== 'progressive')) {
                 wordInput.style.display = 'inline-block';
                 if (clearInput) {
                     wordInput.value = '';
                 }
                 wordInput.focus();
                 
-                feedback.textContent = '';
-                feedback.className = 'feedback';
-                
                 // 通常モードでの音声再生
                 if (playAudio) {
                     audioManager.speakWord(currentWord.word);
                 }
             }
+            
+            feedback.textContent = '';
+            feedback.className = 'feedback';
             
             // キーボードハイライトを表示
             keyboardManager.highlightNextKey();
@@ -2200,8 +2084,6 @@ function displayWord(playAudio = true, clearInput = true) {
                 timerInterval = null;
             }
             
-            // タイマー表示は結果表示（スコア表示）のみで行うため、ここでは更新しない
-            
             // 総タイプ数を計算
             let totalTypesCount = 0;
             words.forEach(word => {
@@ -2248,11 +2130,6 @@ function displayWord(playAudio = true, clearInput = true) {
 
 
 function validateKeyInput(e) {
-    // Lv0: 単語学習モードでは入力バリデーションをスキップ
-    if (isCustomLesson && lessonMode === 'vocabulary-learning') {
-        return true;
-    }
-    
     if (e.key === 'Shift') {
         return true;
     }
@@ -2272,129 +2149,32 @@ function validateKeyInput(e) {
     
     const expectedChar = currentWord[currentPosition].toLowerCase();
     const inputChar = e.key.toLowerCase();
-    
     const isCorrect = expectedChar === inputChar;
     
     if (!isCorrect && e.key !== 'Shift') {
-        // Level1-4の場合、各レベルインスタンスに処理を委譲
-        if (isCustomLesson && lessonMode === 'progressive') {
-            if (level1Instance) {
-                if (!level1Instance.validateInput(e, currentWord)) {
-                    highlightWrongChar(currentPosition);
-                    e.preventDefault();
-                    return false;
-                }
-            } else {
-                // フォールバック: 従来のロジック
-                const currentWord = words[currentWordIndex].word;
-                const visibleCharCount = Math.max(0, currentWord.length - progressiveStep);
-                
-                // 隠されている文字でのミスのみカウント
-                if (currentPosition >= visibleCharCount) {
-                    mistakeCount++;
-                    currentWordMistake = true;
-                    
-                    // 連続ミス処理
-                    // 同じ文字位置でのミスかチェック
-                    if (currentPosition === currentCharPosition) {
-                        consecutiveMistakes++;
-                    } else {
-                        // 新しい文字位置なので連続ミス数をリセット
-                        consecutiveMistakes = 1;
-                        currentCharPosition = currentPosition;
-                    }
-                }
-                
-                // 3回連続ミスで進捗を戻す
-                if (consecutiveMistakes >= 3) {
-                    const currentWord = words[currentWordIndex].word;
-                    const mistakeCharPosition = currentCharPosition; // 3回ミスした文字の位置
-                    
-                    // ミスした文字位置まで進捗を戻す
-                    // progressiveStep = 単語の長さ - 表示する文字数
-                    // ミスした文字を未入力状態で表示するには: progressiveStep = 単語の長さ - (ミスした位置 + 1)
-                    // 例: apple(5文字)でl(位置3)をミスした場合 → progressiveStep = 5 - (3 + 1) = 1 → appl●が表示される
-                    const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
-                    progressiveStep = newProgressiveStep;
-                    
-                    feedback.textContent = `3回連続ミス！「${currentWord[mistakeCharPosition]}」の位置まで戻します`;
-                    feedback.className = 'feedback incorrect';
-                    
-                    setTimeout(() => {
-                        // 入力をミスした文字位置まで戻す（ミスした文字は未入力状態）
-                        wordInput.value = currentWord.substring(0, mistakeCharPosition);
-                        consecutiveMistakes = 0; // 連続ミス数をリセット
-                        currentWordMistake = false; // ミス状態をリセット
-                        if (level1Instance) {
-                        level1Instance.updateDisplay();
-                    } else {
-                        updateProgressiveDisplay();
-                    }
-                        wordInput.focus();
-                    }, 1000);
-                }
+        // カスタムレッスンの場合、LevelManagerを使用した多態性バリデーション
+        if (isCustomLesson && levelManager && levelManager.getCurrentLevel()) {
+            // LevelManagerで設定済みレベルのバリデーション処理を呼び出し
+            if (!levelManager.validateInput(e, currentWord)) {
+                highlightWrongChar(currentPosition);
+                e.preventDefault();
+                return false;
             }
-        }
-        // Level2-4の場合、各レベルインスタンスに処理を委譲
-        else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
-            if (level2Instance) {
-                if (!level2Instance.validateInput(e, currentWord)) {
-                    highlightWrongChar(currentPosition);
-                    e.preventDefault();
-                    return false;
-                }
-            } else {
-                // フォールバック: 通常のミスカウント
-                mistakeCount++;
-                currentWordMistake = true;
-            }
-        }
-        else if (isCustomLesson && lessonMode === 'pronunciation-only') {
-            if (level3Instance) {
-                if (!level3Instance.validateInput(e, currentWord)) {
-                    highlightWrongChar(currentPosition);
-                    e.preventDefault();
-                    return false;
-                }
-            } else {
-                // フォールバック: 通常のミスカウント
-                mistakeCount++;
-                currentWordMistake = true;
-            }
-        }
-        else if (isCustomLesson && lessonMode === 'japanese-reading') {
-            if (level4Instance) {
-                if (!level4Instance.validateInput(e, currentWord)) {
-                    highlightWrongChar(currentPosition);
-                    e.preventDefault();
-                    return false;
-                }
-            } else {
-                // フォールバック: 通常のミスカウント
-                mistakeCount++;
-                currentWordMistake = true;
-            }
-        }
-        else {
-            // 通常モードでは全てのミスをカウント
+        } else {
+            // 通常モードまたはLevelManagerが利用できない場合
             mistakeCount++;
             currentWordMistake = true;
         }
         
         highlightWrongChar(currentPosition);
-        
         e.preventDefault();
         return false;
     }
     
-    // 正解の場合は連続ミス数をリセット
+    // 正解の場合は連続ミス数をリセット（段階的練習モード用）
     if (isCorrect && isCustomLesson && lessonMode === 'progressive') {
-        if (!level1Instance) {
-            // フォールバック: 従来のロジック
-            consecutiveMistakes = 0;
-            currentCharPosition = currentPosition;
-        }
-        // level1Instanceがある場合は既にvalidateInput内で処理済み
+        consecutiveMistakes = 0;
+        currentCharPosition = currentPosition;
     }
     
     return true;
@@ -2423,12 +2203,6 @@ function highlightWrongChar(position) {
 }
 
 function checkInputRealtime() {
-    
-    // Lv0: 単語学習モードでは入力チェックをスキップ
-    if (isCustomLesson && lessonMode === 'vocabulary-learning') {
-        return;
-    }
-    
     // 日本語入力中は処理を無視
     if (uiManager.isComposing) {
         return;
@@ -2441,122 +2215,37 @@ function checkInputRealtime() {
     updatePartialWordDisplay();
     
     if (userInput.toLowerCase() === currentWord.toLowerCase()) {
-        // 段階的練習モードの処理
-        if (isCustomLesson && lessonMode === 'progressive') {
-            if (level1Instance) {
-                const result = level1Instance.handleWordComplete();
-                if (result === 'next_word') {
-                    // 次の単語へ進む（遅延処理はlevel1Instance側で実装済み）
-                    setTimeout(() => {
-                        currentWordIndex++;
-                        correctCount++;
-                        
-                        uiManager.updateProgressBar(currentWordIndex, words.length);
-                        displayWord();
-                    }, 1500);
-                }
-                // 'continue_word'の場合は何もしない（level1Instanceが処理済み）
-            } else {
-                // フォールバック: 従来のロジック（level1Instanceが利用できない場合）
-                // 全文字を緑色で表示
-                let correctHTML = '';
-                for (let i = 0; i < currentWord.length; i++) {
-                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
-                }
-                wordDisplay.innerHTML = correctHTML;
-                
-                // 入力フィールドを即座に無効化して連打を防ぐ
-                wordInput.disabled = true;
-                
-                // 段階を進める
-                progressiveStep++;
-                
-                if (progressiveStep <= maxProgressiveSteps) {
-                    // まだ段階が残っている場合
-                    feedback.textContent = `ステップ ${progressiveStep}/${maxProgressiveSteps} クリア！`;
-                    feedback.className = 'feedback correct';
+        // 単語完了処理
+        if (isCustomLesson && levelManager && levelManager.getCurrentLevel()) {
+            // LevelManagerを使用した多態性による完了処理
+            const result = levelManager.handleWordComplete();
+            
+            if (result === 'next_word') {
+                // 次の単語へ進む（遅延処理はレベル側で実装済み）
+                setTimeout(() => {
+                    currentWordIndex++;
+                    correctCount++;
                     
-                    // 正解効果音を再生
-                    if (!currentWordMistake) {
-                        audioManager.playCorrectSound("excellent");
-                    } else {
-                        audioManager.playCorrectSound("good");
-                    }
-                    
-                    // 遅延後に次の段階へ
-                    setTimeout(() => {
-                        wordInput.value = '';
-                        currentWordMistake = false; // ミス状態をリセット
-                        if (level1Instance) {
-                    level1Instance.updateDisplay();
-                } else {
-                    updateProgressiveDisplay();
-                }
-                        
-                        // 段階が変わったら発音
-                        audioManager.speakWord(currentWord);
-                        
-                        // 入力フィールドを再有効化
-                        wordInput.disabled = false;
-                        wordInput.focus();
-                    }, 1000);
-                } else {
-                    // 全段階完了（最後の段階は全隠し状態での成功）
-                    feedback.textContent = 'Complete!';
-                    feedback.className = 'feedback correct';
-                    
-                    // 正解効果音を再生
-                    if (!currentWordMistake) {
-                        audioManager.playCorrectSound("excellent");
-                    } else {
-                        audioManager.playCorrectSound("good");
-                    }
-                    
-                    // 遅延後に次の単語へ
-                    setTimeout(() => {
-                        currentWordIndex++;
-                        correctCount++;
-                        
-                        // 入力フィールドをクリア
-                        wordInput.value = '';
-                        
-                        uiManager.updateProgressBar(currentWordIndex, words.length);
-                        displayWord();
-                        
-                        // 入力フィールドを再有効化
-                        wordInput.disabled = false;
-                        wordInput.focus();
-                    }, 1500);
-                }
+                    uiManager.updateProgressBar(currentWordIndex, words.length);
+                    displayWord();
+                }, 1500);
             }
-        }
-        // その他のモードの処理
-        else {
-            // 単語全体を緑色にする（全ての文字を正解状態にする）
-            // スペル隠しモードでは現在の表示を維持して色だけ変更
-            if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning')) {
-                const spans = wordDisplay.querySelectorAll('span');
-                spans.forEach((span, i) => {
-                    span.textContent = currentWord[i];
-                    span.className = 'correct-char';
-                    span.style.color = '';
-                });
-            } else {
-                let correctHTML = '';
-                for (let i = 0; i < currentWord.length; i++) {
-                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
-                }
-                wordDisplay.innerHTML = correctHTML;
+            // 'continue_word'の場合は何もしない（レベル側で処理済み）
+            
+        } else {
+            // 通常モードまたはフォールバック処理
+            let correctHTML = '';
+            for (let i = 0; i < currentWord.length; i++) {
+                correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
             }
+            wordDisplay.innerHTML = correctHTML;
             
             // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
             if (!currentWordMistake) {
                 feedback.textContent = 'Excellent!';
-                // 正解効果音を再生（ミスなし）
                 audioManager.playCorrectSound("excellent");
             } else {
                 feedback.textContent = 'Good!';
-                // 正解効果音を再生（ミスあり）
                 audioManager.playCorrectSound("good");
             }
             feedback.className = 'feedback correct';
@@ -2568,46 +2257,23 @@ function checkInputRealtime() {
                 
                 uiManager.updateProgressBar(currentWordIndex, words.length);
                 displayWord();
-            }, 500); // 500ミリ秒の遅延
-        }
-        
-        // 段階的練習モード以外では入力フィールドを一時的に無効化
-        if (!(isCustomLesson && lessonMode === 'progressive')) {
+            }, 500);
+            
+            // 入力フィールドを一時的に無効化
             wordInput.disabled = true;
             setTimeout(() => {
                 wordInput.disabled = false;
-                wordInput.focus(); // フォーカスを再設定
+                wordInput.focus();
             }, 500);
         }
         
         return;
     }
     
-    // スペル隠しモードと段階的練習モードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
-    if (isCustomLesson && lessonMode === 'progressive') {
-        // 段階的練習モード
-        if (level1Instance) {
-            level1Instance.checkInputRealtime();
-        } else {
-            updateProgressiveDisplay();
-        }
-    } else if (isCustomLesson && lessonMode === 'vocabulary-learning') {
-        // 単語学習モードでは何もしない（level0Instanceで処理済み）
-    } else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
-        // Level2: 発音+意味モード
-        if (level2Instance) {
-            level2Instance.checkInputRealtime();
-        }
-    } else if (isCustomLesson && lessonMode === 'pronunciation-only') {
-        // Level3: 発音のみモード
-        if (level3Instance) {
-            level3Instance.checkInputRealtime();
-        }
-    } else if (isCustomLesson && lessonMode === 'japanese-reading') {
-        // Level4: 日本語読み上げモード
-        if (level4Instance) {
-            level4Instance.checkInputRealtime();
-        }
+    // リアルタイム入力チェック（未完了状態）
+    if (isCustomLesson && levelManager && levelManager.getCurrentLevel()) {
+        // LevelManagerを使用した多態性によるリアルタイムチェック
+        levelManager.checkInputRealtime();
     } else {
         // 通常モードでは全文字をハイライト表示
         let highlightedHTML = '';
@@ -2732,15 +2398,15 @@ document.addEventListener('keydown', (e) => {
     if (gameActive && isCustomLesson && lessonMode === 'vocabulary-learning' && 
         wordInput.style.display === 'none' && (e.key === 'Enter' || e.key === ' ')) {
         
-        if (level0Instance) {
-            const currentWord = words[currentWordIndex];
-            const result = level0Instance.handleKeyInput(e, currentWord);
-            
-            if (result === 'next_word') {
-                currentWordIndex++;
-                displayWord();
-            }
-        } else {
+        if (levelManager && levelManager.getCurrentLevel() && levelManager.getCurrentLevel().handleKeyInput) {
+                const currentWord = words[currentWordIndex];
+                const result = levelManager.handleKeyInput(e, currentWord);
+                
+                if (result === 'next_word') {
+                    currentWordIndex++;
+                    displayWord();
+                }
+            } else {
             // フォールバック: 従来のロジック
             e.preventDefault();
             const currentWord = words[currentWordIndex];
@@ -3020,7 +2686,7 @@ function backToTitle() {
     showRecords();
     
     // キーボードをリセット
-    initKeyboardAnimation();
+    keyboardManager.initAnimation();
     
     // 現在のレッスンが選択されている場合は、そのレッスンのモード選択画面を表示
     if (selectedLessonForMode && selectedLessonForMode.index !== undefined) {
