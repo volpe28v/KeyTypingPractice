@@ -2413,6 +2413,7 @@ function checkInputRealtime() {
                         updateProgressBar();
                         displayWord();
                     }, 1500);
+                }
                 // 'continue_word'の場合は何もしない（level1Instanceが処理済み）
             } else {
                 // フォールバック: 従来のロジック（level1Instanceが利用できない場合）
