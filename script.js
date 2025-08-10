@@ -781,7 +781,7 @@ class UIManager {
     
     // タイマー表示を更新
     updateTimerDisplay(timeMs) {
-        this.timerDisplay.textContent = this.formatTime(timeMs);
+        this.timerDisplay.textContent = this.uiManager.formatTime(timeMs);
     }
     
     // 時間をフォーマット
@@ -926,7 +926,7 @@ class UIManager {
     
     // スコア文字列を生成（共通メソッド）
     generateScoreText(elapsedTime, accuracyRate, mistakeCount) {
-        return `正確率: ${accuracyRate}% | ミス: ${mistakeCount}回 | クリアタイム: ${this.formatTime(elapsedTime)}`;
+        return `正確率: ${accuracyRate}% | ミス: ${mistakeCount}回 | クリアタイム: ${this.uiManager.formatTime(elapsedTime)}`;
     }
     
     // スコア表示を更新
@@ -1124,39 +1124,9 @@ let autoProgressTimer = null; // 自動進行タイマー（UI制御用）
 
 // 段階的練習モード関連の変数 → GameManagerに移行済み
 
-// レガシー関数: AudioManagerクラスへのリダイレクト
-function initAudioContext() {
-    return audioManager.initAudioContext();
-}
+// AudioManagerクラスの関数を直接使用するため、レガシーラッパー関数を削除
 
-function playTypingSound() {
-    return audioManager.playTypingSound();
-}
 
-function playMistypeSound() {
-    return audioManager.playMistypeSound();
-}
-
-function speakWord(word) {
-    return audioManager.speakWord(word);
-}
-
-// 現在の単語の発音を再生する関数
-function replayCurrentWord() {
-    if (gameActive && currentWordIndex < words.length) {
-        const currentWord = words[currentWordIndex];
-        if (currentWord && currentWord.word) {
-            // モードに応じて音声を再生
-            if (isCustomLesson && lessonMode === 'japanese-reading') {
-                // 日本語読み上げモード：日本語の意味を読み上げ
-                audioManager.speakJapanese(currentWord.meaning);
-            } else {
-                // その他のモード：英語発音
-                speakWord(currentWord.word);
-            }
-        }
-    }
-}
 
 // カスタム単語をlocalStorageから読み込み
 function loadCustomWords() {
@@ -1571,9 +1541,7 @@ function startCustomLesson() {
 }
 
 // 正解時に効果音を再生する関数
-function playCorrectSound(word = "good") {
-    return audioManager.playCorrectSound(word);
-}
+
 
 // LevelManagerの初期化（レベルクラスが利用可能になった後）
 function initializeLevelManager() {
@@ -1603,7 +1571,7 @@ function initGame() {
         displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
     }, 1000);
     
-    updateProgressBar();
+    uiManager.updateProgressBar(currentWordIndex, words.length);
     scoreDisplay.style.display = 'none';
     wordInput.value = '';
     wordInput.focus();
@@ -1633,7 +1601,7 @@ function initGame() {
     
     hideRecords();
     
-    initLevelSelectors();
+
     
     initKeyboardAnimation();
     
@@ -1819,9 +1787,7 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
 }
 
 // レガシー関数: 時間をフォーマット
-function formatTime(timeMs) {
-    return uiManager.formatTime(timeMs);
-}
+
 
 function displayBestTimes() {
     // すべてのカスタムレッスンの記録を表示
@@ -1852,7 +1818,7 @@ function displayBestTimes() {
                 const recordTime = bestRecord.time || bestRecord;
                 const recordAccuracy = bestRecord.accuracy !== undefined ? bestRecord.accuracy : 100;
                 
-                li.innerHTML = `<span style="color: var(--color-success); font-size: 1.2rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: var(--text-muted);">${formatTime(recordTime)}</small>`;
+                li.innerHTML = `<span style="color: var(--color-success); font-size: 1.2rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: var(--text-muted);">${uiManager.formatTime(recordTime)}</small>`;
                 lessonRecordsList.appendChild(li);
             } else {
                 const li = document.createElement('li');
@@ -1873,13 +1839,7 @@ const progressBar = uiManager.progressBar;
 const scoreDisplay = uiManager.scoreDisplay;
 const timerDisplay = uiManager.timerDisplay;
 
-function updateTimer() {
-    if (!gameActive) return;
-    
-    const currentTime = Date.now();
-    const elapsedTime = currentTime - startTime;
-    timerDisplay.textContent = formatTime(elapsedTime);
-}
+
 
 function startTimer() {
     // Lv0: 単語学習モードではタイマーを開始しない
@@ -1892,7 +1852,7 @@ function startTimer() {
     timerInterval = setInterval(() => {
         // ゲーム中はタイマー表示を更新しない（表示は非表示のまま）
         // const elapsedTime = Date.now() - startTime;
-        // timerDisplay.textContent = formatTime(elapsedTime);
+        // timerDisplay.textContent = uiManager.formatTime(elapsedTime);
     }, 10);
     
     // タイマー表示を非表示にする
@@ -1910,9 +1870,7 @@ function initKeyboardAnimation() {
 }
 
 // レガシー関数: 配列をシャッフル
-function shuffleArray(array) {
-    return gameManager.shuffleArray(array);
-}
+
 
 // 段階的練習モードの表示を更新する関数
 function updateProgressiveDisplay() {
@@ -2074,7 +2032,7 @@ function displayWord(playAudio = true, clearInput = true) {
                     
                     // 発音を再生（最初は英語）
                     if (playAudio) {
-                        speakWord(currentWord.word);
+                        audioManager.speakWord(currentWord.word);
                     }
                     
                     // フィードバック表示を更新
@@ -2082,7 +2040,7 @@ function displayWord(playAudio = true, clearInput = true) {
                     feedback.className = 'feedback';
                     
                     // 進捗バーを更新
-                    updateProgressBar();
+                    uiManager.updateProgressBar(currentWordIndex, words.length);
                 }
                 
             }
@@ -2109,7 +2067,7 @@ function displayWord(playAudio = true, clearInput = true) {
                     
                     // 最初の段階でも発音（playAudio=trueの場合のみ）
                     if (playAudio) {
-                        speakWord(currentWord.word);
+                        audioManager.speakWord(currentWord.word);
                     }
                 }
             }
@@ -2181,12 +2139,12 @@ function displayWord(playAudio = true, clearInput = true) {
                 
                 // 通常モードでの音声再生
                 if (playAudio) {
-                    speakWord(currentWord.word);
+                    audioManager.speakWord(currentWord.word);
                 }
             }
             
             // キーボードハイライトを表示
-            highlightNextKey();
+            keyboardManager.highlightNextKey();
             
             // 新しい単語を表示するたびにミス状態をリセット
             currentWordMistake = false;
@@ -2216,7 +2174,7 @@ function displayWord(playAudio = true, clearInput = true) {
             feedback.textContent = 'Escapeキーでレッスン選択画面に戻ります';
             
             // 効果音を再生
-            playCorrectSound("congratulations");
+            audioManager.playCorrectSound("congratulations");
             
             // ゲームを非アクティブにして自動再開を防ぐ
             gameActive = false;
@@ -2268,9 +2226,9 @@ function displayWord(playAudio = true, clearInput = true) {
             
             // 効果音を再生
             if (isPerfect) {
-                playCorrectSound("congratulations");
+                audioManager.playCorrectSound("congratulations");
             } else {
-                playCorrectSound("complete");
+                audioManager.playCorrectSound("complete");
             }
         }
         
@@ -2287,10 +2245,7 @@ function displayWord(playAudio = true, clearInput = true) {
     }
 }
 
-// レガシー関数: プログレスバーを更新
-function updateProgressBar() {
-    uiManager.updateProgressBar(currentWordIndex, words.length);
-}
+
 
 function validateKeyInput(e) {
     // Lv0: 単語学習モードでは入力バリデーションをスキップ
@@ -2496,7 +2451,7 @@ function checkInputRealtime() {
                         currentWordIndex++;
                         correctCount++;
                         
-                        updateProgressBar();
+                        uiManager.updateProgressBar(currentWordIndex, words.length);
                         displayWord();
                     }, 1500);
                 }
@@ -2523,9 +2478,9 @@ function checkInputRealtime() {
                     
                     // 正解効果音を再生
                     if (!currentWordMistake) {
-                        playCorrectSound("excellent");
+                        audioManager.playCorrectSound("excellent");
                     } else {
-                        playCorrectSound("good");
+                        audioManager.playCorrectSound("good");
                     }
                     
                     // 遅延後に次の段階へ
@@ -2539,7 +2494,7 @@ function checkInputRealtime() {
                 }
                         
                         // 段階が変わったら発音
-                        speakWord(currentWord);
+                        audioManager.speakWord(currentWord);
                         
                         // 入力フィールドを再有効化
                         wordInput.disabled = false;
@@ -2552,9 +2507,9 @@ function checkInputRealtime() {
                     
                     // 正解効果音を再生
                     if (!currentWordMistake) {
-                        playCorrectSound("excellent");
+                        audioManager.playCorrectSound("excellent");
                     } else {
-                        playCorrectSound("good");
+                        audioManager.playCorrectSound("good");
                     }
                     
                     // 遅延後に次の単語へ
@@ -2565,7 +2520,7 @@ function checkInputRealtime() {
                         // 入力フィールドをクリア
                         wordInput.value = '';
                         
-                        updateProgressBar();
+                        uiManager.updateProgressBar(currentWordIndex, words.length);
                         displayWord();
                         
                         // 入力フィールドを再有効化
@@ -2598,11 +2553,11 @@ function checkInputRealtime() {
             if (!currentWordMistake) {
                 feedback.textContent = 'Excellent!';
                 // 正解効果音を再生（ミスなし）
-                playCorrectSound("excellent");
+                audioManager.playCorrectSound("excellent");
             } else {
                 feedback.textContent = 'Good!';
                 // 正解効果音を再生（ミスあり）
-                playCorrectSound("good");
+                audioManager.playCorrectSound("good");
             }
             feedback.className = 'feedback correct';
             
@@ -2611,7 +2566,7 @@ function checkInputRealtime() {
                 currentWordIndex++;
                 correctCount++;
                 
-                updateProgressBar();
+                uiManager.updateProgressBar(currentWordIndex, words.length);
                 displayWord();
             }, 500); // 500ミリ秒の遅延
         }
@@ -2671,14 +2626,14 @@ function checkInputRealtime() {
         wordDisplay.innerHTML = highlightedHTML;
     }
     
-    highlightNextKey();
+    keyboardManager.highlightNextKey();
 }
 
 wordInput.addEventListener('keydown', (e) => {
     if (!timerStarted && gameActive) {
         startTimer();
         // 最初のキー入力時にAudioContextを初期化
-        initAudioContext();
+        audioManager.initAudioContext();
     }
     
     if (e.key === 'Enter' || e.key === ' ') {
@@ -2706,7 +2661,7 @@ wordInput.addEventListener('keydown', (e) => {
                         feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
                     } else {
                         // 英語を読み上げてカウントアップ
-                        speakWord(currentWord.word);
+                        audioManager.speakWord(currentWord.word);
                         vocabularyLearningIsJapanese = false;
                         vocabularyLearningCount++;
                         
@@ -2732,24 +2687,24 @@ wordInput.addEventListener('keydown', (e) => {
         // Backspaceの特別な処理
         if (e.key === 'Backspace') {
             // Backspace音を再生
-            playTypingSound();
+            audioManager.playTypingSound();
             return; // 以下の処理をスキップ（updatePartialWordDisplayはinputイベントで処理される）
         }
         
         if (validateKeyInput(e)) {
             // 正しいキー入力の場合
             if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                playTypingSound();
+                audioManager.playTypingSound();
             }
             
             // KeyboardManagerを使用してキープレスを表示
             keyboardManager.showKeyPress(e.key, true);
             
-            setTimeout(highlightNextKey, 50);
+            setTimeout(() => keyboardManager.highlightNextKey(), 50);
         } else {
             // 間違ったキー入力の場合
             if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                playMistypeSound();
+                audioManager.playMistypeSound();
             }
             
             // KeyboardManagerを使用して間違ったキープレスを表示
@@ -2767,7 +2722,7 @@ wordInput.addEventListener('input', () => {
 // キー入力時のハイライト更新のみ（部分表示更新はinputイベントで処理）
 wordInput.addEventListener('keyup', (e) => {
     if (gameActive && (e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        highlightNextKey();
+        keyboardManager.highlightNextKey();
     }
 });
 
@@ -2798,7 +2753,7 @@ document.addEventListener('keydown', (e) => {
                     feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
                 } else {
                     // 英語を読み上げてカウントアップ
-                    speakWord(currentWord.word);
+                    audioManager.speakWord(currentWord.word);
                     vocabularyLearningIsJapanese = false;
                     vocabularyLearningCount++;
                     
@@ -2820,9 +2775,9 @@ window.addEventListener('load', () => {
     loadCustomLessons(); // カスタムレッスンを読み込み
     
     // レッスン記録を動的に生成
-    generateLevelRecords();
+    updateLessonList();
     
-    initLevelSelectors();
+
     
     // カスタムレッスンがある場合は一番新しいレッスンを自動選択、ない場合はタイトル表示
     if (customLessons.length > 0) {
@@ -2927,31 +2882,13 @@ function showRecords() {
     }
 }
 
-function initLevelSelectors() {
-    // updateLessonList()で動的に作成されるイベントリスナーを使用するため、
-    // ここでは何もする必要がない
-}
 
-// レガシー関数: 次のキーをハイライト
-function highlightNextKey() {
-    keyboardManager.highlightNextKey();
-}
 
-// レガシー関数: キーボードリップルエフェクト
-function createKeyboardRipple(keyElement, isError = false) {
-    keyboardManager.createRippleEffect(keyElement, isError);
-}
 
-function initRecords() {
-    if (!localStorage.getItem('typingRecords')) {
-        records = {};
-        
-        // カスタムレッスンの記録のみ初期化
-        records['level10'] = [];
-        
-        saveRecords();
-    }
-}
+
+
+
+
 
 function showNewRecordMessage() {
     const newRecordMsg = document.createElement('div');
@@ -2975,12 +2912,7 @@ function showNewRecordMessage() {
     }, 100);
 }
 
-function validateInput() {
-    const currentWord = words[currentWordIndex].word;
-    const userInput = wordInput.value.trim();
-    
-    return currentWord.toLowerCase() === userInput.toLowerCase();
-}
+
 
 // レッスン一覧を更新
 function updateLessonList() {
@@ -3049,9 +2981,7 @@ function updateLessonList() {
     displayBestTimes();
 }
 
-function generateLevelRecords() {
-    updateLessonList();
-}
+
 
 // タイトルに戻る機能
 function backToTitle() {

@@ -35,7 +35,7 @@ class VocabularyLearningLevel {
             if (typeof speakWord !== 'undefined') {
                 speakWord(word.word);
             } else {
-                this.audioManager.speakEnglish(word.word);
+                this.audioManager.speakWord(word.word);
             }
         }
 
@@ -65,7 +65,7 @@ class VocabularyLearningLevel {
                     if (typeof speakWord !== 'undefined') {
                         speakWord(currentWord.word);
                     } else {
-                        this.audioManager.speakEnglish(currentWord.word);
+                        this.audioManager.speakWord(currentWord.word);
                     }
                     this.gameManager.vocabularyLearningIsJapanese = false;
                     this.gameManager.vocabularyLearningCount++;
