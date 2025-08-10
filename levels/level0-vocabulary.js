@@ -16,10 +16,14 @@ class VocabularyLearningLevel {
             this.uiManager.wordInput.value = '';
         }
 
-        // 意味のみ表示し、入力フィールドを非表示
-        this.uiManager.wordDisplay.textContent = word.word;
+        // 単語を通常表示（spanで各文字を分割）
+        this.uiManager.wordDisplay.innerHTML = word.word.split('').map(char => `<span>${char}</span>`).join('');
+        
+        // 意味を表示
         this.uiManager.meaningDisplay.textContent = word.meaning;
         this.uiManager.meaningDisplay.style.display = 'block';
+        
+        // 入力フィールドを非表示
         this.uiManager.wordInput.style.display = 'none';
 
         // カウンターと状態をリセット
@@ -27,12 +31,22 @@ class VocabularyLearningLevel {
 
         // 発音を再生（最初は英語）
         if (playAudio) {
-            this.audioManager.speakEnglish(word.word);
+            // speakWord関数を使用（既存コードとの互換性保持）
+            if (typeof speakWord !== 'undefined') {
+                speakWord(word.word);
+            } else {
+                this.audioManager.speakEnglish(word.word);
+            }
         }
 
-        // フィードバック表示
+        // フィードバック表示を更新
         this.uiManager.feedback.textContent = `Enter/Spaceで日本語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`;
         this.uiManager.feedback.className = 'feedback';
+        
+        // 進捗バーを更新（既存関数を呼び出し）
+        if (typeof updateProgressBar !== 'undefined') {
+            updateProgressBar();
+        }
     }
 
     // キー入力ハンドラ（Enter/Spaceで音声切り替え）
@@ -48,7 +62,11 @@ class VocabularyLearningLevel {
                     this.uiManager.feedback.textContent = `Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`;
                 } else {
                     // 英語を読み上げてカウントアップ
-                    this.audioManager.speakEnglish(currentWord.word);
+                    if (typeof speakWord !== 'undefined') {
+                        speakWord(currentWord.word);
+                    } else {
+                        this.audioManager.speakEnglish(currentWord.word);
+                    }
                     this.gameManager.vocabularyLearningIsJapanese = false;
                     this.gameManager.vocabularyLearningCount++;
 

@@ -732,6 +732,17 @@ function updateLetterChoiceButtons(userInput, currentWord) {
 // GameManagerのインスタンスを作成
 const gameManager = new GameManager(audioManager, storageManager);
 
+// Level 0 (vocabulary-learning) のインスタンス
+let level0Instance = null;
+
+// Level インスタンスを初期化する関数
+function initializeLevelInstances() {
+    // UIManager と AudioManager が初期化された後に呼び出す
+    if (typeof VocabularyLearningLevel !== 'undefined' && uiManager && audioManager) {
+        level0Instance = new VocabularyLearningLevel(gameManager, audioManager, uiManager);
+    }
+}
+
 // UIManager: UI操作を管理するクラス
 class UIManager {
     constructor() {
@@ -972,6 +983,9 @@ class UIManager {
 
 // UIManagerのインスタンスを作成
 const uiManager = new UIManager();
+
+// レベルインスタンスを初期化
+initializeLevelInstances();
 
 // LevelManagerのインスタンスを作成（レベルクラスが読み込まれた後に初期化）
 let levelManager = null;
@@ -2019,30 +2033,35 @@ function displayWord(playAudio = true, clearInput = true) {
         if (currentWord && currentWord.word) {
             // Lv0: 単語学習モードの初期化
             if (isCustomLesson && lessonMode === 'vocabulary-learning') {
-                // 単語を通常表示
-                wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
-                
-                // 意味を表示
-                meaningDisplay.textContent = currentWord.meaning;
-                meaningDisplay.style.display = 'block';
-                
-                // 入力フィールドを非表示
-                wordInput.style.display = 'none';
-                
-                // カウンターと状態をリセット
-                gameManager.resetVocabularyLearning();
-                
-                // 発音を再生（最初は英語）
-                if (playAudio) {
-                    speakWord(currentWord.word);
+                if (level0Instance) {
+                    level0Instance.initializeWord(currentWord, playAudio, clearInput);
+                } else {
+                    // フォールバック: 従来のロジック（level0Instance が利用できない場合）
+                    // 単語を通常表示
+                    wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                    
+                    // 意味を表示
+                    meaningDisplay.textContent = currentWord.meaning;
+                    meaningDisplay.style.display = 'block';
+                    
+                    // 入力フィールドを非表示
+                    wordInput.style.display = 'none';
+                    
+                    // カウンターと状態をリセット
+                    gameManager.resetVocabularyLearning();
+                    
+                    // 発音を再生（最初は英語）
+                    if (playAudio) {
+                        speakWord(currentWord.word);
+                    }
+                    
+                    // フィードバック表示を更新
+                    feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
+                    feedback.className = 'feedback';
+                    
+                    // 進捗バーを更新
+                    updateProgressBar();
                 }
-                
-                // フィードバック表示を更新
-                feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
-                feedback.className = 'feedback';
-                
-                // 進捗バーを更新
-                updateProgressBar();
                 
             }
             // 段階的練習モードの初期化
@@ -2504,31 +2523,43 @@ wordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
         // Lv0: 単語学習モード専用の処理
         if (gameActive && isCustomLesson && lessonMode === 'vocabulary-learning') {
-            e.preventDefault();
-            const currentWord = words[currentWordIndex];
-            
-            if (currentWord && currentWord.word) {
-                if (!vocabularyLearningIsJapanese) {
-                    // 日本語を読み上げ
-                    audioManager.speakJapanese(currentWord.meaning);
-                    vocabularyLearningIsJapanese = true;
-                    feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
-                } else {
-                    // 英語を読み上げてカウントアップ
-                    speakWord(currentWord.word);
-                    vocabularyLearningIsJapanese = false;
-                    vocabularyLearningCount++;
-                    
-                    // 10回に達したら次の単語へ
-                    if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
-                        currentWordIndex++;
-                        displayWord();
+            if (level0Instance) {
+                const currentWord = words[currentWordIndex];
+                const result = level0Instance.handleKeyInput(e, currentWord);
+                
+                if (result === 'next_word') {
+                    currentWordIndex++;
+                    displayWord();
+                }
+                return;
+            } else {
+                // フォールバック: 従来のロジック
+                e.preventDefault();
+                const currentWord = words[currentWordIndex];
+                
+                if (currentWord && currentWord.word) {
+                    if (!vocabularyLearningIsJapanese) {
+                        // 日本語を読み上げ
+                        audioManager.speakJapanese(currentWord.meaning);
+                        vocabularyLearningIsJapanese = true;
+                        feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
                     } else {
-                        feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
+                        // 英語を読み上げてカウントアップ
+                        speakWord(currentWord.word);
+                        vocabularyLearningIsJapanese = false;
+                        vocabularyLearningCount++;
+                        
+                        // 規定回数に達したら次の単語へ
+                        if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
+                            currentWordIndex++;
+                            displayWord();
+                        } else {
+                            feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
+                        }
                     }
                 }
+                return;
             }
-            return;
         }
         
         if (!gameActive) {
@@ -2584,27 +2615,39 @@ document.addEventListener('keydown', (e) => {
     // Lv0モードで入力フィールドが非表示の場合のキーハンドラ
     if (gameActive && isCustomLesson && lessonMode === 'vocabulary-learning' && 
         wordInput.style.display === 'none' && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        const currentWord = words[currentWordIndex];
         
-        if (currentWord && currentWord.word) {
-            if (!vocabularyLearningIsJapanese) {
-                // 日本語を読み上げ
-                audioManager.speakJapanese(currentWord.meaning);
-                vocabularyLearningIsJapanese = true;
-                feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
-            } else {
-                // 英語を読み上げてカウントアップ
-                speakWord(currentWord.word);
-                vocabularyLearningIsJapanese = false;
-                vocabularyLearningCount++;
-                
-                // 10回に達したら次の単語へ
-                if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
-                    currentWordIndex++;
-                    displayWord();
+        if (level0Instance) {
+            const currentWord = words[currentWordIndex];
+            const result = level0Instance.handleKeyInput(e, currentWord);
+            
+            if (result === 'next_word') {
+                currentWordIndex++;
+                displayWord();
+            }
+        } else {
+            // フォールバック: 従来のロジック
+            e.preventDefault();
+            const currentWord = words[currentWordIndex];
+            
+            if (currentWord && currentWord.word) {
+                if (!vocabularyLearningIsJapanese) {
+                    // 日本語を読み上げ
+                    audioManager.speakJapanese(currentWord.meaning);
+                    vocabularyLearningIsJapanese = true;
+                    feedback.textContent = `Enter/Spaceで英語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
                 } else {
-                    feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
+                    // 英語を読み上げてカウントアップ
+                    speakWord(currentWord.word);
+                    vocabularyLearningIsJapanese = false;
+                    vocabularyLearningCount++;
+                    
+                    // 規定回数に達したら次の単語へ
+                    if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
+                        currentWordIndex++;
+                        displayWord();
+                    } else {
+                        feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
+                    }
                 }
             }
         }
