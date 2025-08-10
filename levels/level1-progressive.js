@@ -172,15 +172,37 @@ class ProgressiveLearningLevel {
             this.uiManager.feedback.textContent = `ステップ ${this.gameManager.progressiveStep}/${this.gameManager.maxProgressiveSteps} クリア！`;
             this.uiManager.feedback.className = 'feedback correct';
             
+            // 正解効果音を再生
+            const currentWord = this.gameManager.getCurrentWord();
+            if (!this.gameManager.currentWordMistake) {
+                this.audioManager.playCorrectSound("excellent");
+            } else {
+                this.audioManager.playCorrectSound("good");
+            }
+            
             setTimeout(() => {
                 this.updateDisplay();
                 this.uiManager.feedback.textContent = `ステップ ${this.gameManager.progressiveStep}/${this.gameManager.maxProgressiveSteps}`;
                 this.uiManager.feedback.className = 'feedback';
+                
+                // 段階が変わったら発音
+                this.audioManager.speakWord(currentWord.word);
             }, 1000);
             
             return 'continue_word';
         } else {
             // 全段階完了、次の単語へ
+            this.uiManager.feedback.textContent = 'Complete!';
+            this.uiManager.feedback.className = 'feedback correct';
+            
+            // 正解効果音を再生
+            const currentWord = this.gameManager.getCurrentWord();
+            if (!this.gameManager.currentWordMistake) {
+                this.audioManager.playCorrectSound("excellent");
+            } else {
+                this.audioManager.playCorrectSound("good");
+            }
+            
             this.gameManager.resetForNewWord();
             return 'next_word';
         }
@@ -208,7 +230,9 @@ class ProgressiveLearningLevel {
         
         // 段階が変わった場合のみ選択肢を初期化
         if (this.gameManager.lastShuffledStep !== this.gameManager.progressiveStep) {
-            this.gameManager.initHiddenLetterChoices(currentWord.word, visibleCharCount);
+            // 確実に文字列を渡すため、型チェックを追加
+            const wordString = typeof currentWord === 'string' ? currentWord : currentWord.word;
+            this.gameManager.initHiddenLetterChoices(wordString, visibleCharCount);
             this.gameManager.lastShuffledStep = this.gameManager.progressiveStep;
         }
         
