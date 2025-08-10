@@ -24,7 +24,7 @@ class PronunciationOnlyLevel {
 
         // 発音を再生
         if (playAudio) {
-            this.audioManager.speakEnglish(word.word);
+            this.audioManager.speakWord(word.word);
         }
 
         // フィードバック表示
@@ -134,7 +134,7 @@ class PronunciationOnlyLevel {
     replayAudio() {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
-            this.audioManager.speakEnglish(currentWord.word);
+            this.audioManager.speakWord(currentWord.word);
         }
     }
 }

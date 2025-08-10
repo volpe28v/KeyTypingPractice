@@ -119,7 +119,7 @@ class JapaneseReadingLevel {
     handleWordComplete() {
         // 完了時に英語の発音も再生
         const currentWord = this.gameManager.getCurrentWord();
-        this.audioManager.speakEnglish(currentWord.word);
+        this.audioManager.speakWord(currentWord.word);
         
         return 'next_word';
     }

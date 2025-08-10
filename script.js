@@ -737,6 +737,9 @@ const gameManager = new GameManager(audioManager, storageManager);
 // Level 0 (vocabulary-learning) のインスタンス
 let level0Instance = null;
 let level1Instance = null;
+let level2Instance = null;
+let level3Instance = null;
+let level4Instance = null;
 
 // Level インスタンスを初期化する関数
 function initializeLevelInstances() {
@@ -747,6 +750,18 @@ function initializeLevelInstances() {
     
     if (typeof ProgressiveLearningLevel !== 'undefined' && uiManager && audioManager) {
         level1Instance = new ProgressiveLearningLevel(gameManager, audioManager, uiManager);
+    }
+    
+    if (typeof PronunciationMeaningLevel !== 'undefined' && uiManager && audioManager) {
+        level2Instance = new PronunciationMeaningLevel(gameManager, audioManager, uiManager);
+    }
+    
+    if (typeof PronunciationOnlyLevel !== 'undefined' && uiManager && audioManager) {
+        level3Instance = new PronunciationOnlyLevel(gameManager, audioManager, uiManager);
+    }
+    
+    if (typeof JapaneseReadingLevel !== 'undefined' && uiManager && audioManager) {
+        level4Instance = new JapaneseReadingLevel(gameManager, audioManager, uiManager);
     }
 }
 
@@ -2098,23 +2113,54 @@ function displayWord(playAudio = true, clearInput = true) {
                     }
                 }
             }
-            // カスタムレッスンのモードに応じて単語表示を制御
-            else if (isCustomLesson && (lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'japanese-reading')) {
-                // 発音のみ、発音+意味、日本語読み上げモード：黒丸で単語を非表示
-                let hiddenHTML = '';
-                for (let i = 0; i < currentWord.word.length; i++) {
-                    hiddenHTML += '<span style="color: #666;">●</span>';
+            // Level2-4: 各レベル専用の処理に委譲
+            else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
+                if (level2Instance) {
+                    level2Instance.initializeWord(currentWord, playAudio, clearInput);
+                } else {
+                    // フォールバック: 従来のロジック
+                    let hiddenHTML = '';
+                    for (let i = 0; i < currentWord.word.length; i++) {
+                        hiddenHTML += '<span style="color: #666;">●</span>';
+                    }
+                    wordDisplay.innerHTML = hiddenHTML;
+                    meaningDisplay.textContent = currentWord.meaning;
+                    meaningDisplay.style.display = 'block';
                 }
-                wordDisplay.innerHTML = hiddenHTML;
+            }
+            else if (isCustomLesson && lessonMode === 'pronunciation-only') {
+                if (level3Instance) {
+                    level3Instance.initializeWord(currentWord, playAudio, clearInput);
+                } else {
+                    // フォールバック: 従来のロジック
+                    let hiddenHTML = '';
+                    for (let i = 0; i < currentWord.word.length; i++) {
+                        hiddenHTML += '<span style="color: #666;">●</span>';
+                    }
+                    wordDisplay.innerHTML = hiddenHTML;
+                    meaningDisplay.style.display = 'none';
+                }
+            }
+            else if (isCustomLesson && lessonMode === 'japanese-reading') {
+                if (level4Instance) {
+                    level4Instance.initializeWord(currentWord, playAudio, clearInput);
+                } else {
+                    // フォールバック: 従来のロジック
+                    let hiddenHTML = '';
+                    for (let i = 0; i < currentWord.word.length; i++) {
+                        hiddenHTML += '<span style="color: #666;">●</span>';
+                    }
+                    wordDisplay.innerHTML = hiddenHTML;
+                    meaningDisplay.textContent = currentWord.meaning;
+                    meaningDisplay.style.display = 'block';
+                }
             } else {
                 // 通常モード：単語を表示
                 wordDisplay.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
             }
             
-            // モードに応じて意味表示を制御
-            if (isCustomLesson && lessonMode === 'pronunciation-only') {
-                meaningDisplay.style.display = 'none';
-            } else {
+            // 通常モードまたはフォールバック時のみ意味表示を制御
+            if (!isCustomLesson || (lessonMode !== 'pronunciation-only' && lessonMode !== 'pronunciation-meaning' && lessonMode !== 'japanese-reading' && lessonMode !== 'vocabulary-learning' && lessonMode !== 'progressive')) {
                 meaningDisplay.textContent = currentWord.meaning;
                 meaningDisplay.style.display = 'block';
             }
@@ -2122,20 +2168,19 @@ function displayWord(playAudio = true, clearInput = true) {
             feedback.textContent = '';
             feedback.className = 'feedback';
             
-            // 入力フィールドは全モードで表示
-            wordInput.style.display = 'inline-block';
-            if (clearInput) {
-                wordInput.value = '';
-            }
-            wordInput.focus();
-            
-            // モードに応じて音声再生を制御（playAudio=falseの場合は音声なし）
-            if (playAudio) {
-                if (isCustomLesson && lessonMode === 'japanese-reading') {
-                    // 日本語読み上げモード：日本語の意味を読み上げ
-                    audioManager.speakJapanese(currentWord.meaning);
-                } else if (!(isCustomLesson && lessonMode === 'progressive')) {
-                    // 段階的練習モード以外では英語発音（段階的練習は上で既に発音済み）
+            // 通常モードまたはフォールバック時のみ入力フィールドとフィードバックを制御
+            if (!isCustomLesson || (lessonMode !== 'pronunciation-only' && lessonMode !== 'pronunciation-meaning' && lessonMode !== 'japanese-reading' && lessonMode !== 'vocabulary-learning' && lessonMode !== 'progressive')) {
+                wordInput.style.display = 'inline-block';
+                if (clearInput) {
+                    wordInput.value = '';
+                }
+                wordInput.focus();
+                
+                feedback.textContent = '';
+                feedback.className = 'feedback';
+                
+                // 通常モードでの音声再生
+                if (playAudio) {
                     speakWord(currentWord.word);
                 }
             }
@@ -2276,7 +2321,7 @@ function validateKeyInput(e) {
     const isCorrect = expectedChar === inputChar;
     
     if (!isCorrect && e.key !== 'Shift') {
-        // 段階的練習モードの場合、level1Instanceに処理を委譲
+        // Level1-4の場合、各レベルインスタンスに処理を委譲
         if (isCustomLesson && lessonMode === 'progressive') {
             if (level1Instance) {
                 if (!level1Instance.validateInput(e, currentWord)) {
@@ -2334,7 +2379,48 @@ function validateKeyInput(e) {
                     }, 1000);
                 }
             }
-        } else {
+        }
+        // Level2-4の場合、各レベルインスタンスに処理を委譲
+        else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
+            if (level2Instance) {
+                if (!level2Instance.validateInput(e, currentWord)) {
+                    highlightWrongChar(currentPosition);
+                    e.preventDefault();
+                    return false;
+                }
+            } else {
+                // フォールバック: 通常のミスカウント
+                mistakeCount++;
+                currentWordMistake = true;
+            }
+        }
+        else if (isCustomLesson && lessonMode === 'pronunciation-only') {
+            if (level3Instance) {
+                if (!level3Instance.validateInput(e, currentWord)) {
+                    highlightWrongChar(currentPosition);
+                    e.preventDefault();
+                    return false;
+                }
+            } else {
+                // フォールバック: 通常のミスカウント
+                mistakeCount++;
+                currentWordMistake = true;
+            }
+        }
+        else if (isCustomLesson && lessonMode === 'japanese-reading') {
+            if (level4Instance) {
+                if (!level4Instance.validateInput(e, currentWord)) {
+                    highlightWrongChar(currentPosition);
+                    e.preventDefault();
+                    return false;
+                }
+            } else {
+                // フォールバック: 通常のミスカウント
+                mistakeCount++;
+                currentWordMistake = true;
+            }
+        }
+        else {
             // 通常モードでは全てのミスをカウント
             mistakeCount++;
             currentWordMistake = true;
@@ -2550,8 +2636,23 @@ function checkInputRealtime() {
         } else {
             updateProgressiveDisplay();
         }
-    } else if (isCustomLesson && (lessonMode === 'vocabulary-learning' || lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'japanese-reading')) {
-        // スペル隠しモードなどでは何もしない（各モードの表示関数で処理済み）
+    } else if (isCustomLesson && lessonMode === 'vocabulary-learning') {
+        // 単語学習モードでは何もしない（level0Instanceで処理済み）
+    } else if (isCustomLesson && lessonMode === 'pronunciation-meaning') {
+        // Level2: 発音+意味モード
+        if (level2Instance) {
+            level2Instance.checkInputRealtime();
+        }
+    } else if (isCustomLesson && lessonMode === 'pronunciation-only') {
+        // Level3: 発音のみモード
+        if (level3Instance) {
+            level3Instance.checkInputRealtime();
+        }
+    } else if (isCustomLesson && lessonMode === 'japanese-reading') {
+        // Level4: 日本語読み上げモード
+        if (level4Instance) {
+            level4Instance.checkInputRealtime();
+        }
     } else {
         // 通常モードでは全文字をハイライト表示
         let highlightedHTML = '';
