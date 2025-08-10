@@ -452,6 +452,13 @@ class GameManager {
         this.vocabularyLearningCount = 0;
         this.vocabularyLearningMaxCount = 5;
         this.vocabularyLearningIsJapanese = false;
+        
+        // 隠れた文字選択機能関連
+        this.hiddenLetters = [];
+        this.shuffledChoices = [];
+        this.playerSequence = [];
+        this.currentChoiceIndex = 0;
+        this.lastShuffledStep = -1; // 最後にシャッフルした段階を記録
     }
     
     // ゲームを初期化
@@ -487,28 +494,30 @@ class GameManager {
             [array[i], array[j]] = [array[j], array[i]];
         }
     }
+
+    // 現在の単語を取得
+    getCurrentWord() {
+        if (this.currentWordIndex < this.words.length) {
+            return this.words[this.currentWordIndex].word;
+        }
+        return null;
+    }
+    
+    // 次の単語へ進む
+    nextWord() {
+        this.currentWordIndex++;
+    }
+    
+    // ゲームが終了したかチェック
+    isGameComplete() {
+        return this.currentWordIndex >= this.words.length;
+    }
     
     // タイマーを開始
     startTimer() {
         this.startTime = Date.now();
         this.timerStarted = true;
         return this.startTime;
-    }
-    
-    // 現在の単語を取得
-    getCurrentWord() {
-        return this.words[this.currentWordIndex];
-    }
-    
-    // 次の単語へ進む
-    nextWord() {
-        this.currentWordIndex++;
-        this.correctCount++;
-    }
-    
-    // ゲームが終了したかチェック
-    isGameComplete() {
-        return this.currentWordIndex >= this.words.length;
     }
     
     // ゲームを終了
@@ -523,45 +532,45 @@ class GameManager {
     }
     
     // 段階的練習モードの初期化
-    initProgressiveMode(word) {
+    initProgressiveMode() {
         this.progressiveStep = 0;
-        this.maxProgressiveSteps = word.length;
-        this.consecutiveMistakes = 0;
-        this.currentCharPosition = 0;
     }
     
     // 段階的練習モードを進める
     advanceProgressiveStep() {
         this.progressiveStep++;
+        // 文字選択状態をリセット
+        this.resetLetterSelection();
     }
     
     // ミスをカウント（段階的練習モードの特別処理を含む）
-    countMistake(currentPosition, visibleCharCount = null) {
+    countMistake(visibleCharCount) {
         if (this.isCustomLesson && this.lessonMode === 'progressive' && visibleCharCount !== null) {
-            // 隠されている文字でのミスのみカウント
-            if (currentPosition >= visibleCharCount) {
-                this.mistakeCount++;
-                this.currentWordMistake = true;
-                return true;
+            // 段階的練習モードの場合、表示されている文字のミスはカウントしない
+            // 実際には隠れた部分のミス処理を既存のロジックに任せる
+        }
+        
+        this.mistakeCount++;
+        if (this.isCustomLesson && this.lessonMode === 'progressive') {
+            this.consecutiveMistakes++;
+            
+            // 3回連続ミスで進捗を戻す
+            if (this.consecutiveMistakes >= 3) {
+                this.handleConsecutiveMistake();
             }
-            return false;
-        } else {
-            // 通常モードでは全てのミスをカウント
-            this.mistakeCount++;
-            this.currentWordMistake = true;
-            return true;
         }
     }
     
-    // 連続ミスを処理
-    handleConsecutiveMistake(currentPosition) {
-        if (currentPosition === this.currentCharPosition) {
-            this.consecutiveMistakes++;
-        } else {
-            this.consecutiveMistakes = 1;
-            this.currentCharPosition = currentPosition;
-        }
-        return this.consecutiveMistakes;
+    // 連続ミスの処理
+    handleConsecutiveMistake() {
+        // 進捗を戻す処理
+        const newProgressiveStep = Math.min(this.progressiveStep + 2, this.getCurrentWord().length);
+        this.revertProgress(newProgressiveStep);
+    }
+    
+    // 進捗を戻す（段階的練習モード）
+    revertProgress(newProgressiveStep) {
+        this.progressiveStep = newProgressiveStep;
     }
     
     // 連続ミスをリセット
@@ -569,29 +578,156 @@ class GameManager {
         this.consecutiveMistakes = 0;
     }
     
-    // 進捗を戻す（段階的練習モード）
-    revertProgress(mistakeCharPosition) {
-        const currentWord = this.getCurrentWord().word;
-        const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
-        this.progressiveStep = newProgressiveStep;
-    }
-    
-    // 新しい単語の開始時にリセット
+    // 新しい単語用のリセット
     resetForNewWord() {
         this.currentWordMistake = false;
         if (this.isCustomLesson && this.lessonMode === 'progressive') {
             this.consecutiveMistakes = 0;
             this.currentCharPosition = 0;
+            // 隠れた文字選択もリセット
+            this.resetLetterSelection();
+            this.lastShuffledStep = -1;
         }
     }
-
     
     // Lv0: 単語学習モード用のリセット
     resetVocabularyLearning() {
         this.vocabularyLearningCount = 0;
         this.vocabularyLearningIsJapanese = false;
     }
+
+    // 隠れた文字選択機能の初期化
+    initHiddenLetterChoices(word, visibleLength) {
+        this.hiddenLetters = word.slice(visibleLength).split('');
+        this.shuffledChoices = [...this.hiddenLetters];
+        this.shuffleArray(this.shuffledChoices);
+        this.playerSequence = [];
+        this.currentChoiceIndex = 0;
+    }
+    
+    // 文字選択の処理
+    selectLetter(letter) {
+        if (this.currentChoiceIndex >= this.hiddenLetters.length) {
+            return false; // すでに全て選択済み
+        }
+        
+        const correctLetter = this.hiddenLetters[this.currentChoiceIndex];
+        if (letter === correctLetter) {
+            this.playerSequence.push(letter);
+            this.currentChoiceIndex++;
+            return true; // 正解
+        }
+        return false; // 不正解
+    }
+    
+    // 選択をリセット
+    resetLetterSelection() {
+        this.playerSequence = [];
+        this.currentChoiceIndex = 0;
+    }
+    
+    // 全ての文字が正しく選択されたかチェック
+    isLetterSelectionComplete() {
+        return this.currentChoiceIndex >= this.hiddenLetters.length;
+    }
 }
+
+// 隠れた文字選択の表示を更新する関数
+function displayHiddenLetterChoices() {
+    const container = document.getElementById('hidden-letters-container');
+    const lettersDiv = document.getElementById('hidden-letters');
+    
+    if (!gameManager.isCustomLesson || gameManager.lessonMode !== 'progressive') {
+        container.style.display = 'none';
+        return;
+    }
+    
+    const currentWord = gameManager.getCurrentWord();
+    const visibleCharCount = Math.max(0, currentWord.length - gameManager.progressiveStep);
+    
+    // 1文字以上隠れている場合に表示
+    const hiddenCharCount = gameManager.progressiveStep;
+    if (hiddenCharCount < 1) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    // 段階が変わった場合のみ選択肢を初期化
+    if (gameManager.lastShuffledStep !== gameManager.progressiveStep) {
+        gameManager.initHiddenLetterChoices(currentWord, visibleCharCount);
+        gameManager.lastShuffledStep = gameManager.progressiveStep;
+    }
+    
+    container.style.display = 'block';
+    lettersDiv.innerHTML = '';
+    
+    // シャッフルされた文字ボタンを作成
+    gameManager.shuffledChoices.forEach((letter, index) => {
+        const button = document.createElement('button');
+        button.className = 'letter-choice';
+        button.textContent = letter;
+        button.dataset.letter = letter;
+        
+        // 既にプレイヤーが選択済みの文字かチェック（同じ文字の選択回数を考慮）
+        const selectedCount = gameManager.playerSequence.filter(selectedLetter => selectedLetter === letter).length;
+        const totalCount = gameManager.shuffledChoices.filter(choiceLetter => choiceLetter === letter).length;
+        const currentInstanceIndex = gameManager.shuffledChoices.slice(0, index).filter(choiceLetter => choiceLetter === letter).length;
+        
+        if (currentInstanceIndex < selectedCount) {
+            button.classList.add('selected');
+            button.disabled = true;
+            button.classList.add('disabled');
+        }
+        
+        lettersDiv.appendChild(button);
+    });
+}
+
+
+// キーボード入力時に対応する選択肢ボタンの状態を更新する関数
+function updateLetterChoiceButtons(userInput, currentWord) {
+    if (!gameManager.isCustomLesson || gameManager.lessonMode !== 'progressive') {
+        return;
+    }
+    
+    const visibleCharCount = Math.max(0, currentWord.length - gameManager.progressiveStep);
+    const hiddenStartIndex = visibleCharCount;
+    
+    // 隠れた部分の入力文字をチェック
+    const hiddenInputPart = userInput.slice(hiddenStartIndex);
+    
+    // 選択肢ボタンを取得
+    const letterButtons = document.querySelectorAll('.letter-choice');
+    
+    // hiddenLettersが初期化されていない場合は処理しない
+    if (!gameManager.hiddenLetters || gameManager.hiddenLetters.length === 0) {
+        return;
+    }
+    
+    // 入力された隠れた文字に対応するボタンを緑色にする
+    hiddenInputPart.split('').forEach((inputChar, index) => {
+        const expectedChar = gameManager.hiddenLetters[index];
+        
+        // expectedCharが存在し、かつ文字列である場合のみ処理
+        if (expectedChar && inputChar && inputChar.toLowerCase() === expectedChar.toLowerCase()) {
+            // 対応するボタンを一つだけ見つけて緑色にする
+            const availableButton = Array.from(letterButtons).find(button => 
+                button.dataset.letter === expectedChar && 
+                !button.classList.contains('selected') && 
+                !button.disabled
+            );
+            
+            if (availableButton) {
+                availableButton.classList.add('selected');
+                availableButton.disabled = true;
+                availableButton.classList.add('disabled');
+            }
+        }
+    });
+}
+    
+// タイマーを開始
+
 
 // GameManagerのインスタンスを作成
 const gameManager = new GameManager(audioManager, storageManager);
@@ -1798,6 +1934,12 @@ function updateProgressiveDisplay() {
     }
     
     wordDisplay.innerHTML = displayHTML;
+    
+    // 隠れた文字選択の表示を更新
+    displayHiddenLetterChoices();
+    
+    // キーボード入力に対応する選択肢ボタンの状態を更新
+    updateLetterChoiceButtons(userInput, currentWord);
 }
 
 // 部分的に表示された単語を更新する関数
@@ -1905,6 +2047,7 @@ function displayWord(playAudio = true, clearInput = true) {
             }
             // 段階的練習モードの初期化
             else if (isCustomLesson && lessonMode === 'progressive') {
+                // 全文字表示からスタート
                 progressiveStep = 0;
                 maxProgressiveSteps = currentWord.word.length;
                 

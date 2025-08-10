@@ -8,11 +8,15 @@
 </head>
 
 <body>
+    <div class="version-display">v1.0.0</div>
     <div class="main-container">
         <div class="game-container">
             <div class="typing-area">
                 <button id="back-to-title-btn" class="back-to-title-btn">レッスン選択に戻る</button>
                 <div class="word-display" id="word-display"></div>
+                <div class="hidden-letters-container" id="hidden-letters-container">
+                    <div class="hidden-letters" id="hidden-letters"></div>
+                </div>
                 <button id="replay-audio-btn" class="replay-audio-btn" onclick="replayCurrentWord()" title="発音を再生">🔊</button>
                 <div class="meaning" id="meaning"></div>
                 <div class="timer-display" id="timer-display">00.00</div>

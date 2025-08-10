@@ -54,6 +54,20 @@ body {
     min-height: 100vh;
     max-height: 100vh; /* 画面の高さを超えないよう制限 */
     overflow: hidden;
+    position: relative;
+}
+
+.version-display {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    z-index: 1000;
 }
 
 .main-container {
@@ -1412,4 +1426,69 @@ body {
 
 .cancel-custom-btn {
     /* セカンダリ色（キャンセル）: btn btn-secondary */
+}
+
+/* 隠れた文字選択エリアのスタイル */
+.hidden-letters-container {
+    margin: 20px 0;
+    text-align: center;
+    display: none; /* デフォルトは非表示 */
+}
+
+.hidden-letters {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.letter-choice {
+    background: var(--color-primary);
+    color: var(--text-white);
+    border: none;
+    border-radius: 12px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: default;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-family: inherit;
+    pointer-events: none;
+}
+
+
+.letter-choice.selected {
+    background: var(--color-success);
+    transform: translateY(-2px) scale(1.1);
+    box-shadow: var(--shadow-medium);
+}
+
+.letter-choice.disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+.letter-choice.disabled:hover {
+    background: var(--text-muted);
+    transform: none;
+    box-shadow: var(--shadow-light);
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .letter-choice {
+        width: 45px;
+        height: 45px;
+        font-size: 1.6rem;
+        gap: 10px;
+    }
 }
