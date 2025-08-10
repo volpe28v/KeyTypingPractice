@@ -645,7 +645,7 @@ function displayHiddenLetterChoices() {
     }
     
     const currentWord = gameManager.getCurrentWord();
-    const visibleCharCount = Math.max(0, currentWord.length - gameManager.progressiveStep);
+    const visibleCharCount = Math.max(0, currentWord.word.length - gameManager.progressiveStep);
     
     // 1文字以上隠れている場合に表示
     const hiddenCharCount = gameManager.progressiveStep;
@@ -656,7 +656,7 @@ function displayHiddenLetterChoices() {
     
     // 段階が変わった場合のみ選択肢を初期化
     if (gameManager.lastShuffledStep !== gameManager.progressiveStep) {
-        gameManager.initHiddenLetterChoices(currentWord, visibleCharCount);
+        gameManager.initHiddenLetterChoices(currentWord.word, visibleCharCount);
         gameManager.lastShuffledStep = gameManager.progressiveStep;
     }
     
