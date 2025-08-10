@@ -2405,13 +2405,14 @@ function checkInputRealtime() {
             if (level1Instance) {
                 const result = level1Instance.handleWordComplete();
                 if (result === 'next_word') {
-                    // 次の単語へ進む
-                    currentWordIndex++;
-                    correctCount++;
-                    
-                    updateProgressBar();
-                    displayWord();
-                }
+                    // 次の単語へ進む（遅延処理はlevel1Instance側で実装済み）
+                    setTimeout(() => {
+                        currentWordIndex++;
+                        correctCount++;
+                        
+                        updateProgressBar();
+                        displayWord();
+                    }, 1500);
                 // 'continue_word'の場合は何もしない（level1Instanceが処理済み）
             } else {
                 // フォールバック: 従来のロジック（level1Instanceが利用できない場合）

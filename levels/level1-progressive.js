@@ -206,6 +206,15 @@ class ProgressiveLearningLevel {
                 this.audioManager.playCorrectSound("good");
             }
             
+            // 入力フィールドを一時無効化
+            this.uiManager.wordInput.disabled = true;
+            
+            // 遅延後に入力フィールドを再有効化
+            setTimeout(() => {
+                this.uiManager.wordInput.disabled = false;
+                this.uiManager.wordInput.focus();
+            }, 1500);
+            
             this.gameManager.resetForNewWord();
             return 'next_word';
         }
