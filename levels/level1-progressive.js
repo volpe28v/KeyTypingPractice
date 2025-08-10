@@ -28,7 +28,7 @@ class ProgressiveLearningLevel {
 
         // 発音を再生
         if (playAudio) {
-            this.audioManager.speakEnglish(word.word);
+            this.audioManager.speakWord(word.word);
         }
 
         // 初期表示を更新
@@ -197,7 +197,7 @@ class ProgressiveLearningLevel {
         }
         
         const currentWord = this.gameManager.getCurrentWord();
-        const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
+        const visibleCharCount = Math.max(0, currentWord.word.length - this.gameManager.progressiveStep);
         
         // 1文字以上隠れている場合に表示
         const hiddenCharCount = this.gameManager.progressiveStep;
@@ -208,7 +208,7 @@ class ProgressiveLearningLevel {
         
         // 段階が変わった場合のみ選択肢を初期化
         if (this.gameManager.lastShuffledStep !== this.gameManager.progressiveStep) {
-            this.gameManager.initHiddenLetterChoices(currentWord, visibleCharCount);
+            this.gameManager.initHiddenLetterChoices(currentWord.word, visibleCharCount);
             this.gameManager.lastShuffledStep = this.gameManager.progressiveStep;
         }
         

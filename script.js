@@ -498,7 +498,7 @@ class GameManager {
     // 現在の単語を取得
     getCurrentWord() {
         if (this.currentWordIndex < this.words.length) {
-            return this.words[this.currentWordIndex].word;
+            return this.words[this.currentWordIndex];
         }
         return null;
     }
