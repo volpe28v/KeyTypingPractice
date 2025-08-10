@@ -551,6 +551,8 @@ class GameManager {
         }
         
         this.mistakeCount++;
+        this.currentWordMistake = true;  // ミス状態フラグを設定
+        
         if (this.isCustomLesson && this.lessonMode === 'progressive') {
             this.consecutiveMistakes++;
             
