@@ -1225,7 +1225,11 @@ function showCustomLessonSetup() {
     // 入力フィールドをクリア（新規作成モード）
     document.getElementById('lesson-name-input').value = '';
     document.getElementById('custom-words-input').value = 'apple, りんご\nbanana, バナナ\norange, オレンジ\nbook, 本\nwater, 水';
-    document.getElementById('mode-progressive').checked = true;
+    // デフォルトでprogressiveモードを選択状態にする
+    const progressiveButton = document.querySelector('[data-mode="progressive"]');
+    if (progressiveButton) {
+        progressiveButton.classList.add('selected');
+    }
 }
 
 // レッスンモード選択画面を表示
