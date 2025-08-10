@@ -39,33 +39,68 @@ class ProgressiveLearningLevel {
         this.uiManager.feedback.className = 'feedback';
     }
 
-    // 段階的表示の更新
+    // 段階的表示の更新（script.jsのupdateProgressiveDisplay()と統合）
     updateDisplay() {
         const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
-
+        
         // 表示する文字数を計算（全体 - 隠す文字数）
         const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
-
+        
+        // 入力でエラーがあるかチェック
+        let firstErrorIndex = -1;
+        for (let i = 0; i < userInput.length; i++) {
+            if (i >= currentWord.length || userInput[i].toLowerCase() !== currentWord[i].toLowerCase()) {
+                firstErrorIndex = i;
+                break;
+            }
+        }
+        
         for (let i = 0; i < currentWord.length; i++) {
-            if (i < userInput.length) {
-                // 入力済み文字
-                if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                    displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+            if (i < visibleCharCount) {
+                // 常に表示する部分（入力に応じてスタイル変更）
+                if (i < userInput.length) {
+                    if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+                        if (i === firstErrorIndex) {
+                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                        } else {
+                            displayHTML += `<span>${currentWord[i]}</span>`;
+                        }
+                    } else {
+                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    }
                 } else {
-                    displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                    displayHTML += `<span>${currentWord[i]}</span>`;
                 }
-            } else if (i < visibleCharCount) {
-                // 未入力だが表示される文字
-                displayHTML += `<span class="pending-char">${currentWord[i]}</span>`;
             } else {
-                // 隠された文字
-                displayHTML += `<span class="hidden-char">●</span>`;
+                // 隠し部分
+                if (i < userInput.length) {
+                    // 入力済みの文字は隠し部分でも表示
+                    if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
+                        if (i === firstErrorIndex) {
+                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                        } else {
+                            displayHTML += '<span style="color: #666;">●</span>';
+                        }
+                    } else {
+                        // 正解の文字は緑色で表示
+                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    }
+                } else {
+                    // 未入力の文字は黒丸
+                    displayHTML += '<span style="color: #666;">●</span>';
+                }
             }
         }
 
         this.uiManager.wordDisplay.innerHTML = displayHTML;
+        
+        // 隠れた文字選択の表示を更新
+        this.displayHiddenLetterChoices();
+        
+        // キーボード入力に対応する選択肢ボタンの状態を更新
+        this.updateLetterChoiceButtons(userInput, currentWord);
     }
 
     // キー入力バリデーション
@@ -149,6 +184,99 @@ class ProgressiveLearningLevel {
             this.gameManager.resetForNewWord();
             return 'next_word';
         }
+    }
+    
+    // 隠れた文字選択の表示（script.jsのdisplayHiddenLetterChoices()と統合）
+    displayHiddenLetterChoices() {
+        const container = document.getElementById('hidden-letters-container');
+        const lettersDiv = document.getElementById('hidden-letters');
+        
+        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+            container.style.display = 'none';
+            return;
+        }
+        
+        const currentWord = this.gameManager.getCurrentWord();
+        const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
+        
+        // 1文字以上隠れている場合に表示
+        const hiddenCharCount = this.gameManager.progressiveStep;
+        if (hiddenCharCount < 1) {
+            container.style.display = 'none';
+            return;
+        }
+        
+        // 段階が変わった場合のみ選択肢を初期化
+        if (this.gameManager.lastShuffledStep !== this.gameManager.progressiveStep) {
+            this.gameManager.initHiddenLetterChoices(currentWord, visibleCharCount);
+            this.gameManager.lastShuffledStep = this.gameManager.progressiveStep;
+        }
+        
+        container.style.display = 'block';
+        lettersDiv.innerHTML = '';
+        
+        // シャッフルされた文字ボタンを作成
+        this.gameManager.shuffledChoices.forEach((letter, index) => {
+            const button = document.createElement('button');
+            button.className = 'letter-choice';
+            button.textContent = letter;
+            button.dataset.letter = letter;
+            
+            // 既にプレイヤーが選択済みの文字かチェック（同じ文字の選択回数を考慮）
+            const selectedCount = this.gameManager.playerSequence.filter(selectedLetter => selectedLetter === letter).length;
+            const totalCount = this.gameManager.shuffledChoices.filter(choiceLetter => choiceLetter === letter).length;
+            const currentInstanceIndex = this.gameManager.shuffledChoices.slice(0, index).filter(choiceLetter => choiceLetter === letter).length;
+            
+            if (currentInstanceIndex < selectedCount) {
+                button.classList.add('selected');
+                button.disabled = true;
+                button.classList.add('disabled');
+            }
+            
+            lettersDiv.appendChild(button);
+        });
+    }
+    
+    // 選択肢ボタンの状態を更新（script.jsのupdateLetterChoiceButtons()と統合）
+    updateLetterChoiceButtons(userInput, currentWord) {
+        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+            return;
+        }
+        
+        const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
+        const hiddenStartIndex = visibleCharCount;
+        
+        // 隠れた部分の入力文字をチェック
+        const hiddenInputPart = userInput.slice(hiddenStartIndex);
+        
+        // 選択肢ボタンを取得
+        const letterButtons = document.querySelectorAll('.letter-choice');
+        
+        // hiddenLettersが初期化されていない場合は処理しない
+        if (!this.gameManager.hiddenLetters || this.gameManager.hiddenLetters.length === 0) {
+            return;
+        }
+        
+        // 入力された隠れた文字に対応するボタンを緑色にする
+        hiddenInputPart.split('').forEach((inputChar, index) => {
+            const expectedChar = this.gameManager.hiddenLetters[index];
+            
+            // expectedCharが存在し、かつ文字列である場合のみ処理
+            if (expectedChar && inputChar && inputChar.toLowerCase() === expectedChar.toLowerCase()) {
+                // 対応するボタンを一つだけ見つけて緑色にする
+                const availableButton = Array.from(letterButtons).find(button => 
+                    button.dataset.letter === expectedChar && 
+                    !button.classList.contains('selected') && 
+                    !button.disabled
+                );
+                
+                if (availableButton) {
+                    availableButton.classList.add('selected');
+                    availableButton.disabled = true;
+                    availableButton.classList.add('disabled');
+                }
+            }
+        });
     }
 }
 

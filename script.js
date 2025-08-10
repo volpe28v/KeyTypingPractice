@@ -734,12 +734,17 @@ const gameManager = new GameManager(audioManager, storageManager);
 
 // Level 0 (vocabulary-learning) のインスタンス
 let level0Instance = null;
+let level1Instance = null;
 
 // Level インスタンスを初期化する関数
 function initializeLevelInstances() {
     // UIManager と AudioManager が初期化された後に呼び出す
     if (typeof VocabularyLearningLevel !== 'undefined' && uiManager && audioManager) {
         level0Instance = new VocabularyLearningLevel(gameManager, audioManager, uiManager);
+    }
+    
+    if (typeof ProgressiveLearningLevel !== 'undefined' && uiManager && audioManager) {
+        level1Instance = new ProgressiveLearningLevel(gameManager, audioManager, uiManager);
     }
 }
 
@@ -2066,20 +2071,29 @@ function displayWord(playAudio = true, clearInput = true) {
             }
             // 段階的練習モードの初期化
             else if (isCustomLesson && lessonMode === 'progressive') {
-                // 全文字表示からスタート
-                progressiveStep = 0;
-                maxProgressiveSteps = currentWord.word.length;
-                
-                // 入力フィールドを確実にクリア（clearInputがtrueの場合のみ）
-                if (clearInput) {
-                    wordInput.value = '';
+                if (level1Instance) {
+                    level1Instance.initializeWord(currentWord, playAudio, clearInput);
+                } else {
+                    // フォールバック: 従来のロジック（level1Instanceが利用できない場合）
+                    // 全文字表示からスタート
+                    progressiveStep = 0;
+                    maxProgressiveSteps = currentWord.word.length;
+                    
+                    // 入力フィールドを確実にクリア（clearInputがtrueの場合のみ）
+                    if (clearInput) {
+                        wordInput.value = '';
+                    }
+                    
+                    if (level1Instance) {
+                    level1Instance.updateDisplay();
+                } else {
+                    updateProgressiveDisplay();
                 }
-                
-                updateProgressiveDisplay();
-                
-                // 最初の段階でも発音（playAudio=trueの場合のみ）
-                if (playAudio) {
-                    speakWord(currentWord.word);
+                    
+                    // 最初の段階でも発音（playAudio=trueの場合のみ）
+                    if (playAudio) {
+                        speakWord(currentWord.word);
+                    }
                 }
             }
             // カスタムレッスンのモードに応じて単語表示を制御
@@ -2260,50 +2274,63 @@ function validateKeyInput(e) {
     const isCorrect = expectedChar === inputChar;
     
     if (!isCorrect && e.key !== 'Shift') {
-        // 段階的練習モードの場合、表示されている文字のミスはカウントしない
+        // 段階的練習モードの場合、level1Instanceに処理を委譲
         if (isCustomLesson && lessonMode === 'progressive') {
-            const currentWord = words[currentWordIndex].word;
-            const visibleCharCount = Math.max(0, currentWord.length - progressiveStep);
-            
-            // 隠されている文字でのミスのみカウント
-            if (currentPosition >= visibleCharCount) {
-                mistakeCount++;
-                currentWordMistake = true;
-                
-                // 連続ミス処理
-                // 同じ文字位置でのミスかチェック
-                if (currentPosition === currentCharPosition) {
-                    consecutiveMistakes++;
-                } else {
-                    // 新しい文字位置なので連続ミス数をリセット
-                    consecutiveMistakes = 1;
-                    currentCharPosition = currentPosition;
+            if (level1Instance) {
+                if (!level1Instance.validateInput(e, currentWord)) {
+                    highlightWrongChar(currentPosition);
+                    e.preventDefault();
+                    return false;
                 }
-            }
-            
-            // 3回連続ミスで進捗を戻す
-            if (consecutiveMistakes >= 3) {
+            } else {
+                // フォールバック: 従来のロジック
                 const currentWord = words[currentWordIndex].word;
-                const mistakeCharPosition = currentCharPosition; // 3回ミスした文字の位置
+                const visibleCharCount = Math.max(0, currentWord.length - progressiveStep);
                 
-                // ミスした文字位置まで進捗を戻す
-                // progressiveStep = 単語の長さ - 表示する文字数
-                // ミスした文字を未入力状態で表示するには: progressiveStep = 単語の長さ - (ミスした位置 + 1)
-                // 例: apple(5文字)でl(位置3)をミスした場合 → progressiveStep = 5 - (3 + 1) = 1 → appl●が表示される
-                const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
-                progressiveStep = newProgressiveStep;
+                // 隠されている文字でのミスのみカウント
+                if (currentPosition >= visibleCharCount) {
+                    mistakeCount++;
+                    currentWordMistake = true;
+                    
+                    // 連続ミス処理
+                    // 同じ文字位置でのミスかチェック
+                    if (currentPosition === currentCharPosition) {
+                        consecutiveMistakes++;
+                    } else {
+                        // 新しい文字位置なので連続ミス数をリセット
+                        consecutiveMistakes = 1;
+                        currentCharPosition = currentPosition;
+                    }
+                }
                 
-                feedback.textContent = `3回連続ミス！「${currentWord[mistakeCharPosition]}」の位置まで戻します`;
-                feedback.className = 'feedback incorrect';
-                
-                setTimeout(() => {
-                    // 入力をミスした文字位置まで戻す（ミスした文字は未入力状態）
-                    wordInput.value = currentWord.substring(0, mistakeCharPosition);
-                    consecutiveMistakes = 0; // 連続ミス数をリセット
-                    currentWordMistake = false; // ミス状態をリセット
-                    updateProgressiveDisplay();
-                    wordInput.focus();
-                }, 1000);
+                // 3回連続ミスで進捗を戻す
+                if (consecutiveMistakes >= 3) {
+                    const currentWord = words[currentWordIndex].word;
+                    const mistakeCharPosition = currentCharPosition; // 3回ミスした文字の位置
+                    
+                    // ミスした文字位置まで進捗を戻す
+                    // progressiveStep = 単語の長さ - 表示する文字数
+                    // ミスした文字を未入力状態で表示するには: progressiveStep = 単語の長さ - (ミスした位置 + 1)
+                    // 例: apple(5文字)でl(位置3)をミスした場合 → progressiveStep = 5 - (3 + 1) = 1 → appl●が表示される
+                    const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
+                    progressiveStep = newProgressiveStep;
+                    
+                    feedback.textContent = `3回連続ミス！「${currentWord[mistakeCharPosition]}」の位置まで戻します`;
+                    feedback.className = 'feedback incorrect';
+                    
+                    setTimeout(() => {
+                        // 入力をミスした文字位置まで戻す（ミスした文字は未入力状態）
+                        wordInput.value = currentWord.substring(0, mistakeCharPosition);
+                        consecutiveMistakes = 0; // 連続ミス数をリセット
+                        currentWordMistake = false; // ミス状態をリセット
+                        if (level1Instance) {
+                        level1Instance.updateDisplay();
+                    } else {
+                        updateProgressiveDisplay();
+                    }
+                        wordInput.focus();
+                    }, 1000);
+                }
             }
         } else {
             // 通常モードでは全てのミスをカウント
@@ -2319,8 +2346,12 @@ function validateKeyInput(e) {
     
     // 正解の場合は連続ミス数をリセット
     if (isCorrect && isCustomLesson && lessonMode === 'progressive') {
-        consecutiveMistakes = 0;
-        currentCharPosition = currentPosition;
+        if (!level1Instance) {
+            // フォールバック: 従来のロジック
+            consecutiveMistakes = 0;
+            currentCharPosition = currentPosition;
+        }
+        // level1Instanceがある場合は既にvalidateInput内で処理済み
     }
     
     return true;
@@ -2369,71 +2400,89 @@ function checkInputRealtime() {
     if (userInput.toLowerCase() === currentWord.toLowerCase()) {
         // 段階的練習モードの処理
         if (isCustomLesson && lessonMode === 'progressive') {
-            // 全文字を緑色で表示
-            let correctHTML = '';
-            for (let i = 0; i < currentWord.length; i++) {
-                correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
-            }
-            wordDisplay.innerHTML = correctHTML;
-            
-            // 入力フィールドを即座に無効化して連打を防ぐ
-            wordInput.disabled = true;
-            
-            // 段階を進める
-            progressiveStep++;
-            
-            if (progressiveStep <= maxProgressiveSteps) {
-                // まだ段階が残っている場合
-                feedback.textContent = `ステップ ${progressiveStep}/${maxProgressiveSteps} クリア！`;
-                feedback.className = 'feedback correct';
-                
-                // 正解効果音を再生
-                if (!currentWordMistake) {
-                    playCorrectSound("excellent");
-                } else {
-                    playCorrectSound("good");
-                }
-                
-                // 遅延後に次の段階へ
-                setTimeout(() => {
-                    wordInput.value = '';
-                    currentWordMistake = false; // ミス状態をリセット
-                    updateProgressiveDisplay();
-                    
-                    // 段階が変わったら発音
-                    speakWord(currentWord);
-                    
-                    // 入力フィールドを再有効化
-                    wordInput.disabled = false;
-                    wordInput.focus();
-                }, 1000);
-            } else {
-                // 全段階完了（最後の段階は全隠し状態での成功）
-                feedback.textContent = 'Complete!';
-                feedback.className = 'feedback correct';
-                
-                // 正解効果音を再生
-                if (!currentWordMistake) {
-                    playCorrectSound("excellent");
-                } else {
-                    playCorrectSound("good");
-                }
-                
-                // 遅延後に次の単語へ
-                setTimeout(() => {
+            if (level1Instance) {
+                const result = level1Instance.handleWordComplete();
+                if (result === 'next_word') {
+                    // 次の単語へ進む
                     currentWordIndex++;
                     correctCount++;
                     
-                    // 入力フィールドをクリア
-                    wordInput.value = '';
-                    
                     updateProgressBar();
                     displayWord();
+                }
+                // 'continue_word'の場合は何もしない（level1Instanceが処理済み）
+            } else {
+                // フォールバック: 従来のロジック（level1Instanceが利用できない場合）
+                // 全文字を緑色で表示
+                let correctHTML = '';
+                for (let i = 0; i < currentWord.length; i++) {
+                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                }
+                wordDisplay.innerHTML = correctHTML;
+                
+                // 入力フィールドを即座に無効化して連打を防ぐ
+                wordInput.disabled = true;
+                
+                // 段階を進める
+                progressiveStep++;
+                
+                if (progressiveStep <= maxProgressiveSteps) {
+                    // まだ段階が残っている場合
+                    feedback.textContent = `ステップ ${progressiveStep}/${maxProgressiveSteps} クリア！`;
+                    feedback.className = 'feedback correct';
                     
-                    // 入力フィールドを再有効化
-                    wordInput.disabled = false;
-                    wordInput.focus();
-                }, 1500);
+                    // 正解効果音を再生
+                    if (!currentWordMistake) {
+                        playCorrectSound("excellent");
+                    } else {
+                        playCorrectSound("good");
+                    }
+                    
+                    // 遅延後に次の段階へ
+                    setTimeout(() => {
+                        wordInput.value = '';
+                        currentWordMistake = false; // ミス状態をリセット
+                        if (level1Instance) {
+                    level1Instance.updateDisplay();
+                } else {
+                    updateProgressiveDisplay();
+                }
+                        
+                        // 段階が変わったら発音
+                        speakWord(currentWord);
+                        
+                        // 入力フィールドを再有効化
+                        wordInput.disabled = false;
+                        wordInput.focus();
+                    }, 1000);
+                } else {
+                    // 全段階完了（最後の段階は全隠し状態での成功）
+                    feedback.textContent = 'Complete!';
+                    feedback.className = 'feedback correct';
+                    
+                    // 正解効果音を再生
+                    if (!currentWordMistake) {
+                        playCorrectSound("excellent");
+                    } else {
+                        playCorrectSound("good");
+                    }
+                    
+                    // 遅延後に次の単語へ
+                    setTimeout(() => {
+                        currentWordIndex++;
+                        correctCount++;
+                        
+                        // 入力フィールドをクリア
+                        wordInput.value = '';
+                        
+                        updateProgressBar();
+                        displayWord();
+                        
+                        // 入力フィールドを再有効化
+                        wordInput.disabled = false;
+                        wordInput.focus();
+                    }, 1500);
+                }
             }
         }
         // その他のモードの処理
@@ -2490,8 +2539,15 @@ function checkInputRealtime() {
     }
     
     // スペル隠しモードと段階的練習モードでは部分表示更新のみ実行、通常モードでは全文字のハイライト表示
-    if (isCustomLesson && (lessonMode === 'vocabulary-learning' || lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive' || lessonMode === 'japanese-reading')) {
-        // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理済み）
+    if (isCustomLesson && lessonMode === 'progressive') {
+        // 段階的練習モード
+        if (level1Instance) {
+            level1Instance.checkInputRealtime();
+        } else {
+            updateProgressiveDisplay();
+        }
+    } else if (isCustomLesson && (lessonMode === 'vocabulary-learning' || lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'japanese-reading')) {
+        // スペル隠しモードなどでは何もしない（各モードの表示関数で処理済み）
     } else {
         // 通常モードでは全文字をハイライト表示
         let highlightedHTML = '';
