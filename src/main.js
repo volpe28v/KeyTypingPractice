@@ -1349,18 +1349,12 @@ function showCustomLessonSetup() {
 
 // レッスンモード選択画面を表示
 function showLessonModeSelection(lessonIndex) {
-    console.log('🔍 showLessonModeSelection called with index:', lessonIndex);
-    console.log('🔍 customLessons.length:', customLessons.length);
-    console.log('🔍 customLessons:', customLessons);
-    
     if (lessonIndex < 0 || lessonIndex >= customLessons.length) {
-        console.error('❌ Invalid lesson index:', lessonIndex, 'length:', customLessons.length);
         alert('レッスンが見つかりません。');
         return;
     }
     
     const lesson = customLessons[lessonIndex];
-    console.log('✅ Selected lesson:', lesson);
     selectedLessonForMode = { lesson, index: lessonIndex };
     
     // 他の画面を隠す
@@ -1370,10 +1364,8 @@ function showLessonModeSelection(lessonIndex) {
     hideModal('custom-lesson-setup');
     
     // レッスンモード選択画面を表示
-    console.log('🎭 Showing modal: lesson-mode-selection');
     showModal('lesson-mode-selection');
     
-    console.log('🏷️ Setting lesson name:', lesson.name);
     document.getElementById('selected-lesson-name').textContent = lesson.name;
     document.getElementById('back-to-title-btn').style.display = 'none';
     
@@ -1555,21 +1547,15 @@ async function deleteSelectedLesson() {
     
     if (success) {
         selectedLessonForMode = null;
-        // hideModal('lesson-mode-selection'); // 削除：自動選択でまた表示するため
-        
-        console.log('🔍 Debug: customLessons.length after deletion:', customLessons.length);
         
         // 残りのレッスンがある場合は、一番上（最新）のレッスンを自動選択
         if (customLessons.length > 0) {
-            console.log('✅ Auto-selecting first lesson after deletion');
             // 最新レッスン（配列の先頭）のインデックスを取得
             const newestLessonIndex = 0;
             setTimeout(() => {
-                console.log('🎯 Calling showLessonModeSelection with index:', newestLessonIndex);
                 showLessonModeSelection(newestLessonIndex);
-            }, 200); // 少し長めの遅延に変更
+            }, 200);
         } else {
-            console.log('📋 No lessons remaining, returning to title');
             // レッスンがない場合のみモーダルを隠してタイトルに戻る
             hideModal('lesson-mode-selection');
             backToTitle();
