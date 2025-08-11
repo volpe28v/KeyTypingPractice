@@ -1546,10 +1546,20 @@ async function deleteSelectedLesson() {
     const success = await lessonManager.deleteLesson(lessonId, customLessons, updateLessonList);
     
     if (success) {
-        // 削除成功時はレッスンモード選択画面を閉じてタイトルに戻る
         selectedLessonForMode = null;
         hideModal('lesson-mode-selection');
-        backToTitle();
+        
+        // 残りのレッスンがある場合は、一番上（最新）のレッスンを自動選択
+        if (customLessons.length > 0) {
+            // 最新レッスン（配列の先頭）のインデックスを取得
+            const newestLessonIndex = 0;
+            setTimeout(() => {
+                showLessonModeSelection(newestLessonIndex);
+            }, 100);
+        } else {
+            // レッスンがない場合はタイトルに戻る
+            backToTitle();
+        }
     }
 }
 
