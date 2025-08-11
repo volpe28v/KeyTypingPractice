@@ -1,7 +1,6 @@
-// Firebase imports (later)
-// import { auth, db } from './firebase';
-// import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
-// import { doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc } from 'firebase/firestore';
+// Firebase imports
+import { auth, db } from './firebase.ts';
+import { AuthManager } from './auth.js';
 
 // Import level modules
 import { VocabularyLearningLevel } from './levels/level0-vocabulary.js';
@@ -2819,6 +2818,17 @@ function restartCurrentLesson() {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Firebase Authentication first
+    window.authManager = new AuthManager();
+    
+    // Setup login event handler
+    const googleSignInBtn = document.getElementById('google-sign-in-btn');
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', () => {
+            window.authManager.signInWithGoogle();
+        });
+    }
+    
     // Temporary fix: create global instances for compatibility
     window.audioManager = new AudioManager();
     window.storageManager = new StorageManager();
