@@ -29,14 +29,14 @@ export class FirestoreManager {
     
     window.addEventListener('offline', () => {
       this.isOnline = false;
-      console.log('📱 Offline - Using LocalStorage');
+      console.log('📱 Offline - Firestore unavailable');
     });
   }
 
   // カスタムレッスンの保存
   async saveCustomLesson(lesson) {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Saving lesson to LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot save lesson (offline or not authenticated)');
       return null;
     }
 
@@ -60,7 +60,7 @@ export class FirestoreManager {
   // カスタムレッスンの読み込み
   async loadCustomLessons() {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Loading lessons from LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot load lessons (offline or not authenticated)');
       return [];
     }
 
@@ -76,7 +76,7 @@ export class FirestoreManager {
       
       querySnapshot.forEach((doc) => {
         lessons.push({
-          id: doc.id,
+          firestoreId: doc.id,
           ...doc.data()
         });
       });
@@ -92,7 +92,7 @@ export class FirestoreManager {
   // カスタムレッスンの更新
   async updateCustomLesson(lessonId, updates) {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Updating lesson in LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot update lesson (offline or not authenticated)');
       return false;
     }
 
@@ -114,7 +114,7 @@ export class FirestoreManager {
   // カスタムレッスンの削除
   async deleteCustomLesson(lessonId) {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Deleting lesson from LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot delete lesson (offline or not authenticated)');
       return false;
     }
 
@@ -131,7 +131,7 @@ export class FirestoreManager {
   // ゲーム記録の保存
   async saveGameRecord(record) {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Saving game record to LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot save game record (offline or not authenticated)');
       return null;
     }
 
@@ -154,7 +154,7 @@ export class FirestoreManager {
   // ゲーム記録の読み込み
   async loadGameRecords() {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Loading game records from LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot load game records (offline or not authenticated)');
       return [];
     }
 
@@ -170,7 +170,7 @@ export class FirestoreManager {
       
       querySnapshot.forEach((doc) => {
         records.push({
-          id: doc.id,
+          firestoreId: doc.id,
           ...doc.data()
         });
       });
@@ -186,7 +186,7 @@ export class FirestoreManager {
   // ユーザー設定の保存
   async saveUserSettings(settings) {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Saving settings to LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot save settings (offline or not authenticated)');
       return false;
     }
 
@@ -208,7 +208,7 @@ export class FirestoreManager {
   // ユーザー設定の読み込み
   async loadUserSettings() {
     if (!this.isOnline || !this.userId) {
-      console.log('💾 Loading settings from LocalStorage (offline or not authenticated)');
+      console.warn('⚠️ Cannot load settings (offline or not authenticated)');
       return null;
     }
 
