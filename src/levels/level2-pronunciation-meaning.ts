@@ -1,8 +1,16 @@
 // Lv2: 発音＋日本語モード
 // 発音を聞き、日本語の意味を見てスペルを入力するモード
 
+import type { WordData } from '../types';
+
 class PronunciationMeaningLevel {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public name: string;
+    public displayName: string;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -11,7 +19,7 @@ class PronunciationMeaningLevel {
     }
 
     // 単語表示の初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         if (clearInput) {
             this.uiManager.wordInput.value = '';
         }
@@ -39,7 +47,7 @@ class PronunciationMeaningLevel {
     }
 
     // リアルタイム表示更新
-    updateDisplay() {
+    updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
@@ -62,7 +70,7 @@ class PronunciationMeaningLevel {
     }
 
     // キー入力バリデーション
-    validateInput(e, currentWord) {
+    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
         // Backspaceキーの処理
         if (e.key === 'Backspace') {
             return true;
@@ -70,12 +78,12 @@ class PronunciationMeaningLevel {
 
         const currentPosition = this.uiManager.wordInput.value.length;
         
-        if (currentPosition >= currentWord.length) {
+        if (currentPosition >= currentWord.word.length) {
             e.preventDefault();
             return false;
         }
 
-        const expectedChar = currentWord[currentPosition].toLowerCase();
+        const expectedChar = currentWord.word[currentPosition].toLowerCase();
         const inputChar = e.key.toLowerCase();
         const isCorrect = expectedChar === inputChar;
 
@@ -87,12 +95,12 @@ class PronunciationMeaningLevel {
     }
 
     // リアルタイム入力チェック
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         this.updateDisplay();
     }
 
     // 単語完了処理
-    handleWordComplete() {
+    handleWordComplete(): string {
         // 効果音を再生
         if (!this.gameManager.currentWordMistake) {
             this.audioManager.playCorrectSound("excellent");
@@ -103,7 +111,7 @@ class PronunciationMeaningLevel {
     }
 
     // 発音再生機能
-    replayAudio() {
+    replayAudio(): void {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
             this.audioManager.speakWord(currentWord.word);
@@ -116,5 +124,5 @@ export { PronunciationMeaningLevel };
 
 // グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.PronunciationMeaningLevel = PronunciationMeaningLevel;
+    (window as any).PronunciationMeaningLevel = PronunciationMeaningLevel;
 }

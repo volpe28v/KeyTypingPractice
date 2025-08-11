@@ -1,8 +1,16 @@
 // Lv4: 日本語のみモード
 // 日本語の意味だけを見て英単語のスペルを入力するモード
 
+import type { WordData } from '../types';
+
 class JapaneseReadingLevel {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public name: string;
+    public displayName: string;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -11,7 +19,7 @@ class JapaneseReadingLevel {
     }
 
     // 単語表示の初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         if (clearInput) {
             this.uiManager.wordInput.value = '';
         }
@@ -39,7 +47,7 @@ class JapaneseReadingLevel {
     }
 
     // リアルタイム表示更新
-    updateDisplay() {
+    updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
@@ -62,7 +70,7 @@ class JapaneseReadingLevel {
     }
 
     // キー入力バリデーション
-    validateInput(e, currentWord) {
+    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
         // Backspaceキーの処理
         if (e.key === 'Backspace') {
             return true;
@@ -70,12 +78,12 @@ class JapaneseReadingLevel {
 
         const currentPosition = this.uiManager.wordInput.value.length;
         
-        if (currentPosition >= currentWord.length) {
+        if (currentPosition >= currentWord.word.length) {
             e.preventDefault();
             return false;
         }
 
-        const expectedChar = currentWord[currentPosition].toLowerCase();
+        const expectedChar = currentWord.word[currentPosition].toLowerCase();
         const inputChar = e.key.toLowerCase();
         const isCorrect = expectedChar === inputChar;
 
@@ -89,18 +97,18 @@ class JapaneseReadingLevel {
     }
 
     // ヒント表示（ミス時の正解文字表示）
-    showHint(word, position) {
+    showHint(word: WordData, position: number): void {
         let tempHTML = '';
         
-        for (let i = 0; i < word.length; i++) {
+        for (let i = 0; i < word.word.length; i++) {
             if (i === position) {
-                tempHTML += `<span class="hint-char">${word[i]}</span>`;
+                tempHTML += `<span class="hint-char">${word.word[i]}</span>`;
             } else if (i < this.uiManager.wordInput.value.length) {
                 const userChar = this.uiManager.wordInput.value[i];
-                if (userChar.toLowerCase() === word[i].toLowerCase()) {
-                    tempHTML += `<span class="correct-char">${word[i]}</span>`;
+                if (userChar.toLowerCase() === word.word[i].toLowerCase()) {
+                    tempHTML += `<span class="correct-char">${word.word[i]}</span>`;
                 } else {
-                    tempHTML += `<span class="incorrect-char">${word[i]}</span>`;
+                    tempHTML += `<span class="incorrect-char">${word.word[i]}</span>`;
                 }
             } else {
                 tempHTML += `<span class="hidden-char">●</span>`;
@@ -116,12 +124,12 @@ class JapaneseReadingLevel {
     }
 
     // リアルタイム入力チェック
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         this.updateDisplay();
     }
 
     // 単語完了処理
-    handleWordComplete() {
+    handleWordComplete(): string {
         // 効果音を再生
         if (!this.gameManager.currentWordMistake) {
             this.audioManager.playCorrectSound("excellent");
@@ -137,7 +145,7 @@ class JapaneseReadingLevel {
     }
 
     // 音声再生機能（日本語読み上げ）
-    replayAudio() {
+    replayAudio(): void {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.meaning) {
             this.audioManager.speakJapanese(currentWord.meaning);
@@ -150,5 +158,5 @@ export { JapaneseReadingLevel };
 
 // グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.JapaneseReadingLevel = JapaneseReadingLevel;
+    (window as any).JapaneseReadingLevel = JapaneseReadingLevel;
 }

@@ -1,7 +1,11 @@
 import { auth } from './firebase.ts';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, UserCredential } from 'firebase/auth';
 
 export class AuthManager {
+    public user: User | null;
+    public provider: GoogleAuthProvider;
+    public auth: typeof auth;
+
     constructor() {
         this.user = null;
         this.provider = new GoogleAuthProvider();
@@ -9,18 +13,18 @@ export class AuthManager {
         this.initAuth();
     }
 
-    initAuth() {
-        onAuthStateChanged(auth, (user) => {
+    initAuth(): void {
+        onAuthStateChanged(auth, (user: User | null) => {
             this.user = user;
             this.updateAuthUI(user);
         });
     }
 
-    async signInWithGoogle() {
+    async signInWithGoogle(): Promise<User> {
         try {
-            const result = await signInWithPopup(auth, this.provider);
-            const user = result.user;
-            console.log('User signed in:', user.displayName);
+            const result: UserCredential = await signInWithPopup(auth, this.provider);
+            const user: User = result.user;
+
             return user;
         } catch (error) {
             console.error('Error signing in:', error);
@@ -28,20 +32,20 @@ export class AuthManager {
         }
     }
 
-    async signOut() {
+    async signOut(): Promise<void> {
         try {
             await auth.signOut();
-            console.log('User signed out');
+
         } catch (error) {
             console.error('Error signing out:', error);
             throw error;
         }
     }
 
-    updateAuthUI(user) {
-        const loginModal = document.getElementById('login-modal');
-        const mainContainer = document.querySelector('.main-container');
-        const userInfo = document.getElementById('user-info');
+    updateAuthUI(user: User | null): void {
+        const loginModal = document.getElementById('login-modal') as HTMLElement | null;
+        const mainContainer = document.querySelector('.main-container') as HTMLElement | null;
+        const userInfo = document.getElementById('user-info') as HTMLElement | null;
 
         if (user) {
             // ログイン済み：メイン画面を表示
@@ -53,7 +57,7 @@ export class AuthManager {
                     <div class="user-profile">
                         <img src="${user.photoURL}" alt="Profile" class="user-avatar">
                         <span>${user.displayName}</span>
-                        <button onclick="window.authManager.signOut()" class="sign-out-btn">ログアウト</button>
+                        <button onclick="(window as any).authManager.signOut()" class="sign-out-btn">ログアウト</button>
                     </div>
                 `;
             }
@@ -68,11 +72,11 @@ export class AuthManager {
         }
     }
 
-    getCurrentUser() {
+    getCurrentUser(): User | null {
         return this.user;
     }
 
-    isAuthenticated() {
+    isAuthenticated(): boolean {
         return this.user !== null;
     }
 }

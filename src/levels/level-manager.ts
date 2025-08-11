@@ -1,8 +1,21 @@
 // レベル管理クラス
 // 各レベルクラスのインスタンス化と管理を行う
 
+import { VocabularyLearningLevel } from './level0-vocabulary.ts';
+import { ProgressiveLearningLevel } from './level1-progressive.ts';
+import { PronunciationMeaningLevel } from './level2-pronunciation-meaning.ts';
+import { PronunciationOnlyLevel } from './level3-pronunciation-only.ts';
+import { JapaneseReadingLevel } from './level4-japanese-reading.ts';
+import type { WordData } from '../types';
+
 class LevelManager {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public levels: any;
+    public currentLevel: any;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -13,7 +26,7 @@ class LevelManager {
     }
 
     // 全レベルクラスを初期化
-    initializeLevels() {
+    initializeLevels(): void {
         this.levels = {
             'vocabulary-learning': new VocabularyLearningLevel(this.gameManager, this.audioManager, this.uiManager),
             'progressive': new ProgressiveLearningLevel(this.gameManager, this.audioManager, this.uiManager),
@@ -24,7 +37,7 @@ class LevelManager {
     }
 
     // レベルを設定
-    setLevel(levelName) {
+    setLevel(levelName: string): boolean {
         if (this.levels[levelName]) {
             this.currentLevel = this.levels[levelName];
             return true;
@@ -34,35 +47,35 @@ class LevelManager {
     }
 
     // 現在のレベルを取得
-    getCurrentLevel() {
+    getCurrentLevel(): any {
         return this.currentLevel;
     }
 
     // レベル名からレベル情報を取得
-    getLevelInfo(levelName) {
+    getLevelInfo(levelName: string): any {
         return this.levels[levelName] || null;
     }
 
     // 利用可能な全レベル名を取得
-    getAvailableLevels() {
+    getAvailableLevels(): string[] {
         return Object.keys(this.levels);
     }
 
     // レベル表示名を取得
-    getLevelDisplayName(levelName) {
+    getLevelDisplayName(levelName: string): string | null {
         const level = this.levels[levelName];
         return level ? level.displayName : levelName;
     }
 
     // 現在のレベルで単語を初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         if (this.currentLevel) {
             return this.currentLevel.initializeWord(word, playAudio, clearInput);
         }
     }
 
     // 現在のレベルでキー入力を処理
-    handleKeyInput(e, currentWord) {
+    handleKeyInput(e: KeyboardEvent, currentWord: WordData): boolean | string | undefined {
         if (this.currentLevel && this.currentLevel.handleKeyInput) {
             return this.currentLevel.handleKeyInput(e, currentWord);
         }
@@ -70,7 +83,7 @@ class LevelManager {
     }
 
     // 現在のレベルで入力バリデーション
-    validateInput(e, currentWord) {
+    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
         if (this.currentLevel && this.currentLevel.validateInput) {
             return this.currentLevel.validateInput(e, currentWord);
         }
@@ -78,14 +91,14 @@ class LevelManager {
     }
 
     // 現在のレベルでリアルタイム入力チェック
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         if (this.currentLevel && this.currentLevel.checkInputRealtime) {
             return this.currentLevel.checkInputRealtime();
         }
     }
 
     // 現在のレベルで単語完了処理
-    handleWordComplete() {
+    handleWordComplete(): boolean | string | undefined {
         if (this.currentLevel && this.currentLevel.handleWordComplete) {
             return this.currentLevel.handleWordComplete();
         }
@@ -93,14 +106,14 @@ class LevelManager {
     }
 
     // 現在のレベルで音声再生
-    replayAudio() {
+    replayAudio(): void {
         if (this.currentLevel && this.currentLevel.replayAudio) {
             return this.currentLevel.replayAudio();
         }
     }
 
     // 表示更新（現在のレベル用）
-    updateDisplay() {
+    updateDisplay(): void {
         if (this.currentLevel && this.currentLevel.updateDisplay) {
             return this.currentLevel.updateDisplay();
         }
@@ -110,7 +123,7 @@ class LevelManager {
 // Export for ES modules
 export { LevelManager };
 
-// グローバルアクセス用 (backward compatibility)
+// グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.LevelManager = LevelManager;
+    (window as any).LevelManager = LevelManager;
 }

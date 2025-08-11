@@ -11,30 +11,37 @@ import {
   query, 
   where, 
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  DocumentReference,
+  QuerySnapshot,
+  DocumentData
 } from 'firebase/firestore';
+import type { LessonData, RecordData } from './types';
 
 export class FirestoreManager {
-  constructor(userId) {
+  public userId: string | null;
+  public isOnline: boolean;
+
+  constructor(userId: string | null) {
     this.userId = userId;
     this.isOnline = navigator.onLine;
     this.setupNetworkListeners();
   }
 
-  setupNetworkListeners() {
+  setupNetworkListeners(): void {
     window.addEventListener('online', () => {
       this.isOnline = true;
-      console.log('🌐 Online - Firestore available');
+
     });
     
     window.addEventListener('offline', () => {
       this.isOnline = false;
-      console.log('📱 Offline - Firestore unavailable');
+
     });
   }
 
   // カスタムレッスンの保存
-  async saveCustomLesson(lesson) {
+  async saveCustomLesson(lesson: LessonData): Promise<string | null> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot save lesson (offline or not authenticated)');
       return null;
@@ -49,7 +56,7 @@ export class FirestoreManager {
       };
 
       const docRef = await addDoc(collection(db, 'lessons'), lessonData);
-      console.log('☁️ Lesson saved to Firestore:', docRef.id);
+
       return docRef.id;
     } catch (error) {
       console.error('❌ Error saving lesson to Firestore:', error);
@@ -58,7 +65,7 @@ export class FirestoreManager {
   }
 
   // カスタムレッスンの読み込み
-  async loadCustomLessons() {
+  async loadCustomLessons(): Promise<LessonData[]> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot load lessons (offline or not authenticated)');
       return [];
@@ -71,17 +78,21 @@ export class FirestoreManager {
         orderBy('createdAt', 'desc')
       );
       
-      const querySnapshot = await getDocs(q);
-      const lessons = [];
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const lessons: LessonData[] = [];
       
       querySnapshot.forEach((doc) => {
+        const lessonData = doc.data();
         lessons.push({
           firestoreId: doc.id,
-          ...doc.data()
-        });
+          id: lessonData.id,
+          name: lessonData.name,
+          words: lessonData.words,
+          userId: lessonData.userId
+        } as LessonData);
       });
 
-      console.log(`☁️ Loaded ${lessons.length} lessons from Firestore`);
+
       return lessons;
     } catch (error) {
       console.error('❌ Error loading lessons from Firestore:', error);
@@ -90,7 +101,7 @@ export class FirestoreManager {
   }
 
   // カスタムレッスンの更新
-  async updateCustomLesson(lessonId, updates) {
+  async updateCustomLesson(lessonId: string, updates: Partial<LessonData>): Promise<boolean> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot update lesson (offline or not authenticated)');
       return false;
@@ -103,7 +114,7 @@ export class FirestoreManager {
         updatedAt: serverTimestamp()
       });
       
-      console.log('☁️ Lesson updated in Firestore:', lessonId);
+
       return true;
     } catch (error) {
       console.error('❌ Error updating lesson in Firestore:', error);
@@ -112,7 +123,7 @@ export class FirestoreManager {
   }
 
   // カスタムレッスンの削除
-  async deleteCustomLesson(lessonId) {
+  async deleteCustomLesson(lessonId: string): Promise<boolean> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot delete lesson (offline or not authenticated)');
       return false;
@@ -120,7 +131,7 @@ export class FirestoreManager {
 
     try {
       await deleteDoc(doc(db, 'lessons', lessonId));
-      console.log('☁️ Lesson deleted from Firestore:', lessonId);
+
       return true;
     } catch (error) {
       console.error('❌ Error deleting lesson from Firestore:', error);
@@ -129,7 +140,7 @@ export class FirestoreManager {
   }
 
   // ゲーム記録の保存
-  async saveGameRecord(record) {
+  async saveGameRecord(record: RecordData): Promise<string | null> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot save game record (offline or not authenticated)');
       return null;
@@ -143,7 +154,7 @@ export class FirestoreManager {
       };
 
       const docRef = await addDoc(collection(db, 'gameRecords'), recordData);
-      console.log('☁️ Game record saved to Firestore:', docRef.id);
+
       return docRef.id;
     } catch (error) {
       console.error('❌ Error saving game record to Firestore:', error);
@@ -152,7 +163,7 @@ export class FirestoreManager {
   }
 
   // ゲーム記録の読み込み
-  async loadGameRecords() {
+  async loadGameRecords(): Promise<RecordData[]> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot load game records (offline or not authenticated)');
       return [];
@@ -165,17 +176,24 @@ export class FirestoreManager {
         orderBy('timestamp', 'desc')
       );
       
-      const querySnapshot = await getDocs(q);
-      const records = [];
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const records: RecordData[] = [];
       
       querySnapshot.forEach((doc) => {
+        const recordData = doc.data();
         records.push({
           firestoreId: doc.id,
-          ...doc.data()
-        });
+          date: recordData.date,
+          totalWords: recordData.totalWords,
+          mistakes: recordData.mistakes,
+          accuracy: recordData.accuracy,
+          elapsedTime: recordData.elapsedTime,
+          levelName: recordData.levelName,
+          userId: recordData.userId
+        } as RecordData);
       });
 
-      console.log(`☁️ Loaded ${records.length} game records from Firestore`);
+
       return records;
     } catch (error) {
       console.error('❌ Error loading game records from Firestore:', error);
@@ -184,7 +202,7 @@ export class FirestoreManager {
   }
 
   // ユーザー設定の保存
-  async saveUserSettings(settings) {
+  async saveUserSettings(settings: any): Promise<boolean> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot save settings (offline or not authenticated)');
       return false;
@@ -197,7 +215,7 @@ export class FirestoreManager {
         updatedAt: serverTimestamp()
       }, { merge: true });
       
-      console.log('☁️ User settings saved to Firestore');
+
       return true;
     } catch (error) {
       console.error('❌ Error saving user settings to Firestore:', error);
@@ -206,7 +224,7 @@ export class FirestoreManager {
   }
 
   // ユーザー設定の読み込み
-  async loadUserSettings() {
+  async loadUserSettings(): Promise<any | null> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot load settings (offline or not authenticated)');
       return null;
@@ -217,10 +235,10 @@ export class FirestoreManager {
       const userDoc = await getDoc(userRef);
       
       if (userDoc.exists()) {
-        console.log('☁️ User settings loaded from Firestore');
+
         return userDoc.data().settings || null;
       } else {
-        console.log('📄 No user settings found in Firestore');
+
         return null;
       }
     } catch (error) {
@@ -230,11 +248,11 @@ export class FirestoreManager {
   }
 
   // ネットワーク状態の取得
-  getNetworkStatus() {
+  getNetworkStatus(): { isOnline: boolean; userId: string | null; canUseFirestore: boolean } {
     return {
       isOnline: this.isOnline,
       userId: this.userId,
-      canUseFirestore: this.isOnline && this.userId
+      canUseFirestore: this.isOnline && !!this.userId
     };
   }
 }

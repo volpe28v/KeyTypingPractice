@@ -1,8 +1,16 @@
 // Lv3: 発音のみモード
 // 発音だけを聞いてスペルを入力する最も難しいモード
 
+import type { WordData } from '../types';
+
 class PronunciationOnlyLevel {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public name: string;
+    public displayName: string;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -11,7 +19,7 @@ class PronunciationOnlyLevel {
     }
 
     // 単語表示の初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         if (clearInput) {
             this.uiManager.wordInput.value = '';
         }
@@ -39,7 +47,7 @@ class PronunciationOnlyLevel {
     }
 
     // リアルタイム表示更新
-    updateDisplay() {
+    updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
@@ -62,7 +70,7 @@ class PronunciationOnlyLevel {
     }
 
     // キー入力バリデーション
-    validateInput(e, currentWord) {
+    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
         // Backspaceキーの処理
         if (e.key === 'Backspace') {
             return true;
@@ -70,12 +78,12 @@ class PronunciationOnlyLevel {
 
         const currentPosition = this.uiManager.wordInput.value.length;
         
-        if (currentPosition >= currentWord.length) {
+        if (currentPosition >= currentWord.word.length) {
             e.preventDefault();
             return false;
         }
 
-        const expectedChar = currentWord[currentPosition].toLowerCase();
+        const expectedChar = currentWord.word[currentPosition].toLowerCase();
         const inputChar = e.key.toLowerCase();
         const isCorrect = expectedChar === inputChar;
 
@@ -89,19 +97,19 @@ class PronunciationOnlyLevel {
     }
 
     // ヒント表示（ミス時の正解文字表示）
-    showHint(word, position) {
+    showHint(word: WordData, position: number): void {
         const hintHTML = this.uiManager.wordDisplay.innerHTML;
         let tempHTML = '';
         
-        for (let i = 0; i < word.length; i++) {
+        for (let i = 0; i < word.word.length; i++) {
             if (i === position) {
-                tempHTML += `<span class="hint-char">${word[i]}</span>`;
+                tempHTML += `<span class="hint-char">${word.word[i]}</span>`;
             } else if (i < this.uiManager.wordInput.value.length) {
                 const userChar = this.uiManager.wordInput.value[i];
-                if (userChar.toLowerCase() === word[i].toLowerCase()) {
-                    tempHTML += `<span class="correct-char">${word[i]}</span>`;
+                if (userChar.toLowerCase() === word.word[i].toLowerCase()) {
+                    tempHTML += `<span class="correct-char">${word.word[i]}</span>`;
                 } else {
-                    tempHTML += `<span class="incorrect-char">${word[i]}</span>`;
+                    tempHTML += `<span class="incorrect-char">${word.word[i]}</span>`;
                 }
             } else {
                 tempHTML += `<span class="hidden-char">●</span>`;
@@ -117,12 +125,12 @@ class PronunciationOnlyLevel {
     }
 
     // リアルタイム入力チェック
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         this.updateDisplay();
     }
 
     // 単語完了処理
-    handleWordComplete() {
+    handleWordComplete(): string {
         // 効果音を再生
         if (!this.gameManager.currentWordMistake) {
             this.audioManager.playCorrectSound("excellent");
@@ -143,7 +151,7 @@ class PronunciationOnlyLevel {
     }
 
     // 発音再生機能
-    replayAudio() {
+    replayAudio(): void {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
             this.audioManager.speakWord(currentWord.word);
@@ -156,5 +164,5 @@ export { PronunciationOnlyLevel };
 
 // グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.PronunciationOnlyLevel = PronunciationOnlyLevel;
+    (window as any).PronunciationOnlyLevel = PronunciationOnlyLevel;
 }

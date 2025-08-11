@@ -1,15 +1,16 @@
 // Firebase imports
 import { auth, db } from './firebase.ts';
-import { AuthManager } from './auth.js';
-import { FirestoreManager } from './firestore.js';
+import { AuthManager } from './auth.ts';
+import { FirestoreManager } from './firestore.ts';
+// Type imports will be added when converting to TypeScript
 
 // Import level modules
-import { VocabularyLearningLevel } from './levels/level0-vocabulary.js';
-import { ProgressiveLearningLevel } from './levels/level1-progressive.js';
-import { PronunciationMeaningLevel } from './levels/level2-pronunciation-meaning.js';
-import { PronunciationOnlyLevel } from './levels/level3-pronunciation-only.js';
-import { JapaneseReadingLevel } from './levels/level4-japanese-reading.js';
-import { LevelManager } from './levels/level-manager.js';
+import { VocabularyLearningLevel } from './levels/level0-vocabulary.ts';
+import { ProgressiveLearningLevel } from './levels/level1-progressive.ts';
+import { PronunciationMeaningLevel } from './levels/level2-pronunciation-meaning.ts';
+import { PronunciationOnlyLevel } from './levels/level3-pronunciation-only.ts';
+import { JapaneseReadingLevel } from './levels/level4-japanese-reading.ts';
+import { LevelManager } from './levels/level-manager.ts';
 
 // Level data - temporary inline definition
 const levelLists = [
@@ -32,7 +33,7 @@ class AudioManager {
         if (!this.audioContext) {
             try {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('AudioContext initialized');
+
             } catch (e) {
                 console.error('Failed to create AudioContext:', e);
             }
@@ -143,7 +144,7 @@ class AudioManager {
 
     // 正解時に効果音を再生する関数
     playCorrectSound(word = "good") {
-        console.log('playCorrectSound called with:', word);
+
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             
@@ -153,7 +154,7 @@ class AudioManager {
             utterance.pitch = 2.0;
             utterance.volume = 1.0;
             
-            console.log('Speaking:', word);
+
             window.speechSynthesis.speak(utterance);
         } else {
             console.warn('speechSynthesis not available');
@@ -206,7 +207,7 @@ class StorageManager {
     // Firestoreマネージャーを設定
     setFirestoreManager(firestoreManager) {
         this.firestoreManager = firestoreManager;
-        console.log('🔗 Firestore manager connected');
+
     }
 
     // 複数のカスタムレッスンを保存（Firestoreのみ）
@@ -230,7 +231,7 @@ class StorageManager {
                     await this.firestoreManager.updateCustomLesson(lesson.firestoreId, lesson);
                 }
             }
-            console.log('☁️ Lessons saved to Firestore');
+
         } catch (error) {
             console.error('❌ Error saving to Firestore:', error);
         }
@@ -245,7 +246,7 @@ class StorageManager {
 
         try {
             const firestoreLessons = await this.firestoreManager.loadCustomLessons();
-            console.log(`☁️ Loaded ${firestoreLessons.length} lessons from Firestore`);
+
             return firestoreLessons;
         } catch (error) {
             console.error('❌ Error loading from Firestore:', error);
@@ -277,7 +278,7 @@ class StorageManager {
                     }
                 }
             }
-            console.log('☁️ Records saved to Firestore');
+
         } catch (error) {
             console.error('❌ Error saving records to Firestore:', error);
         }
@@ -308,7 +309,7 @@ class StorageManager {
                 });
             }
             
-            console.log('☁️ Records loaded from Firestore');
+
             return records;
         } catch (error) {
             console.error('❌ Error loading records from Firestore:', error);
@@ -485,7 +486,7 @@ class LessonManager {
                     alert('Firestoreからの削除に失敗しました。');
                     return false;
                 }
-                console.log('☁️ Lesson deleted from Firestore:', lesson.firestoreId);
+
             }
             
             // ローカル配列から削除
@@ -840,7 +841,7 @@ let levelManager = null;
 function initializeLevelInstances() {
     // 個別レベルインスタンスは削除済み
     // LevelManagerで統一管理されているため、この関数は不要
-    console.log('initializeLevelInstances: 個別インスタンス初期化は不要（LevelManager使用）');
+
 }
 
 // UIManager: UI操作を管理するクラス
@@ -1236,7 +1237,7 @@ async function loadCustomLessons() {
             console.warn('⚠️ customLessons is not an array, initializing as empty array');
             customLessons = [];
         }
-        console.log(`📚 Loaded ${customLessons.length} custom lessons`);
+
     } catch (error) {
         console.error('❌ Error loading custom lessons:', error);
         customLessons = [];
@@ -2270,7 +2271,8 @@ function validateKeyInput(e) {
         return true; // Backspaceは常に許可
     }
     
-    const currentWord = words[currentWordIndex].word;
+    const currentWordData = words[currentWordIndex];
+    const currentWord = currentWordData.word;
     const currentPosition = wordInput.value.length;
     
     if (currentPosition >= currentWord.length) {
@@ -2286,7 +2288,7 @@ function validateKeyInput(e) {
         // カスタムレッスンの場合、LevelManagerを使用した多態性バリデーション
         if (isCustomLesson && levelManager && levelManager.getCurrentLevel()) {
             // LevelManagerで設定済みレベルのバリデーション処理を呼び出し
-            if (!levelManager.validateInput(e, currentWord)) {
+            if (!levelManager.validateInput(e, currentWordData)) {
                 highlightWrongChar(currentPosition);
                 e.preventDefault();
                 return false;
@@ -2731,7 +2733,7 @@ function updateLessonList() {
     
     // 配列の安全チェック
     if (!Array.isArray(customLessons) || customLessons.length === 0) {
-        console.log('📚 No custom lessons to display');
+
         return;
     }
     
@@ -2933,7 +2935,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize Firestore manager with user ID
             const firestoreManager = new FirestoreManager(user.uid);
             window.storageManager.setFirestoreManager(firestoreManager);
-            console.log('🔗 Firestore connected for user:', user.displayName);
+
             
             // Firestoreが接続されたらデータを再読み込み
             await loadCustomLessons();
@@ -2952,11 +2954,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 100);
             }
             
-            console.log('📊 Data reloaded after Firestore connection');
+
         } else {
             // User logged out, remove Firestore connection
             window.storageManager.setFirestoreManager(null);
-            console.log('🔌 Firestore disconnected');
+
             
             // ログアウト時はデータをクリア
             customLessons = [];
@@ -2979,7 +2981,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         // Call the original initialization code (非同期対応)
         loadCustomLessons().then(() => {
-            console.log('📚 Custom lessons initialized');
+
         });
     }
 });
@@ -2987,7 +2989,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Define replayCurrentWord function (for audio replay button)
 function replayCurrentWord() {
     // This function will be implemented when audio features are restored
-    console.log('replayCurrentWord: Audio replay not yet implemented in Vite version');
+
     // TODO: Implement audio replay functionality
     if (window.audioManager && window.gameManager) {
         // Get current word and replay audio

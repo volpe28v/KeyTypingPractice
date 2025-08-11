@@ -1,8 +1,16 @@
 // Lv0: 単語学習モード
 // 単語の意味を表示し、発音を聞きながら学習するモード
 
+import type { WordData } from '../types';
+
 class VocabularyLearningLevel {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public name: string;
+    public displayName: string;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -11,7 +19,7 @@ class VocabularyLearningLevel {
     }
 
     // 単語表示の初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         if (clearInput) {
             this.uiManager.wordInput.value = '';
         }
@@ -38,8 +46,8 @@ class VocabularyLearningLevel {
         // 発音を再生（最初は英語）
         if (playAudio) {
             // speakWord関数を使用（既存コードとの互換性保持）
-            if (typeof speakWord !== 'undefined') {
-                speakWord(word.word);
+            if (typeof (window as any).speakWord !== 'undefined') {
+                (window as any).speakWord(word.word);
             } else {
                 this.audioManager.speakWord(word.word);
             }
@@ -50,13 +58,13 @@ class VocabularyLearningLevel {
         this.uiManager.feedback.className = 'feedback';
         
         // 進捗バーを更新（既存関数を呼び出し）
-        if (typeof updateProgressBar !== 'undefined') {
-            updateProgressBar();
+        if (typeof (window as any).updateProgressBar !== 'undefined') {
+            (window as any).updateProgressBar();
         }
     }
 
     // キー入力ハンドラ（Enter/Spaceで音声切り替え）
-    handleKeyInput(e, currentWord) {
+    handleKeyInput(e: KeyboardEvent, currentWord: WordData): boolean | string {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             
@@ -68,8 +76,8 @@ class VocabularyLearningLevel {
                     this.uiManager.feedback.textContent = `Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`;
                 } else {
                     // 英語を読み上げてカウントアップ
-                    if (typeof speakWord !== 'undefined') {
-                        speakWord(currentWord.word);
+                    if (typeof (window as any).speakWord !== 'undefined') {
+                        (window as any).speakWord(currentWord.word);
                     } else {
                         this.audioManager.speakWord(currentWord.word);
                     }
@@ -90,17 +98,17 @@ class VocabularyLearningLevel {
     }
 
     // 入力バリデーション（このモードでは文字入力を無効化）
-    validateInput() {
+    validateInput(): boolean {
         return true; // 入力バリデーションをスキップ
     }
 
     // リアルタイム入力チェック（このモードでは不要）
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         return;
     }
 
     // 単語完了処理（このモードでは自動的に次へ進む）
-    handleWordComplete() {
+    handleWordComplete(): boolean {
         return false;
     }
 }
@@ -110,5 +118,5 @@ export { VocabularyLearningLevel };
 
 // グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.VocabularyLearningLevel = VocabularyLearningLevel;
+    (window as any).VocabularyLearningLevel = VocabularyLearningLevel;
 }

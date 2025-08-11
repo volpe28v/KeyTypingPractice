@@ -1,8 +1,16 @@
 // Lv1: 反復練習モード
 // 徐々に文字を隠していく段階的練習モード
 
+import type { WordData } from '../types';
+
 class ProgressiveLearningLevel {
-    constructor(gameManager, audioManager, uiManager) {
+    public gameManager: any;
+    public audioManager: any;
+    public uiManager: any;
+    public name: string;
+    public displayName: string;
+
+    constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -11,7 +19,7 @@ class ProgressiveLearningLevel {
     }
 
     // 単語表示の初期化
-    initializeWord(word, playAudio = true, clearInput = true) {
+    initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
         // 段階的練習モードの初期化
         this.gameManager.progressiveStep = 0;
         this.gameManager.maxProgressiveSteps = word.word.length;
@@ -40,7 +48,7 @@ class ProgressiveLearningLevel {
     }
 
     // 段階的表示の更新（script.jsのupdateProgressiveDisplay()と統合）
-    updateDisplay() {
+    updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
@@ -104,7 +112,7 @@ class ProgressiveLearningLevel {
     }
 
     // キー入力バリデーション
-    validateInput(e, currentWord) {
+    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
         // Backspaceキーの処理
         if (e.key === 'Backspace') {
             return true;
@@ -112,18 +120,18 @@ class ProgressiveLearningLevel {
 
         const currentPosition = this.uiManager.wordInput.value.length;
         
-        if (currentPosition >= currentWord.length) {
+        if (currentPosition >= currentWord.word.length) {
             e.preventDefault();
             return false;
         }
 
-        const expectedChar = currentWord[currentPosition].toLowerCase();
+        const expectedChar = currentWord.word[currentPosition].toLowerCase();
         const inputChar = e.key.toLowerCase();
         const isCorrect = expectedChar === inputChar;
 
         if (!isCorrect && e.key !== 'Shift') {
             // 段階的練習モードの場合、表示されている文字のミスはカウントしない
-            const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
+            const visibleCharCount = Math.max(0, currentWord.word.length - this.gameManager.progressiveStep);
             
             // 隠されている文字でのミスのみカウント
             if (currentPosition >= visibleCharCount) {
@@ -134,10 +142,10 @@ class ProgressiveLearningLevel {
                     const mistakeCharPosition = currentPosition;
                     
                     // ミスした文字位置まで進捗を戻す
-                    const newProgressiveStep = Math.max(0, currentWord.length - (mistakeCharPosition + 1));
+                    const newProgressiveStep = Math.max(0, currentWord.word.length - (mistakeCharPosition + 1));
                     this.gameManager.progressiveStep = newProgressiveStep;
                     
-                    this.uiManager.feedback.textContent = `3回連続ミス！「${currentWord[mistakeCharPosition]}」の位置まで戻します`;
+                    this.uiManager.feedback.textContent = `3回連続ミス！「${currentWord.word[mistakeCharPosition]}」の位置まで戻します`;
                     this.uiManager.feedback.className = 'feedback incorrect';
                     
                     setTimeout(() => {
@@ -157,12 +165,12 @@ class ProgressiveLearningLevel {
     }
 
     // リアルタイム入力チェック
-    checkInputRealtime() {
+    checkInputRealtime(): void {
         this.updateDisplay();
     }
 
     // 単語完了処理
-    handleWordComplete() {
+    handleWordComplete(): boolean | string {
         // 段階を進める
         this.gameManager.progressiveStep++;
         
@@ -221,7 +229,7 @@ class ProgressiveLearningLevel {
     }
     
     // 隠れた文字選択の表示（script.jsのdisplayHiddenLetterChoices()と統合）
-    displayHiddenLetterChoices() {
+    displayHiddenLetterChoices(): void {
         const container = document.getElementById('hidden-letters-container');
         const lettersDiv = document.getElementById('hidden-letters');
         
@@ -274,7 +282,7 @@ class ProgressiveLearningLevel {
     }
     
     // 選択肢ボタンの状態を更新（script.jsのupdateLetterChoiceButtons()と統合）
-    updateLetterChoiceButtons(userInput, currentWord) {
+    updateLetterChoiceButtons(userInput: string, currentWord: string): void {
         if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
             return;
         }
@@ -301,14 +309,14 @@ class ProgressiveLearningLevel {
             if (expectedChar && inputChar && inputChar.toLowerCase() === expectedChar.toLowerCase()) {
                 // 対応するボタンを一つだけ見つけて緑色にする
                 const availableButton = Array.from(letterButtons).find(button => 
-                    button.dataset.letter === expectedChar && 
+                    (button as HTMLButtonElement).dataset.letter === expectedChar && 
                     !button.classList.contains('selected') && 
-                    !button.disabled
+                    !(button as HTMLButtonElement).disabled
                 );
                 
                 if (availableButton) {
                     availableButton.classList.add('selected');
-                    availableButton.disabled = true;
+                    (availableButton as HTMLButtonElement).disabled = true;
                     availableButton.classList.add('disabled');
                 }
             }
@@ -321,5 +329,5 @@ export { ProgressiveLearningLevel };
 
 // グローバルアクセス用
 if (typeof window !== 'undefined') {
-    window.ProgressiveLearningLevel = ProgressiveLearningLevel;
+    (window as any).ProgressiveLearningLevel = ProgressiveLearningLevel;
 }
