@@ -2,7 +2,7 @@
   "name": "keytypingpractice",
   "version": "1.0.0",
   "description": "https://volpe28v.github.io/KeyTypingPractice/",
-  "main": "level-lists.js",
+  "main": "index.html",
   "dependencies": {
     "acorn": "^8.15.0",
     "acorn-jsx": "^5.3.2",

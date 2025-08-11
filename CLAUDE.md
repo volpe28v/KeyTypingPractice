@@ -16,7 +16,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `index.html`: メインHTMLファイル（UIとマークアップ）
 - `styles.css`: スタイルシート（UI設計とアニメーション）
 - `script.js`: JavaScript機能（アプリケーションロジック）
-- `level-lists.js`: レベル別単語リストデータ
 
 ### 主要コンポーネント
 1. **HTML構造（index.html）**
@@ -75,7 +74,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 開発時の注意点
 - クラスベース設計により機能が分離されているため、適切なクラスを選択して編集
 - レガシー互換性を保つため、グローバル変数アクセサーを維持
-- レベル追加時は`level-lists.js`の`wordLists`オブジェクトに追加
+- レベル追加時はmain.js内の`levelLists`配列に追加
 - 段階的練習モードは複雑なロジックを持つため、GameManagerクラス内の関連メソッドを確認
 - モバイル対応のため、タッチイベントとキーボードイベントの両方を考慮
 - Web Speech APIは一部のブラウザで制限があるため、AudioManagerでエラーハンドリング実装済み
