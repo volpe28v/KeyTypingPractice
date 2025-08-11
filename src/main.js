@@ -256,6 +256,8 @@ class StorageManager {
 
     // タイピング記録を保存（Firestoreのみ）
     async saveRecords(records) {
+        console.log('🔍 saveRecords called:', records);
+        
         if (!this.firestoreManager) {
             console.warn('⚠️ Firestore not connected. Please login first.');
             return;
@@ -267,12 +269,23 @@ class StorageManager {
                 if (Array.isArray(levelRecords)) {
                     for (const record of levelRecords) {
                         if (!record.firestoreId) {
-                            const firestoreId = await this.firestoreManager.saveGameRecord({
-                                ...record,
-                                levelName
-                            });
+                            // RecordData型に合わせてフィールド名を変換
+                            const recordData = {
+                                date: record.date || new Date().toLocaleDateString(),
+                                totalWords: record.totalTypes || 0,  // totalTypes → totalWords
+                                mistakes: record.mistakes || 0,
+                                accuracy: record.accuracy || 100,
+                                elapsedTime: record.elapsedTime || 0,
+                                levelName: levelName
+                            };
+                            console.log('🔍 Saving to Firestore:', recordData);
+                            
+                            const firestoreId = await this.firestoreManager.saveGameRecord(recordData);
+                            console.log('🔍 Firestore response:', firestoreId);
+                            
                             if (firestoreId) {
                                 record.firestoreId = firestoreId;
+                                console.log('✅ Record saved successfully');
                             }
                         }
                     }
@@ -1838,11 +1851,15 @@ function saveRecords() {
     return storageManager.saveRecords(records);
 }
 
-function loadRecords() {
-    records = storageManager.loadRecords();
+async function loadRecords() {
+    console.log('🔍 loadRecords called');
+    records = await storageManager.loadRecords();
+    console.log('🔍 Records loaded:', records);
 }
 
-function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
+async function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
+    console.log('🔍 addRecord called:', { levelKey, time, mistakes, totalTypes });
+    
     if (!records[levelKey]) {
         records[levelKey] = [];
     }
@@ -1852,7 +1869,7 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
     
     // 新しい記録オブジェクトを作成（後方互換性のため時間のみの古い形式もサポート）
     const newRecord = {
-        time: time,
+        elapsedTime: time,
         mistakes: mistakes,
         accuracy: accuracy,
         totalTypes: totalTypes,
@@ -1870,8 +1887,8 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
         const currentBestRecord = records[levelKey].reduce((best, current) => {
             const currentAccuracy = current.accuracy !== undefined ? current.accuracy : 100;
             const bestAccuracy = best.accuracy !== undefined ? best.accuracy : 100;
-            const currentTime = current.time || current;
-            const bestTime = best.time || best;
+            const currentTime = current.elapsedTime || current;
+            const bestTime = best.elapsedTime || best;
             
             if (currentAccuracy > bestAccuracy) {
                 return current;
@@ -1882,7 +1899,7 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
         });
         
         const currentBestAccuracy = currentBestRecord.accuracy !== undefined ? currentBestRecord.accuracy : 100;
-        const currentBestTime = currentBestRecord.time || currentBestRecord;
+        const currentBestTime = currentBestRecord.elapsedTime || currentBestRecord;
         
         // 新記録の判定：正確率が高い、または正確率が同じで時間が短い場合
         if (accuracy > currentBestAccuracy || (accuracy === currentBestAccuracy && time < currentBestTime)) {
@@ -1891,10 +1908,13 @@ function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
     }
     
     if (shouldSaveNewRecord) {
+        console.log('🔍 Saving new record:', { levelKey, newRecord });
         records[levelKey] = [newRecord];
-        saveRecords();
+        await saveRecords();  // awaitを追加してFirestoreへの保存を待つ
         
         showNewRecordMessage();
+    } else {
+        console.log('🔍 No new record to save');
     }
 }
 
@@ -1915,8 +1935,8 @@ function displayBestTimes() {
                 const bestRecord = lessonRecords.reduce((best, current) => {
                     const currentAccuracy = current.accuracy !== undefined ? current.accuracy : 100;
                     const bestAccuracy = best.accuracy !== undefined ? best.accuracy : 100;
-                    const currentTime = current.time || current;
-                    const bestTime = best.time || best;
+                    const currentTime = current.elapsedTime || current;
+                    const bestTime = best.elapsedTime || best;
                     
                     if (currentAccuracy > bestAccuracy) {
                         return current;
@@ -1927,7 +1947,7 @@ function displayBestTimes() {
                 });
                 
                 const li = document.createElement('li');
-                const recordTime = bestRecord.time || bestRecord;
+                const recordTime = bestRecord.elapsedTime || bestRecord;
                 const recordAccuracy = bestRecord.accuracy !== undefined ? bestRecord.accuracy : 100;
                 
                 li.innerHTML = `<span style="color: var(--color-success); font-size: 1.2rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: var(--text-muted);">${uiManager.formatTime(recordTime)}</small>`;
@@ -2111,7 +2131,7 @@ function updatePartialWordDisplay() {
     }
 }
 
-function displayWord(playAudio = true, clearInput = true) {
+async function displayWord(playAudio = true, clearInput = true) {
     if (currentWordIndex < words.length) {
         const currentWord = words[currentWordIndex];
         
@@ -2228,9 +2248,9 @@ function displayWord(playAudio = true, clearInput = true) {
             // レッスンごとに記録を保存（正確率計算のための総タイプ数も渡す）
             if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
                 const lessonId = customLessons[currentLessonIndex].id;
-                addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount, totalTypesCount);
+                await addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount, totalTypesCount);
             } else {
-                addRecord(`level${currentLevel}`, elapsedTime, mistakeCount, totalTypesCount);
+                await addRecord(`level${currentLevel}`, elapsedTime, mistakeCount, totalTypesCount);
             }
             
             const isPerfect = mistakeCount === 0;
