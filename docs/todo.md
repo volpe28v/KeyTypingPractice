@@ -112,6 +112,28 @@
   - Firebase SDK (インストール済み)
   - ESモジュール形式
 
+## 現在の状況 📊
+
+**✅ Firebase認証完了**
+- Google OAuth認証機能を実装済み
+- 必須ログイン機能（未ログインではメイン画面非表示）
+- AuthManagerクラスによる認証状態管理
+
+**🔄 現在進行中：Firestore移行**
+- 環境変数を使用したセキュアな設定
+- LocalStorage + Firestore のハイブリッドストレージ
+- オフライン対応の実装
+
 ## 次のアクション 🎯
 
-**Phase 1: Firebase認証の実装** から開始することを推奨します。
+**Phase 2: Firestore移行を実施中**
+
+### 現在の作業項目
+1. **環境変数設定** - .envファイルによるFirebase設定の外部化
+2. **FirestoreManager実装** - データの保存・読み込み機能
+3. **ハイブリッドストレージ** - LocalStorageとFirestoreの統合
+4. **オフライン対応** - ネットワーク状態に応じた自動切り替え
+5. **データ移行** - 既存LocalStorageデータのFirestore移行
+
+### 参考実装
+- [SpeakNote Firebase実装](https://github.com/volpe28v/SpeakNote/tree/firebase) を参考に実装

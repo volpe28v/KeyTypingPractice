@@ -5,6 +5,7 @@ export class AuthManager {
     constructor() {
         this.user = null;
         this.provider = new GoogleAuthProvider();
+        this.auth = auth; // auth オブジェクトを公開
         this.initAuth();
     }
 

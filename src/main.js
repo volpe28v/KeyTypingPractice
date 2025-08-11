@@ -1,6 +1,7 @@
 // Firebase imports
 import { auth, db } from './firebase.ts';
 import { AuthManager } from './auth.js';
+import { FirestoreManager } from './firestore.js';
 
 // Import level modules
 import { VocabularyLearningLevel } from './levels/level0-vocabulary.js';
@@ -196,9 +197,31 @@ class AudioManager {
 
 // AudioManagerのインスタンスを作成
 const audioManager = new AudioManager();
-// StorageManager: LocalStorage操作を管理するクラス
+// StorageManager: LocalStorage操作を管理するクラス（ハイブリッドストレージ対応）
 class StorageManager {
-    // カスタム単語をlocalStorageから読み込み
+    constructor() {
+        this.firestoreManager = null;
+        this.isOnline = navigator.onLine;
+        
+        // ネットワーク状態を監視
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            console.log('🌐 Online - Hybrid storage available');
+        });
+        
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            console.log('📱 Offline - LocalStorage only');
+        });
+    }
+
+    // Firestoreマネージャーを設定
+    setFirestoreManager(firestoreManager) {
+        this.firestoreManager = firestoreManager;
+        console.log('🔗 Firestore manager connected');
+    }
+
+    // カスタム単語をlocalStorageから読み込み（後方互換性のため維持）
     loadCustomWords() {
         const saved = localStorage.getItem('customWords');
         if (saved) {
@@ -212,7 +235,7 @@ class StorageManager {
         return '';
     }
 
-    // カスタム単語をlocalStorageに保存
+    // カスタム単語をlocalStorageに保存（後方互換性のため維持）
     saveCustomWords(wordsText) {
         try {
             localStorage.setItem('customWords', wordsText);
@@ -221,64 +244,240 @@ class StorageManager {
         }
     }
 
-    // 複数のカスタムレッスンを保存
-    saveCustomLessons(lessons) {
+    // 複数のカスタムレッスンを保存（ハイブリッド）
+    async saveCustomLessons(lessons) {
+        console.log('🔍 DEBUG - saveCustomLessons:');
+        console.log('  isOnline:', this.isOnline);
+        console.log('  firestoreManager:', !!this.firestoreManager);
+        
+        // ローカルストレージに保存（オフライン対応）
         try {
             localStorage.setItem('customLessons', JSON.stringify(lessons));
+            console.log('💾 Lessons saved to LocalStorage');
         } catch (e) {
-            console.error('カスタムレッスンの保存に失敗:', e);
+            console.error('❌ Error saving to LocalStorage:', e);
+        }
+
+        // オンライン時はFirestoreにも保存
+        if (this.firestoreManager && this.isOnline) {
+            try {
+                // 各レッスンをFirestoreに保存
+                for (const lesson of lessons) {
+                    if (!lesson.firestoreId) {
+                        // 新しいレッスンの場合
+                        const firestoreId = await this.firestoreManager.saveCustomLesson(lesson);
+                        if (firestoreId) {
+                            lesson.firestoreId = firestoreId;
+                        }
+                    } else {
+                        // 既存のレッスンの場合
+                        await this.firestoreManager.updateCustomLesson(lesson.firestoreId, lesson);
+                    }
+                }
+                
+                // Firestore IDが更新された場合、LocalStorageも更新
+                localStorage.setItem('customLessons', JSON.stringify(lessons));
+                console.log('☁️ Lessons synced to Firestore');
+            } catch (error) {
+                console.error('❌ Error syncing to Firestore:', error);
+            }
         }
     }
 
-    // 複数のカスタムレッスンを読み込み
-    loadCustomLessons() {
+    // 複数のカスタムレッスンを読み込み（ハイブリッド）
+    async loadCustomLessons() {
+        let localLessons = [];
+        
+        // ローカルストレージから読み込み
         try {
             const saved = localStorage.getItem('customLessons');
             if (saved) {
-                return JSON.parse(saved);
-            } else {
-                return [];
+                localLessons = JSON.parse(saved);
             }
+            console.log(`💾 Loaded ${localLessons.length} lessons from LocalStorage`);
         } catch (e) {
-            console.error('カスタムレッスンの読み込みに失敗:', e);
-            return [];
+            console.error('❌ Error loading from LocalStorage:', e);
         }
+
+        // オンライン時はFirestoreからも読み込んで同期
+        if (this.firestoreManager && this.isOnline) {
+            try {
+                const firestoreLessons = await this.firestoreManager.loadCustomLessons();
+                
+                // Firestoreのデータでローカルを更新（マージ）
+                const mergedLessons = this.mergeLessons(localLessons, firestoreLessons);
+                
+                if (mergedLessons.length !== localLessons.length) {
+                    localStorage.setItem('customLessons', JSON.stringify(mergedLessons));
+                    console.log('🔄 Lessons synced from Firestore');
+                }
+                
+                return mergedLessons;
+            } catch (error) {
+                console.error('❌ Error loading from Firestore:', error);
+            }
+        }
+
+        return localLessons;
     }
 
-    // タイピング記録を保存
-    saveRecords(records) {
+    // レッスンのマージ処理
+    mergeLessons(localLessons, firestoreLessons) {
+        const merged = [...localLessons];
+        
+        for (const firestoreLesson of firestoreLessons) {
+            const existingIndex = merged.findIndex(lesson => 
+                lesson.firestoreId === firestoreLesson.id || 
+                lesson.name === firestoreLesson.name
+            );
+            
+            if (existingIndex >= 0) {
+                // 既存のレッスンを更新
+                merged[existingIndex] = {
+                    ...firestoreLesson,
+                    firestoreId: firestoreLesson.id
+                };
+            } else {
+                // 新しいレッスンを追加
+                merged.push({
+                    ...firestoreLesson,
+                    firestoreId: firestoreLesson.id
+                });
+            }
+        }
+        
+        return merged;
+    }
+
+    // タイピング記録を保存（ハイブリッド）
+    async saveRecords(records) {
+        // ローカルストレージに保存
         try {
             localStorage.setItem('typingRecords', JSON.stringify(records));
+            console.log('💾 Records saved to LocalStorage');
         } catch (e) {
-            console.error('記録の保存に失敗:', e);
+            console.error('❌ Error saving records to LocalStorage:', e);
+        }
+
+        // オンライン時はFirestoreにも保存
+        if (this.firestoreManager && this.isOnline) {
+            try {
+                // 各記録をFirestoreに保存（新しい記録のみ）
+                for (const [levelName, levelRecords] of Object.entries(records)) {
+                    if (Array.isArray(levelRecords)) {
+                        for (const record of levelRecords) {
+                            if (!record.firestoreId) {
+                                const firestoreId = await this.firestoreManager.saveGameRecord({
+                                    ...record,
+                                    levelName
+                                });
+                                if (firestoreId) {
+                                    record.firestoreId = firestoreId;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Firestore IDが更新された場合、LocalStorageも更新
+                localStorage.setItem('typingRecords', JSON.stringify(records));
+                console.log('☁️ Records synced to Firestore');
+            } catch (error) {
+                console.error('❌ Error syncing records to Firestore:', error);
+            }
         }
     }
 
-    // タイピング記録を読み込み
-    loadRecords() {
+    // タイピング記録を読み込み（ハイブリッド）
+    async loadRecords() {
+        let localRecords = {};
+        
+        // ローカルストレージから読み込み
         try {
             const savedRecords = localStorage.getItem('typingRecords');
             if (savedRecords) {
-                const records = JSON.parse(savedRecords);
+                localRecords = JSON.parse(savedRecords);
                 
                 // 古い形式のデータをクリーンアップ
-                if (records.total) {
-                    delete records.total;
-                    this.saveRecords(records);
+                if (localRecords.total) {
+                    delete localRecords.total;
+                }
+            }
+            console.log('💾 Records loaded from LocalStorage');
+        } catch (e) {
+            console.error('❌ Error loading records from LocalStorage:', e);
+        }
+
+        // オンライン時はFirestoreからも読み込んで同期
+        if (this.firestoreManager && this.isOnline) {
+            try {
+                const firestoreRecords = await this.firestoreManager.loadGameRecords();
+                
+                // Firestoreのデータをローカル形式にマージ
+                const mergedRecords = this.mergeRecords(localRecords, firestoreRecords);
+                
+                if (Object.keys(mergedRecords).length !== Object.keys(localRecords).length) {
+                    localStorage.setItem('typingRecords', JSON.stringify(mergedRecords));
+                    console.log('🔄 Records synced from Firestore');
                 }
                 
-                return records;
+                return mergedRecords;
+            } catch (error) {
+                console.error('❌ Error loading records from Firestore:', error);
             }
-            return {};
-        } catch (e) {
-            console.error('記録の読み込みに失敗:', e);
-            return {};
         }
+
+        return localRecords;
+    }
+
+    // 記録のマージ処理
+    mergeRecords(localRecords, firestoreRecords) {
+        const merged = { ...localRecords };
+        
+        for (const firestoreRecord of firestoreRecords) {
+            const levelName = firestoreRecord.levelName;
+            
+            if (!merged[levelName]) {
+                merged[levelName] = [];
+            }
+            
+            // 既存の記録をチェック
+            const existingIndex = merged[levelName].findIndex(record => 
+                record.firestoreId === firestoreRecord.id ||
+                (record.date === firestoreRecord.date && 
+                 record.elapsedTime === firestoreRecord.elapsedTime)
+            );
+            
+            if (existingIndex >= 0) {
+                // 既存の記録を更新
+                merged[levelName][existingIndex] = {
+                    ...firestoreRecord,
+                    firestoreId: firestoreRecord.id
+                };
+            } else {
+                // 新しい記録を追加
+                merged[levelName].push({
+                    ...firestoreRecord,
+                    firestoreId: firestoreRecord.id
+                });
+            }
+        }
+        
+        return merged;
+    }
+
+    // ネットワーク状態の取得
+    getNetworkStatus() {
+        return {
+            isOnline: this.isOnline,
+            hasFirestore: !!this.firestoreManager,
+            canSync: this.isOnline && !!this.firestoreManager
+        };
     }
 }
 
-// StorageManagerのインスタンスを作成
-const storageManager = new StorageManager();
+// StorageManagerのインスタンスを作成（後でwindow.storageManagerで置き換え）
+let storageManager = null; // DOMContentLoaded時に初期化
 // LessonManager: レッスン管理機能を管理するクラス
 class LessonManager {
     constructor(storageManager) {
@@ -445,8 +644,8 @@ class LessonManager {
     }
 }
 
-// LessonManagerのインスタンスを作成
-const lessonManager = new LessonManager(storageManager);
+// LessonManagerのインスタンスを作成（後でwindow.lessonManagerで置き換え）
+let lessonManager = null; // DOMContentLoaded時に初期化
 
 // GameManager: ゲーム状態とロジックを管理するクラス
 class GameManager {
@@ -1160,9 +1359,20 @@ function saveCustomLessons() {
     return storageManager.saveCustomLessons(customLessons);
 }
 
-// 複数のカスタムレッスンを読み込み
-function loadCustomLessons() {
-    customLessons = storageManager.loadCustomLessons();
+// 複数のカスタムレッスンを読み込み（非同期対応）
+async function loadCustomLessons() {
+    try {
+        customLessons = await storageManager.loadCustomLessons();
+        // 配列でない場合の安全チェック
+        if (!Array.isArray(customLessons)) {
+            console.warn('⚠️ customLessons is not an array, initializing as empty array');
+            customLessons = [];
+        }
+        console.log(`📚 Loaded ${customLessons.length} custom lessons`);
+    } catch (error) {
+        console.error('❌ Error loading custom lessons:', error);
+        customLessons = [];
+    }
 }
 
 // 新しいレッスンを保存
@@ -2477,9 +2687,9 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     loadRecords();
-    loadCustomLessons(); // カスタムレッスンを読み込み
+    await loadCustomLessons(); // カスタムレッスンを読み込み（非同期）
     
     // レッスン記録を動的に生成
     updateLessonList();
@@ -2642,8 +2852,9 @@ function updateLessonList() {
     newLessonRecord.appendChild(newLessonTitle);
     recordsSidebar.insertBefore(newLessonRecord, clearButton);
     
-    // 保存されたレッスンがない場合はここで終了
-    if (customLessons.length === 0) {
+    // 配列の安全チェック
+    if (!Array.isArray(customLessons) || customLessons.length === 0) {
+        console.log('📚 No custom lessons to display');
         return;
     }
     
@@ -2832,10 +3043,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Temporary fix: create global instances for compatibility
     window.audioManager = new AudioManager();
     window.storageManager = new StorageManager();
+    storageManager = window.storageManager; // グローバル変数も更新
     window.lessonManager = new LessonManager(window.storageManager);
+    lessonManager = window.lessonManager; // グローバル変数も更新
     window.gameManager = new GameManager(window.audioManager, window.storageManager);
     window.uiManager = new UIManager();
     window.keyboardManager = new KeyboardManager();
+    
+    // Setup Firestore integration after authentication
+    window.authManager.auth.onAuthStateChanged((user) => {
+        if (user) {
+            // Initialize Firestore manager with user ID
+            const firestoreManager = new FirestoreManager(user.uid);
+            window.storageManager.setFirestoreManager(firestoreManager);
+            console.log('🔗 Firestore connected for user:', user.displayName);
+        } else {
+            // User logged out, remove Firestore connection
+            window.storageManager.setFirestoreManager(null);
+            console.log('🔌 Firestore disconnected');
+        }
+    });
     
     // Make level classes available globally
     window.LevelManager = LevelManager;
@@ -2849,8 +3076,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof initApp === 'function') {
         initApp();
     } else {
-        // Call the original initialization code
-        loadCustomLessons();
+        // Call the original initialization code (非同期対応)
+        loadCustomLessons().then(() => {
+            console.log('📚 Custom lessons initialized');
+        });
     }
 });
 
