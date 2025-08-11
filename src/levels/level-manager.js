@@ -107,5 +107,10 @@ class LevelManager {
     }
 }
 
-// グローバルアクセス用
-window.LevelManager = LevelManager;
+// Export for ES modules
+export { LevelManager };
+
+// グローバルアクセス用 (backward compatibility)
+if (typeof window !== 'undefined') {
+    window.LevelManager = LevelManager;
+}

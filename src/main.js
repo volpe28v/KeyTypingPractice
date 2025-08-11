@@ -1,3 +1,25 @@
+// Firebase imports (later)
+// import { auth, db } from './firebase';
+// import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+// import { doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc } from 'firebase/firestore';
+
+// Import level modules
+import { VocabularyLearningLevel } from './levels/level0-vocabulary.js';
+import { ProgressiveLearningLevel } from './levels/level1-progressive.js';
+import { PronunciationMeaningLevel } from './levels/level2-pronunciation-meaning.js';
+import { PronunciationOnlyLevel } from './levels/level3-pronunciation-only.js';
+import { JapaneseReadingLevel } from './levels/level4-japanese-reading.js';
+import { LevelManager } from './levels/level-manager.js';
+
+// Level data - temporary inline definition
+const levelLists = [
+    {
+        level: 10,
+        description: "カスタムレッスン",
+        words: []  // カスタム単語はユーザーが入力時に設定
+    }
+];
+
 // Web Audio API関連の変数
 // AudioManager: 音声関連機能を管理するクラス
 class AudioManager {
@@ -121,6 +143,7 @@ class AudioManager {
 
     // 正解時に効果音を再生する関数
     playCorrectSound(word = "good") {
+        console.log('playCorrectSound called with:', word);
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             
@@ -130,7 +153,10 @@ class AudioManager {
             utterance.pitch = 2.0;
             utterance.volume = 1.0;
             
+            console.log('Speaking:', word);
             window.speechSynthesis.speak(utterance);
+        } else {
+            console.warn('speechSynthesis not available');
         }
     }
 
@@ -161,6 +187,11 @@ class AudioManager {
             
             window.speechSynthesis.speak(utterance);
         }
+    }
+    
+    // speak関数（speakWordのエイリアス - 互換性のため）
+    speak(word) {
+        this.speakWord(word);
     }
 }
 
@@ -905,9 +936,16 @@ class UIManager {
         }
     }
     
+    // 時間をフォーマット（UIManager用）
+    formatTime(timeMs) {
+        const seconds = Math.floor(timeMs / 1000);
+        const milliseconds = Math.floor((timeMs % 1000) / 10);
+        return `${seconds}.${milliseconds.toString().padStart(2, '0')}秒`;
+    }
+    
     // スコア文字列を生成（共通メソッド）
     generateScoreText(elapsedTime, accuracyRate, mistakeCount) {
-        return `正確率: ${accuracyRate}% | ミス: ${mistakeCount}回 | クリアタイム: ${this.uiManager.formatTime(elapsedTime)}`;
+        return `正確率: ${accuracyRate}% | ミス: ${mistakeCount}回 | クリアタイム: ${this.formatTime(elapsedTime)}`;
     }
     
     // スコア表示を更新
@@ -2778,3 +2816,55 @@ function restartCurrentLesson() {
         initGame();
     }
 }
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    // Temporary fix: create global instances for compatibility
+    window.audioManager = new AudioManager();
+    window.storageManager = new StorageManager();
+    window.lessonManager = new LessonManager(window.storageManager);
+    window.gameManager = new GameManager(window.audioManager, window.storageManager);
+    window.uiManager = new UIManager();
+    window.keyboardManager = new KeyboardManager();
+    
+    // Make level classes available globally
+    window.LevelManager = LevelManager;
+    window.VocabularyLearningLevel = VocabularyLearningLevel;
+    window.ProgressiveLearningLevel = ProgressiveLearningLevel;
+    window.PronunciationMeaningLevel = PronunciationMeaningLevel;
+    window.PronunciationOnlyLevel = PronunciationOnlyLevel;
+    window.JapaneseReadingLevel = JapaneseReadingLevel;
+    
+    // Initialize the app like the original script.js
+    if (typeof initApp === 'function') {
+        initApp();
+    } else {
+        // Call the original initialization code
+        loadCustomLessons();
+    }
+});
+
+// Define replayCurrentWord function (for audio replay button)
+function replayCurrentWord() {
+    // This function will be implemented when audio features are restored
+    console.log('replayCurrentWord: Audio replay not yet implemented in Vite version');
+    // TODO: Implement audio replay functionality
+    if (window.audioManager && window.gameManager) {
+        // Get current word and replay audio
+        const currentWord = window.gameManager.getCurrentWord ? window.gameManager.getCurrentWord() : null;
+        if (currentWord && window.audioManager.speak) {
+            window.audioManager.speak(currentWord.word);
+        }
+    }
+}
+
+// Export functions to global scope for HTML onclick events
+window.saveNewLessonOnly = saveNewLessonOnly;
+window.cancelCustomLesson = cancelCustomLesson;
+window.saveAndStartLesson = saveAndStartLesson;
+window.startLessonWithMode = startLessonWithMode;
+window.toggleWordsEdit = toggleWordsEdit;
+window.saveWordsEdit = saveWordsEdit;
+window.deleteSelectedLesson = deleteSelectedLesson;
+window.clearRecords = clearRecords;
+window.replayCurrentWord = replayCurrentWord;

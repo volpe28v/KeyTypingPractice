@@ -316,5 +316,10 @@ class ProgressiveLearningLevel {
     }
 }
 
+// Export for ES modules
+export { ProgressiveLearningLevel };
+
 // グローバルアクセス用
-window.ProgressiveLearningLevel = ProgressiveLearningLevel;
+if (typeof window !== 'undefined') {
+    window.ProgressiveLearningLevel = ProgressiveLearningLevel;
+}

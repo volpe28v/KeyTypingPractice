@@ -1,8 +1,9 @@
 
-// word-lists.js - タイピングゲーム用の単語リスト
+// word-lists.ts - タイピングゲーム用の単語リスト
+import { LevelData } from './types';
 
 // レベルごとの単語リスト
-const levelLists = [
+export const levelLists: LevelData[] = [
     {
         level: 10,
         description: "カスタムレッスン",

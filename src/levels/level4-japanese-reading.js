@@ -1,13 +1,13 @@
-// Lv2: 発音＋日本語モード
-// 発音を聞き、日本語の意味を見てスペルを入力するモード
+// Lv4: 日本語のみモード
+// 日本語の意味だけを見て英単語のスペルを入力するモード
 
-class PronunciationMeaningLevel {
+class JapaneseReadingLevel {
     constructor(gameManager, audioManager, uiManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
-        this.name = 'pronunciation-meaning';
-        this.displayName = 'Lv2: 発音＋日本語';
+        this.name = 'japanese-reading';
+        this.displayName = 'Lv4: 日本語のみ';
     }
 
     // 単語表示の初期化
@@ -16,7 +16,7 @@ class PronunciationMeaningLevel {
             this.uiManager.wordInput.value = '';
         }
 
-        // 文字を隠して表示（●で隠す）
+        // 英単語を隠し、日本語の意味のみ表示
         this.uiManager.wordDisplay.textContent = '●'.repeat(word.word.length);
         this.uiManager.meaningDisplay.textContent = word.meaning;
         this.uiManager.meaningDisplay.style.display = 'block';
@@ -28,13 +28,13 @@ class PronunciationMeaningLevel {
             hiddenLettersContainer.style.display = 'none';
         }
 
-        // 発音を再生
+        // 日本語を読み上げ
         if (playAudio) {
-            this.audioManager.speakWord(word.word);
+            this.audioManager.speakJapanese(word.meaning);
         }
 
         // フィードバック表示
-        this.uiManager.feedback.textContent = '発音と意味からスペルを入力してください';
+        this.uiManager.feedback.textContent = '日本語の意味から英単語を入力してください';
         this.uiManager.feedback.className = 'feedback';
     }
 
@@ -81,9 +81,38 @@ class PronunciationMeaningLevel {
 
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake();
+            
+            // 日本語のみモードではヒント表示しない（難易度維持のため）
         }
 
         return isCorrect;
+    }
+
+    // ヒント表示（ミス時の正解文字表示）
+    showHint(word, position) {
+        let tempHTML = '';
+        
+        for (let i = 0; i < word.length; i++) {
+            if (i === position) {
+                tempHTML += `<span class="hint-char">${word[i]}</span>`;
+            } else if (i < this.uiManager.wordInput.value.length) {
+                const userChar = this.uiManager.wordInput.value[i];
+                if (userChar.toLowerCase() === word[i].toLowerCase()) {
+                    tempHTML += `<span class="correct-char">${word[i]}</span>`;
+                } else {
+                    tempHTML += `<span class="incorrect-char">${word[i]}</span>`;
+                }
+            } else {
+                tempHTML += `<span class="hidden-char">●</span>`;
+            }
+        }
+        
+        this.uiManager.wordDisplay.innerHTML = tempHTML;
+        
+        // 1.5秒後に元に戻す
+        setTimeout(() => {
+            this.updateDisplay();
+        }, 1500);
     }
 
     // リアルタイム入力チェック
@@ -93,17 +122,33 @@ class PronunciationMeaningLevel {
 
     // 単語完了処理
     handleWordComplete() {
+        // 効果音を再生
+        if (!this.gameManager.currentWordMistake) {
+            this.audioManager.playCorrectSound("excellent");
+        } else {
+            this.audioManager.playCorrectSound("good");
+        }
+        
+        // 完了時に英語の発音も再生
+        const currentWord = this.gameManager.getCurrentWord();
+        this.audioManager.speakWord(currentWord.word);
+        
         return 'next_word';
     }
 
-    // 発音再生機能
+    // 音声再生機能（日本語読み上げ）
     replayAudio() {
         const currentWord = this.gameManager.getCurrentWord();
-        if (currentWord && currentWord.word) {
-            this.audioManager.speakWord(currentWord.word);
+        if (currentWord && currentWord.meaning) {
+            this.audioManager.speakJapanese(currentWord.meaning);
         }
     }
 }
 
+// Export for ES modules
+export { JapaneseReadingLevel };
+
 // グローバルアクセス用
-window.PronunciationMeaningLevel = PronunciationMeaningLevel;
+if (typeof window !== 'undefined') {
+    window.JapaneseReadingLevel = JapaneseReadingLevel;
+}

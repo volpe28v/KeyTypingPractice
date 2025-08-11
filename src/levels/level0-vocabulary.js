@@ -105,5 +105,10 @@ class VocabularyLearningLevel {
     }
 }
 
+// Export for ES modules
+export { VocabularyLearningLevel };
+
 // グローバルアクセス用
-window.VocabularyLearningLevel = VocabularyLearningLevel;
+if (typeof window !== 'undefined') {
+    window.VocabularyLearningLevel = VocabularyLearningLevel;
+}

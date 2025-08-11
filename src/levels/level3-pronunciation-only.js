@@ -1,13 +1,13 @@
-// Lv4: 日本語のみモード
-// 日本語の意味だけを見て英単語のスペルを入力するモード
+// Lv3: 発音のみモード
+// 発音だけを聞いてスペルを入力する最も難しいモード
 
-class JapaneseReadingLevel {
+class PronunciationOnlyLevel {
     constructor(gameManager, audioManager, uiManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
-        this.name = 'japanese-reading';
-        this.displayName = 'Lv4: 日本語のみ';
+        this.name = 'pronunciation-only';
+        this.displayName = 'Lv3: 発音のみ';
     }
 
     // 単語表示の初期化
@@ -16,10 +16,10 @@ class JapaneseReadingLevel {
             this.uiManager.wordInput.value = '';
         }
 
-        // 英単語を隠し、日本語の意味のみ表示
+        // 文字と意味を完全に隠す
         this.uiManager.wordDisplay.textContent = '●'.repeat(word.word.length);
-        this.uiManager.meaningDisplay.textContent = word.meaning;
-        this.uiManager.meaningDisplay.style.display = 'block';
+        this.uiManager.meaningDisplay.textContent = '';
+        this.uiManager.meaningDisplay.style.display = 'none';
         this.uiManager.wordInput.style.display = 'inline-block';
 
         // Lv1の選択肢表示を非表示にする
@@ -28,13 +28,13 @@ class JapaneseReadingLevel {
             hiddenLettersContainer.style.display = 'none';
         }
 
-        // 日本語を読み上げ
+        // 発音を再生
         if (playAudio) {
-            this.audioManager.speakJapanese(word.meaning);
+            this.audioManager.speakWord(word.word);
         }
 
         // フィードバック表示
-        this.uiManager.feedback.textContent = '日本語の意味から英単語を入力してください';
+        this.uiManager.feedback.textContent = '発音だけを頼りにスペルを入力してください';
         this.uiManager.feedback.className = 'feedback';
     }
 
@@ -46,7 +46,7 @@ class JapaneseReadingLevel {
 
         for (let i = 0; i < currentWord.length; i++) {
             if (i < userInput.length) {
-                // 入力済み文字
+                // 入力済み文字のみ表示
                 if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
                     displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                 } else {
@@ -82,7 +82,7 @@ class JapaneseReadingLevel {
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake();
             
-            // 日本語のみモードではヒント表示しない（難易度維持のため）
+            // 発音のみモードではヒント表示しない（最高難易度のため）
         }
 
         return isCorrect;
@@ -90,6 +90,7 @@ class JapaneseReadingLevel {
 
     // ヒント表示（ミス時の正解文字表示）
     showHint(word, position) {
+        const hintHTML = this.uiManager.wordDisplay.innerHTML;
         let tempHTML = '';
         
         for (let i = 0; i < word.length; i++) {
@@ -109,10 +110,10 @@ class JapaneseReadingLevel {
         
         this.uiManager.wordDisplay.innerHTML = tempHTML;
         
-        // 1.5秒後に元に戻す
+        // 1秒後に元に戻す
         setTimeout(() => {
             this.updateDisplay();
-        }, 1500);
+        }, 1000);
     }
 
     // リアルタイム入力チェック
@@ -122,21 +123,38 @@ class JapaneseReadingLevel {
 
     // 単語完了処理
     handleWordComplete() {
-        // 完了時に英語の発音も再生
+        // 効果音を再生
+        if (!this.gameManager.currentWordMistake) {
+            this.audioManager.playCorrectSound("excellent");
+        } else {
+            this.audioManager.playCorrectSound("good");
+        }
+        
+        // 完了時に正解を表示
         const currentWord = this.gameManager.getCurrentWord();
-        this.audioManager.speakWord(currentWord.word);
+        this.uiManager.meaningDisplay.textContent = currentWord.meaning;
+        this.uiManager.meaningDisplay.style.display = 'block';
+        
+        setTimeout(() => {
+            this.uiManager.meaningDisplay.style.display = 'none';
+        }, 2000);
         
         return 'next_word';
     }
 
-    // 音声再生機能（日本語読み上げ）
+    // 発音再生機能
     replayAudio() {
         const currentWord = this.gameManager.getCurrentWord();
-        if (currentWord && currentWord.meaning) {
-            this.audioManager.speakJapanese(currentWord.meaning);
+        if (currentWord && currentWord.word) {
+            this.audioManager.speakWord(currentWord.word);
         }
     }
 }
 
+// Export for ES modules
+export { PronunciationOnlyLevel };
+
 // グローバルアクセス用
-window.JapaneseReadingLevel = JapaneseReadingLevel;
+if (typeof window !== 'undefined') {
+    window.PronunciationOnlyLevel = PronunciationOnlyLevel;
+}

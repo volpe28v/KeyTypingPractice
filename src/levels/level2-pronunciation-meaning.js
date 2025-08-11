@@ -1,13 +1,13 @@
-// Lv3: 発音のみモード
-// 発音だけを聞いてスペルを入力する最も難しいモード
+// Lv2: 発音＋日本語モード
+// 発音を聞き、日本語の意味を見てスペルを入力するモード
 
-class PronunciationOnlyLevel {
+class PronunciationMeaningLevel {
     constructor(gameManager, audioManager, uiManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
-        this.name = 'pronunciation-only';
-        this.displayName = 'Lv3: 発音のみ';
+        this.name = 'pronunciation-meaning';
+        this.displayName = 'Lv2: 発音＋日本語';
     }
 
     // 単語表示の初期化
@@ -16,10 +16,10 @@ class PronunciationOnlyLevel {
             this.uiManager.wordInput.value = '';
         }
 
-        // 文字と意味を完全に隠す
+        // 文字を隠して表示（●で隠す）
         this.uiManager.wordDisplay.textContent = '●'.repeat(word.word.length);
-        this.uiManager.meaningDisplay.textContent = '';
-        this.uiManager.meaningDisplay.style.display = 'none';
+        this.uiManager.meaningDisplay.textContent = word.meaning;
+        this.uiManager.meaningDisplay.style.display = 'block';
         this.uiManager.wordInput.style.display = 'inline-block';
 
         // Lv1の選択肢表示を非表示にする
@@ -34,7 +34,7 @@ class PronunciationOnlyLevel {
         }
 
         // フィードバック表示
-        this.uiManager.feedback.textContent = '発音だけを頼りにスペルを入力してください';
+        this.uiManager.feedback.textContent = '発音と意味からスペルを入力してください';
         this.uiManager.feedback.className = 'feedback';
     }
 
@@ -46,7 +46,7 @@ class PronunciationOnlyLevel {
 
         for (let i = 0; i < currentWord.length; i++) {
             if (i < userInput.length) {
-                // 入力済み文字のみ表示
+                // 入力済み文字
                 if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
                     displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
                 } else {
@@ -81,39 +81,9 @@ class PronunciationOnlyLevel {
 
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake();
-            
-            // 発音のみモードではヒント表示しない（最高難易度のため）
         }
 
         return isCorrect;
-    }
-
-    // ヒント表示（ミス時の正解文字表示）
-    showHint(word, position) {
-        const hintHTML = this.uiManager.wordDisplay.innerHTML;
-        let tempHTML = '';
-        
-        for (let i = 0; i < word.length; i++) {
-            if (i === position) {
-                tempHTML += `<span class="hint-char">${word[i]}</span>`;
-            } else if (i < this.uiManager.wordInput.value.length) {
-                const userChar = this.uiManager.wordInput.value[i];
-                if (userChar.toLowerCase() === word[i].toLowerCase()) {
-                    tempHTML += `<span class="correct-char">${word[i]}</span>`;
-                } else {
-                    tempHTML += `<span class="incorrect-char">${word[i]}</span>`;
-                }
-            } else {
-                tempHTML += `<span class="hidden-char">●</span>`;
-            }
-        }
-        
-        this.uiManager.wordDisplay.innerHTML = tempHTML;
-        
-        // 1秒後に元に戻す
-        setTimeout(() => {
-            this.updateDisplay();
-        }, 1000);
     }
 
     // リアルタイム入力チェック
@@ -123,15 +93,12 @@ class PronunciationOnlyLevel {
 
     // 単語完了処理
     handleWordComplete() {
-        // 完了時に正解を表示
-        const currentWord = this.gameManager.getCurrentWord();
-        this.uiManager.meaningDisplay.textContent = currentWord.meaning;
-        this.uiManager.meaningDisplay.style.display = 'block';
-        
-        setTimeout(() => {
-            this.uiManager.meaningDisplay.style.display = 'none';
-        }, 2000);
-        
+        // 効果音を再生
+        if (!this.gameManager.currentWordMistake) {
+            this.audioManager.playCorrectSound("excellent");
+        } else {
+            this.audioManager.playCorrectSound("good");
+        }
         return 'next_word';
     }
 
@@ -144,5 +111,10 @@ class PronunciationOnlyLevel {
     }
 }
 
+// Export for ES modules
+export { PronunciationMeaningLevel };
+
 // グローバルアクセス用
-window.PronunciationOnlyLevel = PronunciationOnlyLevel;
+if (typeof window !== 'undefined') {
+    window.PronunciationMeaningLevel = PronunciationMeaningLevel;
+}
