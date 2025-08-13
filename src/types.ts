@@ -10,6 +10,8 @@ export interface LessonData {
   name: string;
   words: WordData[];
   userId?: string;
+  firestoreId?: string;
+  createdAt?: string;
 }
 
 // 記録データの型定義

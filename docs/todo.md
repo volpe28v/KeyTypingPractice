@@ -160,6 +160,41 @@
 
 ## 次のアクション 🎯
 
+### 🔴 最優先：main.tsのファイル分割（3187行→モジュール化） 🔧
+**現在進行中：2025年1月13日**
+
+#### 分割計画
+1. **managers/** ディレクトリ
+   - `AudioManager.ts` - 音声関連機能（約170行）
+   - `StorageManager.ts` - データ保存機能（約140行）
+   - `LessonManager.ts` - レッスン管理（約180行）
+   - `GameManager.ts` - ゲームロジック（約210行）
+   - `UIManager.ts` - UI操作（約240行）
+   - `KeyboardManager.ts` - キーボード表示（約100行）
+
+2. **utils/** ディレクトリ
+   - `globals.ts` - グローバル変数定義
+   - `helpers.ts` - ユーティリティ関数
+
+3. **game/** ディレクトリ
+   - `game-logic.ts` - ゲームのメインロジック
+   - `display-word.ts` - 単語表示関連
+   - `input-validation.ts` - 入力検証
+
+4. **ui/** ディレクトリ
+   - `modals.ts` - モーダル制御
+   - `lesson-selection.ts` - レッスン選択UI
+
+#### 実行手順
+- [x] todo.md更新
+- [ ] managersディレクトリ作成と各Managerクラス分離
+- [ ] utilsディレクトリ作成とヘルパー関数分離
+- [ ] gameディレクトリ作成とゲームロジック分離
+- [ ] uiディレクトリ作成とUI関連分離
+- [ ] main.tsでのimport整理
+- [ ] 型エラー修正
+- [ ] 動作確認
+
 ### 优先度高：機能改善・バグ修正 🔧
 1. **レベルデータの実装**
    - 現在main.js内の`levelLists`はカスタムレッスンのみ
