@@ -132,7 +132,9 @@ export class GameManager {
     
     // 次の単語へ進む
     nextWord(): void {
+        console.log('🔍 GameManager.nextWord() called - before increment:', this.currentWordIndex);
         this.currentWordIndex++;
+        console.log('🔍 GameManager.nextWord() called - after increment:', this.currentWordIndex);
     }
     
     // ゲームが終了したかチェック

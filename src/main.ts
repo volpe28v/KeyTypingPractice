@@ -224,7 +224,8 @@ function updateLetterChoiceButtons(userInput, currentWord) {
 
 
 // GameManagerのインスタンスを作成
-const gameManager = new GameManager(audioManager, storageManager);
+let gameManager = new GameManager(audioManager, storageManager);
+console.log('🔧 Created gameManager instance:', gameManager);
 
 // Level 0 (vocabulary-learning) のインスタンス
 // 個別レベルインスタンス変数は削除済み（LevelManagerで統一管理）
@@ -731,6 +732,10 @@ function initGame() {
         gameManager.initGame(levelLists, customWords);
     }
     
+    // GameManagerの初期化後にグローバル変数を同期
+    currentWordIndex = gameManager.currentWordIndex;
+    words = gameManager.words;
+    
     // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし、入力もクリアしない）
     setTimeout(() => {
         displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
@@ -785,9 +790,17 @@ Object.defineProperty(window, 'words', {
 });
 
 Object.defineProperty(window, 'currentWordIndex', {
-    get: () => gameManager.currentWordIndex,
-    set: (value) => { gameManager.currentWordIndex = value; }
+    get: () => {
+        console.log('🔍 Getting currentWordIndex from gameManager:', gameManager.currentWordIndex, 'gameManager instance:', gameManager);
+        return gameManager.currentWordIndex;
+    },
+    set: (value) => { 
+        console.log('🔍 Setting currentWordIndex to:', value, 'gameManager instance:', gameManager);
+        gameManager.currentWordIndex = value; 
+    }
 });
+
+console.log('🔧 Set up currentWordIndex proxy for gameManager:', gameManager);
 
 Object.defineProperty(window, 'correctCount', {
     get: () => gameManager.correctCount,
@@ -1416,7 +1429,12 @@ function checkInputRealtime() {
             if (result === 'next_word') {
                 // 次の単語へ進む（遅延処理はレベル側で実装済み）
                 setTimeout(() => {
+                    console.log('🔍 About to increment currentWordIndex in checkInputRealtime - current value:', currentWordIndex);
                     currentWordIndex++;
+                    console.log('🔍 Incremented currentWordIndex in checkInputRealtime - new value:', currentWordIndex);
+                    // GameManagerのプロパティも手動で同期
+                    gameManager.currentWordIndex = currentWordIndex;
+                    console.log('🔍 Synced gameManager.currentWordIndex:', gameManager.currentWordIndex);
                     correctCount++;
                     
                     uiManager.updateProgressBar(currentWordIndex, words.length);
@@ -1446,6 +1464,8 @@ function checkInputRealtime() {
             // 遅延を追加して、緑色の状態を見えるようにする
             setTimeout(() => {
                 currentWordIndex++;
+                // GameManagerのプロパティも手動で同期
+                gameManager.currentWordIndex = currentWordIndex;
                 correctCount++;
                 
                 uiManager.updateProgressBar(currentWordIndex, words.length);
@@ -1504,6 +1524,8 @@ wordInput.addEventListener('keydown', (e) => {
                 
                 if (result === 'next_word') {
                     currentWordIndex++;
+                    // GameManagerのプロパティも手動で同期
+                    gameManager.currentWordIndex = currentWordIndex;
                     displayWord();
                 }
                 return;
@@ -1527,6 +1549,8 @@ wordInput.addEventListener('keydown', (e) => {
                         // 規定回数に達したら次の単語へ
                         if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
                             currentWordIndex++;
+                            // GameManagerのプロパティも手動で同期
+                            gameManager.currentWordIndex = currentWordIndex;
                             displayWord();
                         } else {
                             feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
@@ -1597,6 +1621,7 @@ document.addEventListener('keydown', (e) => {
                 
                 if (result === 'next_word') {
                     currentWordIndex++;
+                    gameManager.currentWordIndex = currentWordIndex;
                     displayWord();
                 }
             } else {
@@ -1619,6 +1644,7 @@ document.addEventListener('keydown', (e) => {
                     // 規定回数に達したら次の単語へ
                     if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
                         currentWordIndex++;
+                        gameManager.currentWordIndex = currentWordIndex;
                         displayWord();
                     } else {
                         feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
@@ -1986,6 +2012,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.lessonManager = new LessonManager(window.storageManager);
     lessonManager = window.lessonManager; // グローバル変数も更新
     window.gameManager = new GameManager(window.audioManager, window.storageManager);
+    // グローバルgameManagerも更新して同期を保つ
+    gameManager = window.gameManager;
+    console.log('🔧 Updated global gameManager to window.gameManager:', gameManager);
+    
     window.uiManager = new UIManager();
     window.keyboardManager = new KeyboardManager();
     
