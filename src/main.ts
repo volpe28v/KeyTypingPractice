@@ -1055,7 +1055,7 @@ function startTimer() {
 
 // 段階的練習モードの表示を更新する関数
 function updateProgressiveDisplay() {
-    const currentWord = words[currentWordIndex].word;
+    const currentWord = window.words[window.currentWordIndex].word;
     const userInput = wordInput.value.trim();
     let displayHTML = '';
     
@@ -1129,7 +1129,7 @@ function updatePartialWordDisplay() {
         return;
     }
     
-    const currentWord = words[currentWordIndex].word;
+    const currentWord = window.words[window.currentWordIndex].word;
     const userInput = wordInput.value.trim();
     
     // 現在の表示を直接更新せず、スパン要素を個別に更新
@@ -1185,8 +1185,8 @@ function updatePartialWordDisplay() {
 }
 
 async function displayWord(playAudio = true, clearInput = true) {
-    if (currentWordIndex < words.length) {
-        const currentWord = words[currentWordIndex];
+    if (window.currentWordIndex < window.words.length) {
+        const currentWord = window.words[window.currentWordIndex];
         
         // 音声再生ボタンを表示
         uiManager.replayAudioBtn.style.display = 'block';
@@ -1344,7 +1344,7 @@ function validateKeyInput(e) {
         return true; // Backspaceは常に許可
     }
     
-    const currentWordData = words[currentWordIndex];
+    const currentWordData = window.words[window.currentWordIndex];
     const currentWord = currentWordData.word;
     const currentPosition = wordInput.value.length;
     
@@ -1392,7 +1392,7 @@ function highlightWrongChar(position) {
         return;
     }
     
-    const currentWord = words[currentWordIndex].word;
+    const currentWord = window.words[window.currentWordIndex].word;
     let highlightedHTML = '';
     
     for (let i = 0; i < currentWord.length; i++) {
@@ -1414,7 +1414,7 @@ function checkInputRealtime() {
         return;
     }
     
-    const currentWord = words[currentWordIndex].word;
+    const currentWord = window.words[window.currentWordIndex].word;
     const userInput = wordInput.value.trim();
     
     // カスタムレッスンの非表示モードでの部分表示更新
@@ -1429,15 +1429,13 @@ function checkInputRealtime() {
             if (result === 'next_word') {
                 // 次の単語へ進む（遅延処理はレベル側で実装済み）
                 setTimeout(() => {
-                    console.log('🔍 About to increment currentWordIndex in checkInputRealtime - current value:', currentWordIndex);
-                    currentWordIndex++;
-                    console.log('🔍 Incremented currentWordIndex in checkInputRealtime - new value:', currentWordIndex);
-                    // GameManagerのプロパティも手動で同期
-                    gameManager.currentWordIndex = currentWordIndex;
-                    console.log('🔍 Synced gameManager.currentWordIndex:', gameManager.currentWordIndex);
+                    console.log('🔍 About to increment currentWordIndex in checkInputRealtime - current value:', window.currentWordIndex);
+                    window.currentWordIndex++;
+                    console.log('🔍 Incremented window.currentWordIndex - new value:', window.currentWordIndex);
+                    console.log('🔍 gameManager.currentWordIndex (should auto-sync):', gameManager.currentWordIndex);
                     correctCount++;
                     
-                    uiManager.updateProgressBar(currentWordIndex, words.length);
+                    uiManager.updateProgressBar(window.currentWordIndex, words.length);
                     displayWord();
                 }, 1500);
             }
@@ -1463,12 +1461,10 @@ function checkInputRealtime() {
             
             // 遅延を追加して、緑色の状態を見えるようにする
             setTimeout(() => {
-                currentWordIndex++;
-                // GameManagerのプロパティも手動で同期
-                gameManager.currentWordIndex = currentWordIndex;
+                window.currentWordIndex++;
                 correctCount++;
                 
-                uiManager.updateProgressBar(currentWordIndex, words.length);
+                uiManager.updateProgressBar(window.currentWordIndex, window.words.length);
                 displayWord();
             }, 500);
             
@@ -1519,20 +1515,18 @@ wordInput.addEventListener('keydown', (e) => {
         // Lv0: 単語学習モード専用の処理
         if (gameActive && isCustomLesson && lessonMode === 'vocabulary-learning') {
             if (level0Instance) {
-                const currentWord = words[currentWordIndex];
+                const currentWord = window.words[window.currentWordIndex];
                 const result = level0Instance.handleKeyInput(e, currentWord);
                 
                 if (result === 'next_word') {
-                    currentWordIndex++;
-                    // GameManagerのプロパティも手動で同期
-                    gameManager.currentWordIndex = currentWordIndex;
+                    window.currentWordIndex++;
                     displayWord();
                 }
                 return;
             } else {
                 // フォールバック: 従来のロジック
                 e.preventDefault();
-                const currentWord = words[currentWordIndex];
+                const currentWord = window.words[window.currentWordIndex];
                 
                 if (currentWord && currentWord.word) {
                     if (!vocabularyLearningIsJapanese) {
@@ -1548,9 +1542,7 @@ wordInput.addEventListener('keydown', (e) => {
                         
                         // 規定回数に達したら次の単語へ
                         if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
-                            currentWordIndex++;
-                            // GameManagerのプロパティも手動で同期
-                            gameManager.currentWordIndex = currentWordIndex;
+                            window.currentWordIndex++;
                             displayWord();
                         } else {
                             feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
@@ -1616,18 +1608,17 @@ document.addEventListener('keydown', (e) => {
         wordInput.style.display === 'none' && (e.key === 'Enter' || e.key === ' ')) {
         
         if (levelManager && levelManager.getCurrentLevel() && levelManager.getCurrentLevel().handleKeyInput) {
-                const currentWord = words[currentWordIndex];
+                const currentWord = window.words[window.currentWordIndex];
                 const result = levelManager.handleKeyInput(e, currentWord);
                 
                 if (result === 'next_word') {
-                    currentWordIndex++;
-                    gameManager.currentWordIndex = currentWordIndex;
+                    window.currentWordIndex++;
                     displayWord();
                 }
             } else {
             // フォールバック: 従来のロジック
             e.preventDefault();
-            const currentWord = words[currentWordIndex];
+            const currentWord = window.words[window.currentWordIndex];
             
             if (currentWord && currentWord.word) {
                 if (!vocabularyLearningIsJapanese) {
@@ -1643,8 +1634,7 @@ document.addEventListener('keydown', (e) => {
                     
                     // 規定回数に達したら次の単語へ
                     if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
-                        currentWordIndex++;
-                        gameManager.currentWordIndex = currentWordIndex;
+                        window.currentWordIndex++;
                         displayWord();
                     } else {
                         feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
@@ -2079,7 +2069,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function replayCurrentWord() {
         if (window.audioManager && words && words.length > 0) {
             // Get current word from global words array
-            const currentWord = words[currentWordIndex];
+            const currentWord = window.words[window.currentWordIndex];
             
             if (currentWord && currentWord.word && window.audioManager.speakWord) {
                 window.audioManager.speakWord(currentWord.word);
