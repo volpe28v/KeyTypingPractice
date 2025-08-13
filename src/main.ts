@@ -2044,29 +2044,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
         });
     }
-});
-
-// Define replayCurrentWord function (for audio replay button)
-function replayCurrentWord() {
-    // This function will be implemented when audio features are restored
-
-    // TODO: Implement audio replay functionality
-    if (window.audioManager && window.gameManager) {
-        // Get current word and replay audio
-        const currentWord = window.gameManager.getCurrentWord ? window.gameManager.getCurrentWord() : null;
-        if (currentWord && window.audioManager.speak) {
-            window.audioManager.speak(currentWord.word);
+    
+    // Define replayCurrentWord function (for audio replay button)
+    function replayCurrentWord() {
+        if (window.audioManager && words && words.length > 0) {
+            // Get current word from global words array
+            const currentWord = words[currentWordIndex];
+            
+            if (currentWord && currentWord.word && window.audioManager.speakWord) {
+                window.audioManager.speakWord(currentWord.word);
+            }
         }
     }
-}
-
-// Export functions to global scope for HTML onclick events
-window.saveNewLessonOnly = saveNewLessonOnly;
-window.cancelCustomLesson = cancelCustomLesson;
-window.saveAndStartLesson = saveAndStartLesson;
-window.startLessonWithMode = startLessonWithMode;
-window.toggleWordsEdit = toggleWordsEdit;
-window.saveWordsEdit = saveWordsEdit;
-window.deleteSelectedLesson = deleteSelectedLesson;
-window.clearRecords = clearRecords;
-window.replayCurrentWord = replayCurrentWord;
+    
+    // Export functions to global scope for HTML onclick events
+    window.saveNewLessonOnly = saveNewLessonOnly;
+    window.cancelCustomLesson = cancelCustomLesson;
+    window.saveAndStartLesson = saveAndStartLesson;
+    window.startLessonWithMode = startLessonWithMode;
+    window.toggleWordsEdit = toggleWordsEdit;
+    window.saveWordsEdit = saveWordsEdit;
+    window.deleteSelectedLesson = deleteSelectedLesson;
+    window.clearRecords = clearRecords;
+    window.replayCurrentWord = replayCurrentWord;
+});
