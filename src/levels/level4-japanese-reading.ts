@@ -137,10 +137,6 @@ class JapaneseReadingLevel {
             this.audioManager.playCorrectSound("good");
         }
         
-        // 完了時に英語の発音も再生
-        const currentWord = this.gameManager.getCurrentWord();
-        this.audioManager.speakWord(currentWord.word);
-        
         return 'next_word';
     }
 

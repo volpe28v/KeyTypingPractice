@@ -40,6 +40,9 @@ declare global {
         clearRecords: any;
         replayCurrentWord: any;
         webkitAudioContext: any;
+        // プロキシプロパティ
+        words: WordData[];
+        currentWordIndex: number;
     }
 }
 
@@ -1187,6 +1190,9 @@ function updatePartialWordDisplay() {
 async function displayWord(playAudio = true, clearInput = true) {
     if (window.currentWordIndex < window.words.length) {
         const currentWord = window.words[window.currentWordIndex];
+        
+        // 新しい単語のためにミス状態をリセット
+        gameManager.resetForNewWord();
         
         // 音声再生ボタンを表示
         uiManager.replayAudioBtn.style.display = 'block';
