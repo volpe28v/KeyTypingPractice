@@ -48,7 +48,10 @@ class PronunciationOnlyLevel {
 
     // リアルタイム表示更新
     updateDisplay(): void {
-        const currentWord = this.gameManager.getCurrentWord().word;
+        // グローバル変数から直接現在の単語を取得（同期問題を回避）
+        const globalWords = (window as any).words;
+        const globalCurrentWordIndex = (window as any).currentWordIndex;
+        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex].word : this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
 
@@ -139,7 +142,10 @@ class PronunciationOnlyLevel {
         }
         
         // 完了時に正解を表示
-        const currentWord = this.gameManager.getCurrentWord();
+        // グローバル変数から直接現在の単語を取得（同期問題を回避）
+        const globalWords = (window as any).words;
+        const globalCurrentWordIndex = (window as any).currentWordIndex;
+        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex] : this.gameManager.getCurrentWord();
         this.uiManager.meaningDisplay.textContent = currentWord.meaning;
         this.uiManager.meaningDisplay.style.display = 'block';
         
@@ -152,7 +158,10 @@ class PronunciationOnlyLevel {
 
     // 発音再生機能
     replayAudio(): void {
-        const currentWord = this.gameManager.getCurrentWord();
+        // グローバル変数から直接現在の単語を取得（同期問題を回避）
+        const globalWords = (window as any).words;
+        const globalCurrentWordIndex = (window as any).currentWordIndex;
+        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex] : this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
             this.audioManager.speakWord(currentWord.word);
         }
