@@ -247,6 +247,40 @@ export class FirestoreManager {
     }
   }
 
+  // 全ての記録をクリア
+  async clearAllRecords(): Promise<void> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot clear records (offline or not authenticated)');
+      throw new Error('Cannot clear records: offline or not authenticated');
+    }
+
+    try {
+      console.log('🗑️ Starting to clear all records from Firestore...');
+      
+      // ユーザーの全記録を取得
+      const recordsQuery = query(
+        collection(db, 'gameRecords'),
+        where('userId', '==', this.userId)
+      );
+      
+      const recordsSnapshot = await getDocs(recordsQuery);
+      console.log(`📊 Found ${recordsSnapshot.size} records to delete`);
+      
+      // 各記録を削除
+      const deletePromises = recordsSnapshot.docs.map(async (docSnapshot) => {
+        await deleteDoc(doc(db, 'gameRecords', docSnapshot.id));
+        console.log(`🗑️ Deleted record: ${docSnapshot.id}`);
+      });
+      
+      await Promise.all(deletePromises);
+      console.log('✅ All Firestore records deleted successfully');
+      
+    } catch (error) {
+      console.error('❌ Error clearing Firestore records:', error);
+      throw error;
+    }
+  }
+
   // ネットワーク状態の取得
   getNetworkStatus(): { isOnline: boolean; userId: string | null; canUseFirestore: boolean } {
     return {

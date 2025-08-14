@@ -1802,8 +1802,12 @@ function setupFocusManagement() {
     });
 }
 
-function clearRecords() {
+async function clearRecords() {
     if (confirm('すべての記録をクリアしますか？')) {
+        // StorageManagerを使用して完全にクリア
+        await storageManager.clearAllRecords();
+        
+        // メモリ上のrecordsオブジェクトもクリア
         records = {};
         
         // すべてのカスタムレッスンの記録を初期化
@@ -1811,7 +1815,7 @@ function clearRecords() {
             records[`lesson${lesson.id}`] = [];
         });
         
-        saveRecords();
+        // 表示を更新
         displayBestTimes();
     }
 }

@@ -180,4 +180,30 @@ export class StorageManager {
     saveCustomWords(wordsText: string): void {
         // 何もしない（後方互換性のため）
     }
+
+    // 全ての記録をクリア（LocalStorageとFirestore）
+    async clearAllRecords(): Promise<void> {
+        if (!this.firestoreManager) {
+            console.warn('⚠️ Firestore not connected. Please login first.');
+            // LocalStorageのみクリア
+            localStorage.removeItem('typingRecords');
+            return;
+        }
+
+        try {
+            console.log('🗑️ Clearing all records from Firestore and localStorage...');
+            
+            // Firestoreの全記録を削除
+            await this.firestoreManager.clearAllRecords();
+            
+            // LocalStorageもクリア
+            localStorage.removeItem('typingRecords');
+            
+            console.log('✅ All records cleared successfully');
+        } catch (error) {
+            console.error('❌ Error clearing records:', error);
+            // エラーが発生してもLocalStorageはクリア
+            localStorage.removeItem('typingRecords');
+        }
+    }
 }
