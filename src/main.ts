@@ -43,6 +43,7 @@ declare global {
         // プロキシプロパティ
         words: WordData[];
         currentWordIndex: number;
+        isShowingClearScreen?: boolean;
     }
 }
 
@@ -719,7 +720,16 @@ function initializeLevelManager() {
     }
 }
 
+// グローバル変数として定義
+let displayWordTimer: NodeJS.Timeout | null = null;
+
 function initGame() {
+    // 既存のdisplayWordタイマーをクリア
+    if (displayWordTimer) {
+        clearTimeout(displayWordTimer);
+        displayWordTimer = null;
+    }
+    
     // LevelManagerを初期化
     initializeLevelManager();
     
@@ -740,8 +750,11 @@ function initGame() {
     words = gameManager.words;
     
     // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし、入力もクリアしない）
-    setTimeout(() => {
-        displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
+    displayWordTimer = setTimeout(() => {
+        // ゲーム完了画面表示中でない場合のみ実行
+        if (!window.isShowingClearScreen && gameActive) {
+            displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
+        }
     }, 1000);
     
     uiManager.updateProgressBar(currentWordIndex, words.length);
@@ -779,7 +792,7 @@ function initGame() {
     keyboardManager.initAnimation();
     
     setTimeout(() => {
-        if (words.length > 0) {
+        if (words.length > 0 && !window.isShowingClearScreen && gameActive) {
             displayWord();
         }
     }, 100);
@@ -966,7 +979,8 @@ async function addRecord(levelKey, time, mistakes = 0, totalTypes = 0) {
     if (shouldSaveNewRecord) {
         console.log('🔍 Saving new record:', { levelKey, newRecord });
         records[levelKey] = [newRecord];
-        await saveRecords();  // awaitを追加してFirestoreへの保存を待つ
+        // 新しい記録のみをFirestoreに保存
+        await storageManager.saveNewRecord(levelKey, newRecord);
         
         showNewRecordMessage();
     } else {
@@ -1188,6 +1202,7 @@ function updatePartialWordDisplay() {
 }
 
 async function displayWord(playAudio = true, clearInput = true) {
+    console.log('📝 displayWord called - currentWordIndex:', window.currentWordIndex, 'words.length:', window.words.length);
     if (window.currentWordIndex < window.words.length) {
         const currentWord = window.words[window.currentWordIndex];
         
@@ -1258,6 +1273,12 @@ async function displayWord(playAudio = true, clearInput = true) {
     } else {
         // Lv0: 単語学習モードの完了処理
         if (isCustomLesson && lessonMode === 'vocabulary-learning') {
+            // displayWordタイマーをクリア（Lv0完了時）
+            if (displayWordTimer) {
+                clearTimeout(displayWordTimer);
+                displayWordTimer = null;
+            }
+            
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
@@ -1290,6 +1311,12 @@ async function displayWord(playAudio = true, clearInput = true) {
             endTime = Date.now();
             const elapsedTime = endTime - startTime;
             
+            // displayWordタイマーをクリア（ゲーム完了時）
+            if (displayWordTimer) {
+                clearTimeout(displayWordTimer);
+                displayWordTimer = null;
+            }
+            
             if (timerInterval) {
                 clearInterval(timerInterval);
                 timerInterval = null;
@@ -1315,6 +1342,7 @@ async function displayWord(playAudio = true, clearInput = true) {
             const isPerfect = mistakeCount === 0;
             
             // UIManagerを使用してゲーム完了時の表示
+            console.log('🎮 Game Complete - Showing results for lesson mode:', lessonMode);
             uiManager.showGameComplete(isPerfect, mistakeCount, elapsedTime, accuracyRate);
             
             // 効果音を再生
@@ -1329,6 +1357,16 @@ async function displayWord(playAudio = true, clearInput = true) {
         hideRecords();
         
         gameActive = false;
+        
+        // クリア画面表示中フラグを設定
+        window.isShowingClearScreen = true;
+        
+        // 保留中のdisplayWordタイマーをクリア
+        if (displayWordTimer) {
+            clearTimeout(displayWordTimer);
+            displayWordTimer = null;
+            console.log('🔍 Cleared displayWordTimer on game complete');
+        }
         
         wordInput.value = '';
         wordInput.focus();
@@ -1434,7 +1472,7 @@ function checkInputRealtime() {
             
             if (result === 'next_word') {
                 // 次の単語へ進む（遅延処理はレベル側で実装済み）
-                setTimeout(() => {
+                displayWordTimer = setTimeout(() => {
                     console.log('🔍 About to increment currentWordIndex in checkInputRealtime - current value:', window.currentWordIndex);
                     window.currentWordIndex++;
                     console.log('🔍 Incremented window.currentWordIndex - new value:', window.currentWordIndex);
@@ -1442,7 +1480,9 @@ function checkInputRealtime() {
                     correctCount++;
                     
                     uiManager.updateProgressBar(window.currentWordIndex, words.length);
-                    displayWord();
+                    if (!window.isShowingClearScreen && gameActive) {
+                        displayWord();
+                    }
                 }, 1500);
             }
             // 'continue_word'の場合は何もしない（レベル側で処理済み）
@@ -1466,12 +1506,14 @@ function checkInputRealtime() {
             feedback.className = 'feedback correct';
             
             // 遅延を追加して、緑色の状態を見えるようにする
-            setTimeout(() => {
+            displayWordTimer = setTimeout(() => {
                 window.currentWordIndex++;
                 correctCount++;
                 
                 uiManager.updateProgressBar(window.currentWordIndex, window.words.length);
-                displayWord();
+                if (!window.isShowingClearScreen && gameActive) {
+                    displayWord();
+                }
             }, 500);
             
             // 入力フィールドを一時的に無効化
@@ -1526,7 +1568,9 @@ wordInput.addEventListener('keydown', (e) => {
                 
                 if (result === 'next_word') {
                     window.currentWordIndex++;
-                    displayWord();
+                    if (!window.isShowingClearScreen && gameActive) {
+                        displayWord();
+                    }
                 }
                 return;
             } else {
@@ -1549,7 +1593,9 @@ wordInput.addEventListener('keydown', (e) => {
                         // 規定回数に達したら次の単語へ
                         if (vocabularyLearningCount >= vocabularyLearningMaxCount) {
                             window.currentWordIndex++;
-                            displayWord();
+                            if (!window.isShowingClearScreen && gameActive) {
+                                displayWord();
+                            }
                         } else {
                             feedback.textContent = `Enter/Spaceで日本語を聞く (${vocabularyLearningCount}/${vocabularyLearningMaxCount})`;
                         }
@@ -1619,7 +1665,9 @@ document.addEventListener('keydown', (e) => {
                 
                 if (result === 'next_word') {
                     window.currentWordIndex++;
-                    displayWord();
+                    if (!window.isShowingClearScreen && gameActive) {
+                        displayWord();
+                    }
                 }
             } else {
             // フォールバック: 従来のロジック
@@ -1962,6 +2010,9 @@ function setupVocabularyLearningCompleteKeyEvents() {
 }
 
 function restartCurrentLesson() {
+    // クリア画面表示フラグをクリア
+    window.isShowingClearScreen = false;
+    
     // クリア画面のキーイベントを削除
     if (clearScreenKeyHandler) {
         document.removeEventListener('keydown', clearScreenKeyHandler);
