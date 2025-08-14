@@ -118,6 +118,14 @@ class LevelManager {
             return this.currentLevel.updateDisplay();
         }
     }
+
+    
+    // クリーンアップ（ゲーム終了時の後処理）
+    cleanup(): void {
+        if (this.currentLevel && this.currentLevel.cleanup) {
+            this.currentLevel.cleanup();
+        }
+    }
 }
 
 // Export for ES modules

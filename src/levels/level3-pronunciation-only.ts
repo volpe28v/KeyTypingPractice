@@ -9,6 +9,7 @@ class PronunciationOnlyLevel {
     public uiManager: any;
     public name: string;
     public displayName: string;
+    private meaningDisplayTimer: NodeJS.Timeout | null = null;
 
     constructor(gameManager: any, audioManager: any, uiManager: any) {
         this.gameManager = gameManager;
@@ -20,6 +21,12 @@ class PronunciationOnlyLevel {
 
     // 単語表示の初期化
     initializeWord(word: WordData, playAudio: boolean = true, clearInput: boolean = true): void {
+        // 既存の意味表示タイマーをクリア
+        if (this.meaningDisplayTimer) {
+            clearTimeout(this.meaningDisplayTimer);
+            this.meaningDisplayTimer = null;
+        }
+        
         if (clearInput) {
             this.uiManager.wordInput.value = '';
         }
@@ -48,10 +55,7 @@ class PronunciationOnlyLevel {
 
     // リアルタイム表示更新
     updateDisplay(): void {
-        // グローバル変数から直接現在の単語を取得（同期問題を回避）
-        const globalWords = (window as any).words;
-        const globalCurrentWordIndex = (window as any).currentWordIndex;
-        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex].word : this.gameManager.getCurrentWord().word;
+        const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
 
@@ -141,16 +145,21 @@ class PronunciationOnlyLevel {
             this.audioManager.playCorrectSound("good");
         }
         
+        // 既存の意味表示タイマーをクリア
+        if (this.meaningDisplayTimer) {
+            clearTimeout(this.meaningDisplayTimer);
+            this.meaningDisplayTimer = null;
+        }
+        
         // 完了時に正解を表示
-        // グローバル変数から直接現在の単語を取得（同期問題を回避）
-        const globalWords = (window as any).words;
-        const globalCurrentWordIndex = (window as any).currentWordIndex;
-        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex] : this.gameManager.getCurrentWord();
+        const currentWord = this.gameManager.getCurrentWord();
         this.uiManager.meaningDisplay.textContent = currentWord.meaning;
         this.uiManager.meaningDisplay.style.display = 'block';
         
-        setTimeout(() => {
+        // 管理されたタイマーで意味を非表示に
+        this.meaningDisplayTimer = setTimeout(() => {
             this.uiManager.meaningDisplay.style.display = 'none';
+            this.meaningDisplayTimer = null;
         }, 2000);
         
         return 'next_word';
@@ -158,12 +167,17 @@ class PronunciationOnlyLevel {
 
     // 発音再生機能
     replayAudio(): void {
-        // グローバル変数から直接現在の単語を取得（同期問題を回避）
-        const globalWords = (window as any).words;
-        const globalCurrentWordIndex = (window as any).currentWordIndex;
-        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex] : this.gameManager.getCurrentWord();
+        const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
             this.audioManager.speakWord(currentWord.word);
+        }
+    }
+
+    // クリーンアップ（ゲーム終了時にタイマーをクリア）
+    cleanup(): void {
+        if (this.meaningDisplayTimer) {
+            clearTimeout(this.meaningDisplayTimer);
+            this.meaningDisplayTimer = null;
         }
     }
 }

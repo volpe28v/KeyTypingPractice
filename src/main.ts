@@ -724,6 +724,22 @@ function initializeLevelManager() {
 let displayWordTimer: NodeJS.Timeout | null = null;
 
 function initGame() {
+    // クリア画面フラグをリセット
+    window.isShowingClearScreen = false;
+    
+    // UI状態をリセット（完了画面の表示をクリア）
+    if (meaningDisplay) {
+        meaningDisplay.innerHTML = '';
+        meaningDisplay.style.display = 'none';
+    }
+    if (wordDisplay) {
+        wordDisplay.innerHTML = '';
+    }
+    if (feedback) {
+        feedback.textContent = '';
+        feedback.className = 'feedback';
+    }
+    
     // 既存のdisplayWordタイマーをクリア
     if (displayWordTimer) {
         clearTimeout(displayWordTimer);
@@ -1340,6 +1356,11 @@ async function displayWord(playAudio = true, clearInput = true) {
             }
             
             const isPerfect = mistakeCount === 0;
+            
+            // レベルマネージャーのクリーンアップ（タイマーなどをクリア）
+            if (levelManager && levelManager.cleanup) {
+                levelManager.cleanup();
+            }
             
             // UIManagerを使用してゲーム完了時の表示
             console.log('🎮 Game Complete - Showing results for lesson mode:', lessonMode);
