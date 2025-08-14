@@ -5,20 +5,11 @@ import type { WordData } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
+import { BaseLevel } from './BaseLevel';
 
-class PronunciationMeaningLevel {
-    public gameManager: GameManager;
-    public audioManager: AudioManager;
-    public uiManager: UIManager;
-    public name: string;
-    public displayName: string;
-
+class PronunciationMeaningLevel extends BaseLevel {
     constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
-        this.gameManager = gameManager;
-        this.audioManager = audioManager;
-        this.uiManager = uiManager;
-        this.name = 'pronunciation-meaning';
-        this.displayName = 'Lv2: 発音＋日本語';
+        super(gameManager, audioManager, uiManager, 'pronunciation-meaning', 'Lv2: 発音＋日本語');
     }
 
     // 単語表示の初期化
@@ -73,34 +64,9 @@ class PronunciationMeaningLevel {
         this.uiManager.wordDisplay.innerHTML = displayHTML;
     }
 
-    // キー入力バリデーション
-    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
-        // Backspaceキーの処理
-        if (e.key === 'Backspace') {
-            return true;
-        }
-
-        const currentPosition = this.uiManager.wordInput.value.length;
-        
-        if (currentPosition >= currentWord.word.length) {
-            e.preventDefault();
-            return false;
-        }
-
-        const expectedChar = currentWord.word[currentPosition].toLowerCase();
-        const inputChar = e.key.toLowerCase();
-        const isCorrect = expectedChar === inputChar;
-
-        if (!isCorrect && e.key !== 'Shift') {
-            this.gameManager.countMistake(null);
-        }
-
-        return isCorrect;
-    }
-
-    // リアルタイム入力チェック
-    checkInputRealtime(): void {
-        this.updateDisplay();
+    // ヒント表示（Lv2では使用しない）
+    showHint(word: WordData, position: number): void {
+        // Lv2では意味が表示されているためヒント不要
     }
 
     // 単語完了処理
@@ -114,7 +80,7 @@ class PronunciationMeaningLevel {
         return 'next_word';
     }
 
-    // 発音再生機能
+    // 発音再生機能（BaseLevel.replayAudioをオーバーライド）
     replayAudio(): void {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {

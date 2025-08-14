@@ -5,20 +5,11 @@ import type { WordData } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
+import { BaseLevel } from './BaseLevel';
 
-class JapaneseReadingLevel {
-    public gameManager: GameManager;
-    public audioManager: AudioManager;
-    public uiManager: UIManager;
-    public name: string;
-    public displayName: string;
-
+class JapaneseReadingLevel extends BaseLevel {
     constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
-        this.gameManager = gameManager;
-        this.audioManager = audioManager;
-        this.uiManager = uiManager;
-        this.name = 'japanese-reading';
-        this.displayName = 'Lv4: 日本語のみ';
+        super(gameManager, audioManager, uiManager, 'japanese-reading', 'Lv4: 日本語のみ');
     }
 
     // 単語表示の初期化
@@ -27,7 +18,7 @@ class JapaneseReadingLevel {
             this.uiManager.wordInput.value = '';
         }
 
-        // 英単語を隠し、日本語の意味のみ表示
+        // 英単語を隠して、日本語の意味のみ表示
         this.uiManager.wordDisplay.textContent = '●'.repeat(word.word.length);
         this.uiManager.meaningDisplay.textContent = word.meaning;
         this.uiManager.meaningDisplay.style.display = 'block';
@@ -39,13 +30,10 @@ class JapaneseReadingLevel {
             hiddenLettersContainer.style.display = 'none';
         }
 
-        // 日本語を読み上げ
-        if (playAudio) {
-            this.audioManager.speakJapanese(word.meaning);
-        }
+        // 発音は再生しない（日本語のみモードのため）
 
         // フィードバック表示
-        this.uiManager.feedback.textContent = '日本語の意味から英単語を入力してください';
+        this.uiManager.feedback.textContent = '日本語の意味からスペルを推測して入力してください';
         this.uiManager.feedback.className = 'feedback';
     }
 
@@ -72,33 +60,6 @@ class JapaneseReadingLevel {
         this.uiManager.wordDisplay.innerHTML = displayHTML;
     }
 
-    // キー入力バリデーション
-    validateInput(e: KeyboardEvent, currentWord: WordData): boolean {
-        // Backspaceキーの処理
-        if (e.key === 'Backspace') {
-            return true;
-        }
-
-        const currentPosition = this.uiManager.wordInput.value.length;
-        
-        if (currentPosition >= currentWord.word.length) {
-            e.preventDefault();
-            return false;
-        }
-
-        const expectedChar = currentWord.word[currentPosition].toLowerCase();
-        const inputChar = e.key.toLowerCase();
-        const isCorrect = expectedChar === inputChar;
-
-        if (!isCorrect && e.key !== 'Shift') {
-            this.gameManager.countMistake(null);
-            
-            // 日本語のみモードではヒント表示しない（難易度維持のため）
-        }
-
-        return isCorrect;
-    }
-
     // ヒント表示（ミス時の正解文字表示）
     showHint(word: WordData, position: number): void {
         let tempHTML = '';
@@ -120,15 +81,10 @@ class JapaneseReadingLevel {
         
         this.uiManager.wordDisplay.innerHTML = tempHTML;
         
-        // 1.5秒後に元に戻す
+        // 1秒後に元に戻す
         setTimeout(() => {
             this.updateDisplay();
-        }, 1500);
-    }
-
-    // リアルタイム入力チェック
-    checkInputRealtime(): void {
-        this.updateDisplay();
+        }, 1000);
     }
 
     // 単語完了処理
@@ -139,16 +95,13 @@ class JapaneseReadingLevel {
         } else {
             this.audioManager.playCorrectSound("good");
         }
-        
         return 'next_word';
     }
 
-    // 音声再生機能（日本語読み上げ）
+    // 発音再生機能（日本語のみモードでは音声なし）
     replayAudio(): void {
-        const currentWord = this.gameManager.getCurrentWord();
-        if (currentWord && currentWord.meaning) {
-            this.audioManager.speakJapanese(currentWord.meaning);
-        }
+        // 日本語のみモードでは発音なし
+        console.log('日本語のみモードでは音声再生はありません');
     }
 }
 
