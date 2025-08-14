@@ -767,13 +767,13 @@ function initGame() {
     currentWordIndex = gameManager.currentWordIndex;
     words = gameManager.words;
     
-    // レッスン開始時の音声再生に1秒のタイムラグを追加（初回は音声なし、入力もクリアしない）
+    // レッスン開始時の適度な遅延でUI初期化を完了させる（初回は音声なし、入力もクリアしない）
     displayWordTimer = setTimeout(() => {
         // ゲーム完了画面表示中でない場合のみ実行
         if (!window.isShowingClearScreen && gameActive) {
             displayWord(false, false); // 初回は音声を鳴らさず、入力もクリアしない
         }
-    }, 1000);
+    }, 400);
     
     uiManager.updateProgressBar(currentWordIndex, words.length);
     scoreDisplay.style.display = 'none';
@@ -1506,7 +1506,7 @@ function checkInputRealtime() {
                     if (!window.isShowingClearScreen && gameActive) {
                         displayWord();
                     }
-                }, 1500);
+                }, 600);
             }
             // 'continue_word'の場合は何もしない（レベル側で処理済み）
             
@@ -1528,7 +1528,7 @@ function checkInputRealtime() {
             }
             feedback.className = 'feedback correct';
             
-            // 遅延を追加して、緑色の状態を見えるようにする
+            // 短い遅延で、完了状態を確認してから次の単語へ
             displayWordTimer = setTimeout(() => {
                 window.currentWordIndex++;
                 correctCount++;
@@ -1537,7 +1537,7 @@ function checkInputRealtime() {
                 if (!window.isShowingClearScreen && gameActive) {
                     displayWord();
                 }
-            }, 500);
+            }, 300);
             
             // 入力フィールドを一時的に無効化
             wordInput.disabled = true;
