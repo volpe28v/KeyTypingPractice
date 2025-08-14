@@ -1,18 +1,19 @@
 import type { LessonData, RecordData } from '../types.ts';
+import type { FirestoreManager } from '../firestore.ts';
 
 /**
  * StorageManager - データストレージ管理クラス
  * Firestoreとの連携でカスタムレッスンと記録データを管理
  */
 export class StorageManager {
-    public firestoreManager: any = null;
+    public firestoreManager: FirestoreManager | null = null;
 
     constructor() {
         this.firestoreManager = null;
     }
 
     // Firestoreマネージャーを設定
-    setFirestoreManager(firestoreManager: any): void {
+    setFirestoreManager(firestoreManager: FirestoreManager): void {
         this.firestoreManager = firestoreManager;
     }
 
@@ -61,7 +62,7 @@ export class StorageManager {
     }
 
     // 新しい記録のみを保存（Firestoreのみ）
-    async saveNewRecord(levelName: string, record: any): Promise<void> {
+    async saveNewRecord(levelName: string, record: RecordData): Promise<void> {
         console.log('🔍 saveNewRecord called:', levelName, record);
         
         if (!this.firestoreManager) {
@@ -98,7 +99,7 @@ export class StorageManager {
     }
 
     // タイピング記録を保存（Firestoreのみ）- 後方互換性のため残存
-    async saveRecords(records: any): Promise<void> {
+    async saveRecords(records: RecordData[]): Promise<void> {
         console.log('🔍 saveRecords called:', records);
         
         if (!this.firestoreManager) {

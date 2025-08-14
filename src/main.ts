@@ -17,82 +17,110 @@ import type { WordData, LessonData, RecordData, LevelData, LessonMode } from './
 // Global variable declarations for existing JavaScript code
 declare global {
     interface Window {
-        authManager: any;
-        audioManager: any;
-        storageManager: any;
-        lessonManager: any;
-        gameManager: any;
-        uiManager: any;
-        keyboardManager: any;
-        LevelManager: any;
-        VocabularyLearningLevel: any;
-        ProgressiveLearningLevel: any;
-        PronunciationMeaningLevel: any;
-        PronunciationOnlyLevel: any;
-        JapaneseReadingLevel: any;
-        saveNewLessonOnly: any;
-        cancelCustomLesson: any;
-        saveAndStartLesson: any;
-        startLessonWithMode: any;
-        toggleWordsEdit: any;
-        saveWordsEdit: any;
-        deleteSelectedLesson: any;
-        clearRecords: any;
-        replayCurrentWord: any;
-        webkitAudioContext: any;
-        // プロキシプロパティ
+        // Manager instances
+        authManager?: AuthManager;
+        audioManager: AudioManager;
+        storageManager: StorageManager;
+        lessonManager: LessonManager;
+        gameManager: GameManager;
+        uiManager: UIManager;
+        keyboardManager: KeyboardManager;
+        
+        // Level class definitions
+        LevelManager: typeof LevelManager;
+        VocabularyLearningLevel: typeof VocabularyLearningLevel;
+        ProgressiveLearningLevel: typeof ProgressiveLearningLevel;
+        PronunciationMeaningLevel: typeof PronunciationMeaningLevel;
+        PronunciationOnlyLevel: typeof PronunciationOnlyLevel;
+        JapaneseReadingLevel: typeof JapaneseReadingLevel;
+        
+        // GameManager proxy properties
         words: WordData[];
         currentWordIndex: number;
+        correctCount: number;
         mistakeCount: number;
+        currentLevel: number;
+        gameActive: boolean;
+        timerStarted: boolean;
+        startTime: number | null;
+        endTime: number | null;
+        timerInterval: number | null;
         currentWordMistake: boolean;
+        isCustomLesson: boolean;
+        lessonMode: string;
+        currentLessonIndex: number;
+        progressiveStep: number;
+        maxProgressiveSteps: number;
+        consecutiveMistakes: number;
+        currentCharPosition: number;
+        vocabularyLearningCount: number;
+        vocabularyLearningMaxCount: number;
+        vocabularyLearningIsJapanese: boolean;
+        
+        // Audio context for Web Audio API
+        webkitAudioContext?: typeof AudioContext;
+        
+        // Additional UI state properties
         isShowingClearScreen?: boolean;
+        
+        // Custom lesson functions
+        saveNewLessonOnly?: () => void;
+        cancelCustomLesson?: () => void;
+        saveAndStartLesson?: (mode?: string) => void;
+        startLessonWithMode?: (mode?: string) => void;
+        toggleWordsEdit?: () => void;
+        saveWordsEdit?: () => void;
+        deleteSelectedLesson?: () => void;
+        clearRecords?: () => void;
+        replayCurrentWord?: () => void;
     }
 }
 
 // Global variables (keeping existing structure for compatibility)
-let gameActive: boolean = true;
-let isCustomLesson: boolean = false;
-let currentLessonIndex: number = 0;
+// ※ 段階的にwindowプロキシ経由でGameManagerと同期するように移行中
+let gameActive: boolean = true;  // TODO: → window.gameActive
+let isCustomLesson: boolean = false;  // TODO: → window.isCustomLesson
+let currentLessonIndex: number = 0;  // TODO: → window.currentLessonIndex
 let initApp: () => void;
 
-// Game state variables
-let words: WordData[] = [];
-let currentWordIndex: number = 0;
-let correctCount: number = 0;
-let mistakeCount: number = 0;
-let currentLevel: number = 10;
-let timerStarted: boolean = false;
-let startTime: number | null = null;
-let endTime: number | null = null;
-let timerInterval: NodeJS.Timeout | null = null;
-let currentWordMistake: boolean = false;
+// Game state variables - TODO: GameManagerプロキシ経由でアクセス
+let words: WordData[] = [];  // TODO: → window.words
+let currentWordIndex: number = 0;  // TODO: → window.currentWordIndex
+let correctCount: number = 0;  // TODO: → window.correctCount
+// mistakeCount: 削除済み - 全てwindow.mistakeCountでアクセス
+let currentLevel: number = 10;  // TODO: → window.currentLevel
+let timerStarted: boolean = false;  // TODO: → window.timerStarted
+let startTime: number | null = null;  // TODO: → window.startTime
+let endTime: number | null = null;  // TODO: → window.endTime
+let timerInterval: NodeJS.Timeout | null = null;  // TODO: → window.timerInterval
+// currentWordMistake: 削除済み - 全てwindow.currentWordMistakeでアクセス
 
-// Progressive mode variables
-let progressiveStep: number = 0;
-let maxProgressiveSteps: number = 0;
-let consecutiveMistakes: number = 0;
-let currentCharPosition: number = 0;
+// Progressive mode variables - TODO: GameManagerプロキシ経由でアクセス
+let progressiveStep: number = 0;  // TODO: → window.progressiveStep
+// maxProgressiveSteps: 削除済み - 使用されていない
+let consecutiveMistakes: number = 0;  // TODO: → window.consecutiveMistakes
+let currentCharPosition: number = 0;  // TODO: → window.currentCharPosition
 
-// Vocabulary learning mode variables
-let vocabularyLearningCount: number = 0;
-let vocabularyLearningMaxCount: number = 5;
-let vocabularyLearningIsJapanese: boolean = false;
+// Vocabulary learning mode variables - TODO: GameManagerプロキシ経由でアクセス
+let vocabularyLearningCount: number = 0;  // TODO: → window.vocabularyLearningCount
+let vocabularyLearningMaxCount: number = 5;  // TODO: → window.vocabularyLearningMaxCount
+let vocabularyLearningIsJapanese: boolean = false;  // TODO: → window.vocabularyLearningIsJapanese
 
 // Level instances
-let level0Instance: any = null;
-let level1Instance: any = null;
-let level2Instance: any = null;
-let level3Instance: any = null;
-let level4Instance: any = null;
+let level0Instance: import('./levels/level0-vocabulary').VocabularyLearningLevel | null = null;
+let level1Instance: import('./levels/level1-progressive').ProgressiveLearningLevel | null = null;
+let level2Instance: import('./levels/level2-pronunciation-meaning').PronunciationMeaningLevel | null = null;
+let level3Instance: import('./levels/level3-pronunciation-only').PronunciationOnlyLevel | null = null;
+let level4Instance: import('./levels/level4-japanese-reading').JapaneseReadingLevel | null = null;
 
 // Custom lesson variables
 let customLessons: LessonData[] = [];
-let selectedLessonForMode: any = null;
+let selectedLessonForMode: { lesson: LessonData; index: number } | null = null;
 let selectedCustomMode: string = '';
 let lessonMode: string = 'full';
 
 // Manager instances
-let levelManager: any = null;
+let levelManager: import('./levels/level-manager').LevelManager | null = null;
 
 // Import level modules
 import { VocabularyLearningLevel } from './levels/level0-vocabulary.ts';

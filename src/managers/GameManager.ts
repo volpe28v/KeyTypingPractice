@@ -1,4 +1,4 @@
-import type { WordData } from '../types';
+import type { WordData, LevelData } from '../types';
 import type { AudioManager } from './AudioManager';
 import type { StorageManager } from './StorageManager';
 
@@ -89,9 +89,9 @@ export class GameManager {
     }
     
     // ゲームを初期化
-    initGame(levelLists: any, customWords: WordData[] | null = null): void {
+    initGame(levelLists: LevelData[], customWords: WordData[] | null = null): void {
         if (!this.isCustomLesson) {
-            const levelData = levelLists.find((level: any) => level.level === this.currentLevel);
+            const levelData = levelLists.find((level: LevelData) => level.level === this.currentLevel);
             if (levelData) {
                 const fullWordList = [...levelData.words];
                 this.shuffleArray(fullWordList);
@@ -115,7 +115,7 @@ export class GameManager {
     }
     
     // 配列をシャッフル
-    shuffleArray(array: any[]): void {
+    shuffleArray<T>(array: T[]): void {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];

@@ -2,15 +2,18 @@
 // 徐々に文字を隠していく段階的練習モード
 
 import type { WordData } from '../types';
+import type { GameManager } from '../managers/GameManager';
+import type { AudioManager } from '../managers/AudioManager';
+import type { UIManager } from '../managers/UIManager';
 
 class ProgressiveLearningLevel {
-    public gameManager: any;
-    public audioManager: any;
-    public uiManager: any;
+    public gameManager: GameManager;
+    public audioManager: AudioManager;
+    public uiManager: UIManager;
     public name: string;
     public displayName: string;
 
-    constructor(gameManager: any, audioManager: any, uiManager: any) {
+    constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -135,7 +138,7 @@ class ProgressiveLearningLevel {
             
             // 隠されている文字でのミスのみカウント
             if (currentPosition >= visibleCharCount) {
-                this.gameManager.countMistake();
+                this.gameManager.countMistake(visibleCharCount);
                 
                 // 3回連続ミスで進捗を戻す
                 if (this.gameManager.consecutiveMistakes >= 3) {

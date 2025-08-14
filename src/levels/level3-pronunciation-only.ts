@@ -2,16 +2,19 @@
 // 発音だけを聞いてスペルを入力する最も難しいモード
 
 import type { WordData } from '../types';
+import type { GameManager } from '../managers/GameManager';
+import type { AudioManager } from '../managers/AudioManager';
+import type { UIManager } from '../managers/UIManager';
 
 class PronunciationOnlyLevel {
-    public gameManager: any;
-    public audioManager: any;
-    public uiManager: any;
+    public gameManager: GameManager;
+    public audioManager: AudioManager;
+    public uiManager: UIManager;
     public name: string;
     public displayName: string;
     private meaningDisplayTimer: NodeJS.Timeout | null = null;
 
-    constructor(gameManager: any, audioManager: any, uiManager: any) {
+    constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
@@ -95,7 +98,7 @@ class PronunciationOnlyLevel {
         const isCorrect = expectedChar === inputChar;
 
         if (!isCorrect && e.key !== 'Shift') {
-            this.gameManager.countMistake();
+            this.gameManager.countMistake(null);
             
             // 発音のみモードではヒント表示しない（最高難易度のため）
         }

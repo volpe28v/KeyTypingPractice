@@ -23,6 +23,9 @@ export interface RecordData {
   elapsedTime: number;
   levelName: string;
   userId?: string;
+  firestoreId?: string;
+  totalTypes?: number; // for backward compatibility
+  id?: string; // for legacy compatibility
 }
 
 // レベルリストの型定義

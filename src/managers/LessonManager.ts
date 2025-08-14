@@ -102,7 +102,7 @@ export class LessonManager {
     }
 
     // 単語編集を保存
-    saveWordsEdit(selectedLessonForMode: any, customLessons: LessonData[], updateLessonListCallback?: () => void): boolean {
+    saveWordsEdit(selectedLessonForMode: { lesson: LessonData; index: number }, customLessons: LessonData[], updateLessonListCallback?: () => void): boolean {
         const wordsEditArea = document.getElementById('words-edit-area') as HTMLTextAreaElement;
         const wordsText = wordsEditArea.value.trim();
         

@@ -2,15 +2,18 @@
 // 単語の意味を表示し、発音を聞きながら学習するモード
 
 import type { WordData } from '../types';
+import type { GameManager } from '../managers/GameManager';
+import type { AudioManager } from '../managers/AudioManager';
+import type { UIManager } from '../managers/UIManager';
 
 class VocabularyLearningLevel {
-    public gameManager: any;
-    public audioManager: any;
-    public uiManager: any;
+    public gameManager: GameManager;
+    public audioManager: AudioManager;
+    public uiManager: UIManager;
     public name: string;
     public displayName: string;
 
-    constructor(gameManager: any, audioManager: any, uiManager: any) {
+    constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;

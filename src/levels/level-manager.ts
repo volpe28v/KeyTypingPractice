@@ -7,15 +7,18 @@ import { PronunciationMeaningLevel } from './level2-pronunciation-meaning.ts';
 import { PronunciationOnlyLevel } from './level3-pronunciation-only.ts';
 import { JapaneseReadingLevel } from './level4-japanese-reading.ts';
 import type { WordData } from '../types';
+import type { GameManager } from '../managers/GameManager';
+import type { AudioManager } from '../managers/AudioManager';
+import type { UIManager } from '../managers/UIManager';
 
 class LevelManager {
-    public gameManager: any;
-    public audioManager: any;
-    public uiManager: any;
+    public gameManager: GameManager;
+    public audioManager: AudioManager;
+    public uiManager: UIManager;
     public levels: any;
     public currentLevel: any;
 
-    constructor(gameManager: any, audioManager: any, uiManager: any) {
+    constructor(gameManager: GameManager, audioManager: AudioManager, uiManager: UIManager) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
         this.uiManager = uiManager;
