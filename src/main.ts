@@ -43,6 +43,8 @@ declare global {
         // プロキシプロパティ
         words: WordData[];
         currentWordIndex: number;
+        mistakeCount: number;
+        currentWordMistake: boolean;
         isShowingClearScreen?: boolean;
     }
 }
@@ -1273,7 +1275,7 @@ async function displayWord(playAudio = true, clearInput = true) {
             keyboardManager.highlightNextKey();
             
             // 新しい単語を表示するたびにミス状態をリセット
-            currentWordMistake = false;
+            window.currentWordMistake = false;
             
             // 段階的練習モードの連続ミス変数もリセット
             if (isCustomLesson && lessonMode === 'progressive') {
@@ -1345,17 +1347,17 @@ async function displayWord(playAudio = true, clearInput = true) {
             });
             
             // 正確率を計算（正解タイプ数 ÷ (正解タイプ数 + ミスタイプ数) × 100）
-            const accuracyRate = mistakeCount === 0 ? 100 : Math.round((totalTypesCount / (totalTypesCount + mistakeCount)) * 100);
+            const accuracyRate = window.mistakeCount === 0 ? 100 : Math.round((totalTypesCount / (totalTypesCount + window.mistakeCount)) * 100);
             
             // レッスンごとに記録を保存（正確率計算のための総タイプ数も渡す）
             if (isCustomLesson && currentLessonIndex >= 0 && currentLessonIndex < customLessons.length) {
                 const lessonId = customLessons[currentLessonIndex].id;
-                await addRecord(`lesson${lessonId}`, elapsedTime, mistakeCount, totalTypesCount);
+                await addRecord(`lesson${lessonId}`, elapsedTime, window.mistakeCount, totalTypesCount);
             } else {
-                await addRecord(`level${currentLevel}`, elapsedTime, mistakeCount, totalTypesCount);
+                await addRecord(`level${currentLevel}`, elapsedTime, window.mistakeCount, totalTypesCount);
             }
             
-            const isPerfect = mistakeCount === 0;
+            const isPerfect = window.mistakeCount === 0;
             
             // レベルマネージャーのクリーンアップ（タイマーなどをクリア）
             if (levelManager && levelManager.cleanup) {
@@ -1364,7 +1366,7 @@ async function displayWord(playAudio = true, clearInput = true) {
             
             // UIManagerを使用してゲーム完了時の表示
             console.log('🎮 Game Complete - Showing results for lesson mode:', lessonMode);
-            uiManager.showGameComplete(isPerfect, mistakeCount, elapsedTime, accuracyRate);
+            uiManager.showGameComplete(isPerfect, window.mistakeCount, elapsedTime, accuracyRate);
             
             // 効果音を再生
             if (isPerfect) {
@@ -1433,8 +1435,8 @@ function validateKeyInput(e) {
             }
         } else {
             // 通常モードまたはLevelManagerが利用できない場合
-            mistakeCount++;
-            currentWordMistake = true;
+            window.mistakeCount++;
+            window.currentWordMistake = true;
         }
         
         highlightWrongChar(currentPosition);
@@ -1517,7 +1519,7 @@ function checkInputRealtime() {
             wordDisplay.innerHTML = correctHTML;
             
             // ミスがなかった場合は"excellent"、ミスがあった場合は"good"と表示
-            if (!currentWordMistake) {
+            if (!window.currentWordMistake) {
                 feedback.textContent = 'Excellent!';
                 audioManager.playCorrectSound("excellent");
             } else {

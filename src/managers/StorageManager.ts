@@ -60,7 +60,44 @@ export class StorageManager {
         }
     }
 
-    // タイピング記録を保存（Firestoreのみ）
+    // 新しい記録のみを保存（Firestoreのみ）
+    async saveNewRecord(levelName: string, record: any): Promise<void> {
+        console.log('🔍 saveNewRecord called:', levelName, record);
+        
+        if (!this.firestoreManager) {
+            console.warn('⚠️ Firestore not connected. Please login first.');
+            return;
+        }
+
+        try {
+            // 新しい記録のみ保存
+            if (!record.firestoreId) {
+                // RecordData型に合わせてフィールド名を変換
+                const recordData = {
+                    date: record.date || new Date().toLocaleDateString(),
+                    totalWords: record.totalTypes || 0,  // totalTypes → totalWords
+                    mistakes: record.mistakes || 0,
+                    accuracy: record.accuracy || 100,
+                    elapsedTime: record.elapsedTime || 0,
+                    levelName: levelName
+                };
+                console.log('🔍 Saving to Firestore:', recordData);
+                
+                const firestoreId = await this.firestoreManager.saveGameRecord(recordData);
+                console.log('🔍 Firestore response:', firestoreId);
+                
+                if (firestoreId) {
+                    record.firestoreId = firestoreId;
+                    console.log('✅ Record saved successfully');
+                }
+            }
+
+        } catch (error) {
+            console.error('❌ Error saving record to Firestore:', error);
+        }
+    }
+
+    // タイピング記録を保存（Firestoreのみ）- 後方互換性のため残存
     async saveRecords(records: any): Promise<void> {
         console.log('🔍 saveRecords called:', records);
         

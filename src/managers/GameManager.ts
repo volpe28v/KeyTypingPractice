@@ -179,8 +179,8 @@ export class GameManager {
             // 実際には隠れた部分のミス処理を既存のロジックに任せる
         }
         
-        this.mistakeCount++;
-        this.currentWordMistake = true;  // ミス状態フラグを設定
+        (window as any).mistakeCount++;
+        (window as any).currentWordMistake = true;  // ミス状態フラグを設定
         
         if (this.isCustomLesson && this.lessonMode === 'progressive') {
             this.consecutiveMistakes++;
@@ -211,7 +211,7 @@ export class GameManager {
     
     // 新しい単語用のリセット
     resetForNewWord(): void {
-        this.currentWordMistake = false;
+        (window as any).currentWordMistake = false;
         if (this.isCustomLesson && this.lessonMode === 'progressive') {
             this.consecutiveMistakes = 0;
             this.currentCharPosition = 0;

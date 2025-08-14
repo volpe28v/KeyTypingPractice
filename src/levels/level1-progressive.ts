@@ -49,10 +49,7 @@ class ProgressiveLearningLevel {
 
     // 段階的表示の更新（script.jsのupdateProgressiveDisplay()と統合）
     updateDisplay(): void {
-        // グローバル変数から直接現在の単語を取得（同期問題を回避）
-        const globalWords = (window as any).words;
-        const globalCurrentWordIndex = (window as any).currentWordIndex;
-        const currentWord = globalWords && globalWords[globalCurrentWordIndex] ? globalWords[globalCurrentWordIndex].word : this.gameManager.getCurrentWord().word;
+        const currentWord = this.gameManager.getCurrentWord().word;
         const userInput = this.uiManager.wordInput.value.trim();
         let displayHTML = '';
         
@@ -197,7 +194,7 @@ class ProgressiveLearningLevel {
                 this.uiManager.feedback.className = 'feedback';
                 
                 // 段階が変わったらミス状態をリセット（新しい段階として扱う）
-                this.gameManager.currentWordMistake = false;
+                (window as any).currentWordMistake = false;
                 
                 // 段階が変わったら発音
                 this.audioManager.speakWord(currentWord.word);
