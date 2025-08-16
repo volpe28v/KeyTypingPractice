@@ -29,6 +29,7 @@ export class GameManager {
     public maxProgressiveSteps: number = 0;
     public consecutiveMistakes: number = 0;
     public currentCharPosition: number = 0;
+    public positionMistakes: Map<number, number> = new Map();
     
     // Custom lesson properties
     public isCustomLesson: boolean = false;
@@ -69,6 +70,7 @@ export class GameManager {
         this.maxProgressiveSteps = 0;
         this.consecutiveMistakes = 0;
         this.currentCharPosition = 0;
+        this.positionMistakes = new Map();
         
         // カスタムレッスン関連
         this.isCustomLesson = false;
@@ -192,11 +194,45 @@ export class GameManager {
         }
     }
     
+    // 段階的練習モード専用のミスカウント（consecutiveMistakesを増やさない）
+    countMistakeForProgressive(): void {
+        (window as any).mistakeCount++;
+        (window as any).currentWordMistake = true;  // ミス状態フラグを設定
+    }
+    
     // 連続ミスの処理
     handleConsecutiveMistake(): void {
         // 進捗を戻す処理
         const newProgressiveStep = Math.min(this.progressiveStep + 2, this.getCurrentWord()!.word.length);
         this.revertProgress(newProgressiveStep);
+    }
+    
+    // 文字位置ごとのミスをカウント（段階的練習モード用）
+    countPositionMistake(position: number): boolean {
+        const currentCount = this.positionMistakes.get(position) || 0;
+        this.positionMistakes.set(position, currentCount + 1);
+        
+        // 同じ位置で3回ミスしたら進捗を戻す
+        if (currentCount + 1 >= 3) {
+            this.handlePositionMistake(position);
+            return true; // 進捗を戻したことを通知
+        }
+        return false;
+    }
+    
+    // 文字位置でのミス処理
+    handlePositionMistake(position: number): void {
+        // ミスした文字位置まで段階を戻す計算
+        // position: ミスした文字の位置（0から開始）
+        // 例: "hello"でposition=2('l')でミス → progressiveStep = 5-2-1 = 2（'l'まで表示）
+        const currentWord = this.getCurrentWord();
+        if (currentWord) {
+            const newProgressiveStep = Math.max(0, currentWord.word.length - (position + 1));
+            this.revertProgress(newProgressiveStep);
+        }
+        
+        // その位置のミスカウントをリセット
+        this.positionMistakes.set(position, 0);
     }
     
     // 進捗を戻す（段階的練習モード）
@@ -215,6 +251,7 @@ export class GameManager {
         if (this.isCustomLesson && this.lessonMode === 'progressive') {
             this.consecutiveMistakes = 0;
             this.currentCharPosition = 0;
+            this.positionMistakes.clear(); // 文字位置ごとのミスカウントをリセット
             // 隠れた文字選択もリセット
             this.resetLetterSelection();
             this.lastShuffledStep = -1;

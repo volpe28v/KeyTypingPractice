@@ -138,17 +138,17 @@ class ProgressiveLearningLevel {
             
             // 隠されている文字でのミスのみカウント
             if (currentPosition >= visibleCharCount) {
-                this.gameManager.countMistake(visibleCharCount);
+                // 段階的練習モード専用のミスカウント（consecutiveMistakesを増やさない）
+                this.gameManager.countMistakeForProgressive();
                 
-                // 3回連続ミスで進捗を戻す
-                if (this.gameManager.consecutiveMistakes >= 3) {
+                // 文字位置ベースのミス処理のみを使用
+                const positionMistakeTriggered = this.gameManager.countPositionMistake(currentPosition);
+                
+                if (positionMistakeTriggered) {
+                    // 文字位置での3回ミスが発生
                     const mistakeCharPosition = currentPosition;
                     
-                    // ミスした文字位置まで進捗を戻す
-                    const newProgressiveStep = Math.max(0, currentWord.word.length - (mistakeCharPosition + 1));
-                    this.gameManager.progressiveStep = newProgressiveStep;
-                    
-                    this.uiManager.feedback.textContent = `3回連続ミス！「${currentWord.word[mistakeCharPosition]}」の位置まで戻します`;
+                    this.uiManager.feedback.textContent = `「${currentWord.word[mistakeCharPosition]}」の位置で3回ミス！段階を戻します`;
                     this.uiManager.feedback.className = 'feedback incorrect';
                     
                     setTimeout(() => {
@@ -156,12 +156,12 @@ class ProgressiveLearningLevel {
                         this.uiManager.feedback.className = 'feedback';
                     }, 2000);
                     
-                    this.gameManager.resetConsecutiveMistakes();
                     this.updateDisplay();
                 }
+                // 従来の全体ミス処理は削除（文字位置ベースのみ使用）
             }
         } else {
-            this.gameManager.resetConsecutiveMistakes();
+            // 正解時は特に何もしない（文字位置ベースのミス管理のため）
         }
 
         return isCorrect;
