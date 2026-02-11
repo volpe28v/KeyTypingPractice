@@ -1,0 +1,636 @@
+import type { WordData, LevelData } from '../types';
+import type { GameManager } from '../managers/GameManager';
+import type { AudioManager } from '../managers/AudioManager';
+import type { UIManager } from '../managers/UIManager';
+import type { KeyboardManager } from '../managers/KeyboardManager';
+import type { RecordManager } from '../managers/RecordManager';
+import type { InputHandler } from '../InputHandler';
+import { LevelManager } from '../levels/level-manager';
+
+// LessonFlowController型の循環依存を避けるためのインターフェース
+interface ILessonFlowController {
+    customLessons: import('../types').LessonData[];
+    selectedLessonForMode: { lesson: import('../types').LessonData; index: number } | null;
+    customWords: WordData[];
+    showLessonModeSelection(index: number): void;
+    showCustomLessonSetup(): void;
+    loadCustomLessons(): Promise<void>;
+}
+
+/**
+ * GameController - ゲーム制御クラス
+ * ゲームの初期化、単語表示、タイマー、イベントリスナー、画面遷移を処理
+ */
+export class GameController {
+    // State
+    public displayWordTimer: NodeJS.Timeout | null = null;
+    private clearScreenKeyHandler: ((event: KeyboardEvent) => void) | null = null;
+    private levelManager: LevelManager | null = null;
+    private levelLists: LevelData[];
+
+    // Dependencies
+    private gameManager: GameManager;
+    private audioManager: AudioManager;
+    private uiManager: UIManager;
+    private keyboardManager: KeyboardManager;
+    private inputHandler: InputHandler;
+    private recordManager: RecordManager;
+
+    // Cross-reference (set after construction)
+    private lessonFlowController: ILessonFlowController | null = null;
+
+    constructor(
+        gameManager: GameManager,
+        audioManager: AudioManager,
+        uiManager: UIManager,
+        keyboardManager: KeyboardManager,
+        inputHandler: InputHandler,
+        recordManager: RecordManager,
+    ) {
+        this.gameManager = gameManager;
+        this.audioManager = audioManager;
+        this.uiManager = uiManager;
+        this.keyboardManager = keyboardManager;
+        this.inputHandler = inputHandler;
+        this.recordManager = recordManager;
+
+        this.levelLists = [
+            {
+                level: 10,
+                description: "カスタムレッスン",
+                words: []
+            }
+        ];
+    }
+
+    setLessonFlowController(lfc: ILessonFlowController): void {
+        this.lessonFlowController = lfc;
+    }
+
+    private initializeLevelManager(): void {
+        if (!this.levelManager) {
+            this.levelManager = new LevelManager(this.gameManager, this.audioManager, this.uiManager);
+        }
+        this.inputHandler.setLevelManager(this.levelManager);
+    }
+
+    clearDisplayWordTimer(): void {
+        if (this.displayWordTimer) {
+            clearTimeout(this.displayWordTimer);
+            this.displayWordTimer = null;
+        }
+    }
+
+    private scheduleNextWord(delay: number): void {
+        this.clearDisplayWordTimer();
+        this.displayWordTimer = setTimeout(() => {
+            window.currentWordIndex++;
+            this.gameManager.correctCount++;
+
+            this.uiManager.updateProgressBar(
+                this.gameManager.currentWordIndex,
+                this.gameManager.words.length
+            );
+            if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                this.displayWord();
+            }
+        }, delay);
+    }
+
+    initGame(): void {
+        window.isShowingClearScreen = false;
+
+        if (this.uiManager.meaningDisplay) {
+            this.uiManager.meaningDisplay.innerHTML = '';
+            this.uiManager.meaningDisplay.style.display = 'none';
+        }
+        if (this.uiManager.wordDisplay) {
+            this.uiManager.wordDisplay.innerHTML = '';
+        }
+        if (this.uiManager.feedback) {
+            this.uiManager.feedback.textContent = '';
+            this.uiManager.feedback.className = 'feedback';
+        }
+
+        this.clearDisplayWordTimer();
+        this.initializeLevelManager();
+
+        // GameManagerのプロパティはLessonFlowControllerで設定済み
+        const customWords = this.lessonFlowController?.customWords || [];
+
+        if (!this.gameManager.isCustomLesson) {
+            this.gameManager.initGame(this.levelLists);
+        } else {
+            this.gameManager.initGame(this.levelLists, customWords);
+        }
+
+        // InputHandlerのコールバックを設定
+        this.inputHandler.setScheduleNextWord((delay) => this.scheduleNextWord(delay));
+
+        this.displayWordTimer = setTimeout(() => {
+            if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                this.displayWord(false, false);
+            }
+        }, 400);
+
+        this.uiManager.updateProgressBar(this.gameManager.currentWordIndex, this.gameManager.words.length);
+        if (this.uiManager.scoreDisplay) this.uiManager.scoreDisplay.style.display = 'none';
+        if (this.uiManager.wordInput) {
+            this.uiManager.wordInput.value = '';
+            this.uiManager.wordInput.focus();
+        }
+
+        this.uiManager.forceAlphabetInput();
+
+        this.gameManager.gameActive = true;
+        this.gameManager.timerStarted = false;
+
+        document.getElementById('back-to-title-btn')!.style.display = 'block';
+
+        setTimeout(() => {
+            if (this.gameManager.gameActive && this.uiManager.wordInput && !this.uiManager.wordInput.disabled) {
+                this.uiManager.wordInput.focus();
+            }
+        }, 100);
+
+        if (this.uiManager.timerDisplay) this.uiManager.timerDisplay.textContent = "00.00";
+
+        if (this.gameManager.timerInterval) {
+            clearInterval(this.gameManager.timerInterval);
+            this.gameManager.timerInterval = null;
+        }
+
+        this.recordManager.hideRecords();
+        this.keyboardManager.initAnimation();
+
+        setTimeout(() => {
+            if (this.gameManager.words.length > 0 && !window.isShowingClearScreen && this.gameManager.gameActive) {
+                this.displayWord();
+            }
+        }, 100);
+    }
+
+    private startTimer(): void {
+        if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+            return;
+        }
+
+        this.gameManager.startTime = Date.now();
+        this.gameManager.timerStarted = true;
+        this.gameManager.timerInterval = setInterval(() => {
+            // タイマー表示は非表示
+        }, 10);
+
+        if (this.uiManager.timerDisplay) this.uiManager.timerDisplay.style.display = 'none';
+
+        this.recordManager.hideRecords();
+        document.getElementById('back-to-title-btn')!.style.display = 'block';
+    }
+
+    async displayWord(playAudio: boolean = true, clearInput: boolean = true): Promise<void> {
+        if (this.gameManager.currentWordIndex < this.gameManager.words.length) {
+            const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+
+            this.gameManager.resetForNewWord();
+
+            if (this.uiManager.replayAudioBtn) {
+                this.uiManager.replayAudioBtn.style.display = 'block';
+            }
+
+            if (currentWord && currentWord.word) {
+                if (this.gameManager.isCustomLesson) {
+                    if (this.levelManager && this.levelManager.setLevel(this.gameManager.lessonMode)) {
+                        this.levelManager.initializeWord(currentWord, playAudio, clearInput);
+                    } else {
+                        console.warn('LevelManager not available, using fallback');
+                        this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                        this.uiManager.updateMeaningDisplay(currentWord.meaning);
+                        if (this.uiManager.wordInput) {
+                            this.uiManager.wordInput.style.display = 'inline-block';
+                            if (clearInput) this.uiManager.wordInput.value = '';
+                        }
+                        if (playAudio) this.audioManager.speakWord(currentWord.word);
+                    }
+                } else {
+                    this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                    this.uiManager.updateMeaningDisplay(currentWord.meaning);
+                    if (this.uiManager.wordInput) {
+                        this.uiManager.wordInput.style.display = 'inline-block';
+                        if (clearInput) this.uiManager.wordInput.value = '';
+                        this.uiManager.wordInput.focus();
+                    }
+                    if (playAudio) this.audioManager.speakWord(currentWord.word);
+                }
+
+                if (this.uiManager.feedback) {
+                    this.uiManager.feedback.textContent = '';
+                    this.uiManager.feedback.className = 'feedback';
+                }
+
+                this.keyboardManager.highlightNextKey();
+                window.currentWordMistake = false;
+
+                if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'progressive') {
+                    this.gameManager.consecutiveMistakes = 0;
+                    this.gameManager.currentCharPosition = 0;
+                }
+            } else {
+                console.error('単語データが不正です:', currentWord);
+                if (this.uiManager.wordDisplay) {
+                    this.uiManager.wordDisplay.innerHTML = '<span>エラー</span>';
+                }
+                this.uiManager.updateMeaningDisplay('単語データの読み込みに問題があります');
+            }
+
+        } else {
+            // ゲーム完了
+            if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+                // Lv0: 単語学習モードの完了処理
+                this.clearDisplayWordTimer();
+
+                if (this.gameManager.timerInterval) {
+                    clearInterval(this.gameManager.timerInterval);
+                    this.gameManager.timerInterval = null;
+                }
+
+                if (this.uiManager.wordDisplay) {
+                    this.uiManager.wordDisplay.innerHTML = '<span style="color: #00ff41; font-size: 1.5em;">🎉 単語学習完了！</span>';
+                }
+                this.uiManager.updateMeaningDisplay('全ての単語を学習しました。お疲れさまでした！');
+                this.uiManager.showFeedback('Escapeキーでレッスン選択画面に戻ります');
+
+                this.audioManager.playCorrectSound("congratulations");
+                this.gameManager.gameActive = false;
+
+                if (this.uiManager.replayAudioBtn) this.uiManager.replayAudioBtn.style.display = 'none';
+                if (this.uiManager.wordInput) this.uiManager.wordInput.value = '';
+
+                this.setupVocabularyLearningCompleteKeyEvents();
+                return;
+            } else {
+                // 通常モードの完了処理
+                this.gameManager.endTime = Date.now();
+                const elapsedTime = this.gameManager.endTime - (this.gameManager.startTime || 0);
+
+                this.clearDisplayWordTimer();
+
+                if (this.gameManager.timerInterval) {
+                    clearInterval(this.gameManager.timerInterval);
+                    this.gameManager.timerInterval = null;
+                }
+
+                let totalTypesCount = 0;
+                this.gameManager.words.forEach(word => {
+                    totalTypesCount += word.word.length;
+                });
+
+                const accuracyRate = this.gameManager.mistakeCount === 0
+                    ? 100
+                    : Math.round((totalTypesCount / (totalTypesCount + this.gameManager.mistakeCount)) * 100);
+
+                const customLessons = this.lessonFlowController?.customLessons || [];
+                if (this.gameManager.isCustomLesson &&
+                    this.gameManager.currentLessonIndex >= 0 &&
+                    this.gameManager.currentLessonIndex < customLessons.length) {
+                    const lessonId = customLessons[this.gameManager.currentLessonIndex].id;
+                    await this.recordManager.addRecord(`lesson${lessonId}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                } else {
+                    await this.recordManager.addRecord(`level${this.gameManager.currentLevel}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                }
+
+                const isPerfect = this.gameManager.mistakeCount === 0;
+
+                if (this.levelManager && this.levelManager.cleanup) {
+                    this.levelManager.cleanup();
+                }
+
+                this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate);
+
+                if (isPerfect) {
+                    this.audioManager.playCorrectSound("congratulations");
+                } else {
+                    this.audioManager.playCorrectSound("complete");
+                }
+            }
+
+            this.recordManager.hideRecords();
+            this.gameManager.gameActive = false;
+            window.isShowingClearScreen = true;
+
+            this.clearDisplayWordTimer();
+
+            if (this.uiManager.wordInput) {
+                this.uiManager.wordInput.value = '';
+                this.uiManager.wordInput.focus();
+            }
+
+            this.setupClearScreenKeyEvents();
+        }
+    }
+
+    private setupClearScreenKeyEvents(): void {
+        if (this.clearScreenKeyHandler) {
+            document.removeEventListener('keydown', this.clearScreenKeyHandler);
+        }
+
+        this.clearScreenKeyHandler = (event: KeyboardEvent) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.restartCurrentLesson();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                this.backToTitle();
+            }
+        };
+
+        document.addEventListener('keydown', this.clearScreenKeyHandler);
+    }
+
+    private setupVocabularyLearningCompleteKeyEvents(): void {
+        if (this.clearScreenKeyHandler) {
+            document.removeEventListener('keydown', this.clearScreenKeyHandler);
+        }
+
+        this.clearScreenKeyHandler = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                this.backToTitle();
+            }
+        };
+
+        document.addEventListener('keydown', this.clearScreenKeyHandler);
+    }
+
+    restartCurrentLesson(): void {
+        window.isShowingClearScreen = false;
+
+        if (this.clearScreenKeyHandler) {
+            document.removeEventListener('keydown', this.clearScreenKeyHandler);
+            this.clearScreenKeyHandler = null;
+        }
+
+        const lfc = this.lessonFlowController;
+        if (lfc?.selectedLessonForMode && lfc.selectedLessonForMode.lesson) {
+            const { lesson, index } = lfc.selectedLessonForMode;
+            this.gameManager.currentLessonIndex = index;
+            lfc.customWords = lesson.words;
+            this.gameManager.isCustomLesson = true;
+
+            this.uiManager.hideModal('lesson-mode-selection');
+
+            (document.querySelector('.typing-area') as HTMLElement).style.display = 'block';
+            (document.querySelector('.keyboard-display-container') as HTMLElement).style.display = 'block';
+            document.getElementById('back-to-title-btn')!.style.display = 'block';
+
+            this.initGame();
+        }
+    }
+
+    backToTitle(): void {
+        if (this.gameManager.gameActive && this.gameManager.timerStarted) {
+            if (!confirm('現在のゲームを中断してレッスン選択に戻りますか？')) {
+                return;
+            }
+        }
+
+        if (this.clearScreenKeyHandler) {
+            document.removeEventListener('keydown', this.clearScreenKeyHandler);
+            this.clearScreenKeyHandler = null;
+        }
+
+        if (this.gameManager.timerInterval) {
+            clearInterval(this.gameManager.timerInterval);
+            this.gameManager.timerInterval = null;
+        }
+
+        this.gameManager.gameActive = false;
+        this.gameManager.timerStarted = false;
+
+        document.getElementById('back-to-title-btn')!.style.display = 'none';
+
+        (document.querySelector('.typing-area') as HTMLElement).style.display = 'block';
+        (document.querySelector('.keyboard-display-container') as HTMLElement).style.display = 'block';
+        document.getElementById('word-input')!.style.display = 'inline-block';
+        document.getElementById('meaning')!.style.display = 'block';
+
+        const customLessons = this.lessonFlowController?.customLessons || [];
+        this.recordManager.showRecords(customLessons);
+        this.keyboardManager.initAnimation();
+
+        const lfc = this.lessonFlowController;
+        if (lfc?.selectedLessonForMode && lfc.selectedLessonForMode.index !== undefined) {
+            lfc.showLessonModeSelection(lfc.selectedLessonForMode.index);
+        } else {
+            if (customLessons.length > 0) {
+                lfc?.showLessonModeSelection(0);
+            } else {
+                lfc?.showCustomLessonSetup();
+            }
+        }
+    }
+
+    updateLessonList(): void {
+        const recordsSidebar = document.querySelector('.records-sidebar');
+        if (!recordsSidebar) return;
+
+        const clearButton = recordsSidebar.querySelector('.clear-records-btn');
+
+        const existingRecords = recordsSidebar.querySelectorAll('.level-record');
+        existingRecords.forEach(record => record.remove());
+
+        const newLessonRecord = document.createElement('div');
+        newLessonRecord.className = 'level-record';
+
+        const newLessonTitle = document.createElement('h3');
+        newLessonTitle.className = 'level-selector create-lesson-btn';
+        newLessonTitle.textContent = '+ 新しいレッスンを作成';
+        newLessonTitle.addEventListener('click', () => {
+            this.lessonFlowController?.showCustomLessonSetup();
+        });
+
+        newLessonRecord.appendChild(newLessonTitle);
+        recordsSidebar.insertBefore(newLessonRecord, clearButton);
+
+        const customLessons = this.lessonFlowController?.customLessons || [];
+        if (!Array.isArray(customLessons) || customLessons.length === 0) {
+            return;
+        }
+
+        const sortedLessons = [...customLessons].sort((a, b) => Number(b.id) - Number(a.id));
+
+        sortedLessons.forEach((lesson) => {
+            const originalIndex = customLessons.findIndex(l => l.id === lesson.id);
+
+            const levelRecord = document.createElement('div');
+            levelRecord.className = 'level-record';
+
+            const levelTitle = document.createElement('h3');
+            levelTitle.className = 'level-selector';
+            levelTitle.setAttribute('data-lesson-id', lesson.id);
+            levelTitle.textContent = lesson.name;
+            levelTitle.style.cursor = 'pointer';
+
+            levelTitle.addEventListener('click', () => {
+                if (this.gameManager.gameActive && this.gameManager.timerStarted) {
+                    if (!confirm(`現在のゲームを中断して「${lesson.name}」を開始しますか？`)) {
+                        return;
+                    }
+                }
+                this.lessonFlowController?.showLessonModeSelection(originalIndex);
+            });
+
+            const recordsList = document.createElement('ol');
+            recordsList.id = `lesson${lesson.id}-records`;
+            recordsList.className = 'best-time-display';
+
+            levelRecord.appendChild(levelTitle);
+            levelRecord.appendChild(recordsList);
+
+            recordsSidebar.insertBefore(levelRecord, clearButton);
+        });
+
+        this.recordManager.displayBestTimes(customLessons);
+    }
+
+    replayCurrentWord(): void {
+        if (this.gameManager.words && this.gameManager.words.length > 0) {
+            const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+            if (currentWord && currentWord.word) {
+                this.audioManager.speakWord(currentWord.word);
+            }
+        }
+    }
+
+    setupEventListeners(): void {
+        const wordInput = this.uiManager.wordInput!;
+
+        // キーダウンイベント
+        wordInput.addEventListener('keydown', (e) => {
+            if (!this.gameManager.timerStarted && this.gameManager.gameActive) {
+                this.startTimer();
+                this.audioManager.initAudioContext();
+            }
+
+            if (e.key === 'Enter' || e.key === ' ') {
+                // Lv0: 単語学習モード専用の処理
+                if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+                    if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
+                        const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                        const result = this.levelManager.handleKeyInput(e, currentWord);
+                        if (result === 'next_word') {
+                            this.gameManager.currentWordIndex++;
+                            if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                                this.displayWord();
+                            }
+                        }
+                    } else {
+                        // フォールバック
+                        e.preventDefault();
+                        const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                        if (currentWord && currentWord.word) {
+                            if (!this.gameManager.vocabularyLearningIsJapanese) {
+                                this.audioManager.speakJapanese(currentWord.meaning);
+                                this.gameManager.vocabularyLearningIsJapanese = true;
+                                this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                            } else {
+                                this.audioManager.speakWord(currentWord.word);
+                                this.gameManager.vocabularyLearningIsJapanese = false;
+                                this.gameManager.vocabularyLearningCount++;
+                                if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {
+                                    this.gameManager.currentWordIndex++;
+                                    if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                                        this.displayWord();
+                                    }
+                                } else {
+                                    this.uiManager.showFeedback(`Enter/Spaceで日本語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
+
+                if (!this.gameManager.gameActive) {
+                    if (this.gameManager.currentWordIndex >= this.gameManager.words.length) {
+                        this.initGame();
+                    }
+                }
+            } else if (this.gameManager.gameActive) {
+                if (e.key === 'Backspace') {
+                    this.audioManager.playTypingSound();
+                    return;
+                }
+
+                if (this.inputHandler.validateKeyInput(e)) {
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        this.audioManager.playTypingSound();
+                    }
+                    this.keyboardManager.showKeyPress(e.key, true);
+                    setTimeout(() => this.keyboardManager.highlightNextKey(), 50);
+                } else {
+                    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                        this.audioManager.playMistypeSound();
+                    }
+                    this.keyboardManager.showKeyPress(e.key, false);
+                }
+            }
+        });
+
+        // インプットイベント
+        wordInput.addEventListener('input', () => {
+            if (this.gameManager.gameActive && !wordInput.disabled) {
+                this.inputHandler.checkInputRealtime();
+            }
+        });
+
+        // キーアップイベント
+        wordInput.addEventListener('keyup', (e) => {
+            if (this.gameManager.gameActive && (e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                this.keyboardManager.highlightNextKey();
+            }
+        });
+
+        // Lv0: 単語学習モード用のdocumentレベルキーハンドラ
+        document.addEventListener('keydown', (e) => {
+            if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning' &&
+                wordInput.style.display === 'none' && (e.key === 'Enter' || e.key === ' ')) {
+
+                if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
+                    const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                    const result = this.levelManager.handleKeyInput(e, currentWord);
+
+                    if (result === 'next_word') {
+                        this.gameManager.currentWordIndex++;
+                        if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                            this.displayWord();
+                        }
+                    }
+                } else {
+                    // フォールバック
+                    e.preventDefault();
+                    const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                    if (currentWord && currentWord.word) {
+                        if (!this.gameManager.vocabularyLearningIsJapanese) {
+                            this.audioManager.speakJapanese(currentWord.meaning);
+                            this.gameManager.vocabularyLearningIsJapanese = true;
+                            this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                        } else {
+                            this.audioManager.speakWord(currentWord.word);
+                            this.gameManager.vocabularyLearningIsJapanese = false;
+                            this.gameManager.vocabularyLearningCount++;
+                            if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {
+                                this.gameManager.currentWordIndex++;
+                                this.displayWord();
+                            } else {
+                                this.uiManager.showFeedback(`Enter/Spaceで日本語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 戻るボタン
+        document.getElementById('back-to-title-btn')?.addEventListener('click', () => this.backToTitle());
+    }
+}

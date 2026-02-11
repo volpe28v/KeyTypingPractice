@@ -316,4 +316,82 @@ export class UIManager {
             }
         });
     }
+
+    // モーダルを表示
+    showModal(elementId: string): void {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = 'block';
+            setTimeout(() => {
+                element.classList.add('show');
+            }, 10);
+        }
+    }
+
+    // モーダルを非表示
+    hideModal(elementId: string): void {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.remove('show');
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 400);
+        }
+    }
+
+    // フォーカス管理のセットアップ
+    setupFocusManagement(): void {
+        document.addEventListener('click', (e) => {
+            if ((window as any).gameActive && this.wordInput && !this.wordInput.disabled) {
+                const clickedElement = e.target as HTMLElement;
+                const isInteractiveElement = clickedElement.tagName === 'BUTTON' ||
+                                           clickedElement.tagName === 'INPUT' ||
+                                           clickedElement.tagName === 'SELECT' ||
+                                           clickedElement.classList.contains('level-selector') ||
+                                           clickedElement.classList.contains('clear-records-btn');
+                if (!isInteractiveElement) {
+                    this.wordInput.focus();
+                }
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            if ((window as any).gameActive && this.wordInput && !this.wordInput.disabled) {
+                this.wordInput.focus();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && (window as any).gameActive && this.wordInput && !this.wordInput.disabled) {
+                setTimeout(() => {
+                    if (this.wordInput) {
+                        this.wordInput.focus();
+                    }
+                }, 100);
+            }
+        });
+    }
+
+    // 新記録メッセージを表示
+    showNewRecordMessage(): void {
+        const newRecordMsg = document.createElement('div');
+        newRecordMsg.className = 'new-record-message';
+        newRecordMsg.textContent = '新記録達成！';
+
+        document.body.appendChild(newRecordMsg);
+
+        setTimeout(() => {
+            newRecordMsg.style.opacity = '1';
+            newRecordMsg.style.transform = 'translateY(0) scale(1)';
+
+            setTimeout(() => {
+                newRecordMsg.style.opacity = '0';
+                newRecordMsg.style.transform = 'translateY(-50px) scale(0.8)';
+
+                setTimeout(() => {
+                    newRecordMsg.remove();
+                }, 500);
+            }, 2000);
+        }, 100);
+    }
 }
