@@ -57,7 +57,7 @@ export class AuthManager {
                     <div class="user-profile">
                         <img src="${user.photoURL}" alt="Profile" class="user-avatar">
                         <span>${user.displayName}</span>
-                        <button onclick="(window as any).authManager.signOut()" class="sign-out-btn">ログアウト</button>
+                        <button onclick="window.authManager.signOut()" class="sign-out-btn">ログアウト</button>
                     </div>
                 `;
             }
