@@ -1,4 +1,5 @@
-import type { LessonData, RecordData } from '../types.ts';
+import type { LessonData, RecordData, XPRecord, RankingEntry } from '../types.ts';
+import { getWeekKey } from '../types.ts';
 import type { FirestoreManager } from '../firestore.ts';
 
 /**
@@ -170,6 +171,63 @@ export class StorageManager {
         } catch (error) {
             console.error('❌ Error loading records from Firestore:', error);
             return {};
+        }
+    }
+
+    // XPレコードを保存
+    async saveXPRecord(record: XPRecord): Promise<void> {
+        if (!this.firestoreManager) {
+            console.warn('⚠️ Firestore not connected. Please login first.');
+            return;
+        }
+
+        try {
+            await this.firestoreManager.saveXPRecord(record);
+        } catch (error) {
+            console.error('❌ Error saving XP record:', error);
+        }
+    }
+
+    // 今週のランキングを取得
+    async loadWeeklyRanking(): Promise<RankingEntry[]> {
+        if (!this.firestoreManager) {
+            console.warn('⚠️ Firestore not connected. Please login first.');
+            return [];
+        }
+
+        try {
+            const weekKey = getWeekKey();
+            const records = await this.firestoreManager.loadWeeklyXP(weekKey);
+
+            // userIdごとにXPを合計
+            const userXPMap = new Map<string, { displayName: string; totalXP: number }>();
+            for (const record of records) {
+                const existing = userXPMap.get(record.userId);
+                if (existing) {
+                    existing.totalXP += record.xp;
+                } else {
+                    userXPMap.set(record.userId, {
+                        displayName: record.displayName,
+                        totalXP: record.xp,
+                    });
+                }
+            }
+
+            // ランキング配列に変換してソート
+            const rankings: RankingEntry[] = [];
+            for (const [userId, data] of userXPMap) {
+                rankings.push({
+                    userId,
+                    displayName: data.displayName,
+                    totalXP: data.totalXP,
+                });
+            }
+            rankings.sort((a, b) => b.totalXP - a.totalXP);
+
+            return rankings;
+        } catch (error) {
+            console.error('❌ Error loading weekly ranking:', error);
+            return [];
         }
     }
 

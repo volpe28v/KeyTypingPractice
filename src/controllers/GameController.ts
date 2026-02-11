@@ -1,9 +1,10 @@
-import { type WordData, type LevelData, MODE_TO_LEVEL } from '../types';
+import { type WordData, type LevelData, type XPRecord, MODE_TO_LEVEL, calculateXP, getWeekKey } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
 import type { KeyboardManager } from '../managers/KeyboardManager';
 import type { RecordManager } from '../managers/RecordManager';
+import type { StorageManager } from '../managers/StorageManager';
 import type { InputHandler } from '../InputHandler';
 import { LevelManager } from '../levels/level-manager';
 
@@ -35,6 +36,7 @@ export class GameController {
     private keyboardManager: KeyboardManager;
     private inputHandler: InputHandler;
     private recordManager: RecordManager;
+    private storageManager: StorageManager;
 
     // Cross-reference (set after construction)
     private lessonFlowController: ILessonFlowController | null = null;
@@ -46,6 +48,7 @@ export class GameController {
         keyboardManager: KeyboardManager,
         inputHandler: InputHandler,
         recordManager: RecordManager,
+        storageManager: StorageManager,
     ) {
         this.gameManager = gameManager;
         this.audioManager = audioManager;
@@ -53,6 +56,7 @@ export class GameController {
         this.keyboardManager = keyboardManager;
         this.inputHandler = inputHandler;
         this.recordManager = recordManager;
+        this.storageManager = storageManager;
 
         this.levelLists = [
             {
@@ -253,17 +257,26 @@ export class GameController {
                     this.gameManager.timerInterval = null;
                 }
 
+                // Lv0のXP計算・保存
+                const lv0WordCount = this.gameManager.words.length;
+                const lv0XP = calculateXP(0, lv0WordCount, 100);
+                await this.saveXPRecord(0, lv0WordCount, 100, lv0XP);
+
                 if (this.uiManager.wordDisplay) {
                     this.uiManager.wordDisplay.innerHTML = '<span style="color: #00ff41; font-size: 1.5em;">🎉 単語学習完了！</span>';
                 }
                 this.uiManager.updateMeaningDisplay('全ての単語を学習しました。お疲れさまでした！');
                 this.uiManager.showFeedback('Escapeキーでレッスン選択画面に戻ります');
+                this.uiManager.showXPGain(lv0XP);
 
                 this.audioManager.playCorrectSound("congratulations");
                 this.gameManager.gameActive = false;
 
                 if (this.uiManager.replayAudioBtn) this.uiManager.replayAudioBtn.style.display = 'none';
                 if (this.uiManager.wordInput) this.uiManager.wordInput.value = '';
+
+                // リーダーボード更新
+                this.updateLeaderboard();
 
                 this.setupVocabularyLearningCompleteKeyEvents();
                 return;
@@ -301,17 +314,25 @@ export class GameController {
 
                 const isPerfect = this.gameManager.mistakeCount === 0;
 
+                // XP計算・保存
+                const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
+                const xp = calculateXP(levelIndex, this.gameManager.words.length, accuracyRate);
+                await this.saveXPRecord(levelIndex, this.gameManager.words.length, accuracyRate, xp);
+
                 if (this.levelManager && this.levelManager.cleanup) {
                     this.levelManager.cleanup();
                 }
 
-                this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate);
+                this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate, xp);
 
                 if (isPerfect) {
                     this.audioManager.playCorrectSound("congratulations");
                 } else {
                     this.audioManager.playCorrectSound("complete");
                 }
+
+                // リーダーボード更新
+                this.updateLeaderboard();
             }
 
             this.recordManager.hideRecords();
@@ -417,6 +438,7 @@ export class GameController {
         const customLessons = this.lessonFlowController?.customLessons || [];
         this.recordManager.showRecords(customLessons);
         this.keyboardManager.initAnimation();
+        this.updateLeaderboard();
 
         const lfc = this.lessonFlowController;
         if (lfc?.selectedLessonForMode && lfc.selectedLessonForMode.index !== undefined) {
@@ -491,6 +513,40 @@ export class GameController {
         });
 
         this.recordManager.displayBestTimes(customLessons);
+    }
+
+    private async saveXPRecord(levelIndex: number, wordCount: number, accuracy: number, xp: number): Promise<void> {
+        const user = (window as any).authManager?.getCurrentUser();
+        if (!user) return;
+
+        const customLessons = this.lessonFlowController?.customLessons || [];
+        let lessonId = '';
+        if (this.gameManager.isCustomLesson &&
+            this.gameManager.currentLessonIndex >= 0 &&
+            this.gameManager.currentLessonIndex < customLessons.length) {
+            lessonId = customLessons[this.gameManager.currentLessonIndex].id;
+        }
+
+        const record: XPRecord = {
+            lessonId,
+            levelIndex,
+            userId: user.uid,
+            displayName: user.displayName || 'Unknown',
+            xp,
+            accuracy,
+            wordCount,
+            weekKey: getWeekKey(),
+        };
+
+        await this.storageManager.saveXPRecord(record);
+    }
+
+    async updateLeaderboard(): Promise<void> {
+        const user = (window as any).authManager?.getCurrentUser();
+        if (!user) return;
+
+        const rankings = await this.storageManager.loadWeeklyRanking();
+        this.uiManager.updateLeaderboard(rankings, user.uid);
     }
 
     replayCurrentWord(): void {

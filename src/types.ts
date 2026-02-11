@@ -47,3 +47,44 @@ export const MODE_TO_LEVEL: Record<string, number> = {
     'japanese-reading': 4,
     'pronunciation-blind': 5,
 };
+
+// XP記録の型定義
+export interface XPRecord {
+    lessonId: string;
+    levelIndex: number;
+    userId: string;
+    displayName: string;
+    xp: number;
+    accuracy: number;
+    wordCount: number;
+    weekKey: string;
+    createdAt?: any;
+}
+
+// ランキングエントリの型定義
+export interface RankingEntry {
+    userId: string;
+    displayName: string;
+    totalXP: number;
+}
+
+// モード別基本XP値
+export const XP_PER_LEVEL: Record<number, number> = {
+    0: 1, 1: 2, 2: 3, 3: 4, 4: 4, 5: 5
+};
+
+// XP計算
+export function calculateXP(levelIndex: number, wordCount: number, accuracy: number): number {
+    const base = XP_PER_LEVEL[levelIndex] ?? 1;
+    const perfectBonus = accuracy === 100 ? 1.5 : 1.0;
+    return Math.floor(base * wordCount * perfectBonus);
+}
+
+// 今週のweekKeyを生成（ISO 8601 週番号）
+export function getWeekKey(): string {
+    const now = new Date();
+    const jan1 = new Date(now.getFullYear(), 0, 1);
+    const days = Math.floor((now.getTime() - jan1.getTime()) / 86400000);
+    const week = Math.ceil((days + jan1.getDay() + 1) / 7);
+    return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}

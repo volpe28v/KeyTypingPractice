@@ -1,3 +1,5 @@
+import type { RankingEntry } from '../types';
+
 /**
  * UIManager - UI操作とDOM要素管理クラス
  * DOM要素の操作、フィードバック表示、入力制御などを処理
@@ -224,7 +226,7 @@ export class UIManager {
     }
     
     // ゲーム完了時の表示
-    showGameComplete(isPerfect: boolean, mistakeCount: number, elapsedTime: number, accuracyRate: number): void {
+    showGameComplete(isPerfect: boolean, mistakeCount: number, elapsedTime: number, accuracyRate: number, xp?: number): void {
         if (this.wordDisplay) {
             if (isPerfect) {
                 this.wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
@@ -233,14 +235,21 @@ export class UIManager {
                 this.wordDisplay.innerHTML = '<span style="color: #66bb6a; font-size: 1.2em;">クリア！</span>';
             }
         }
-        
+
         if (this.meaningDisplay) {
+            const xpText = xp !== undefined ? `<div style="margin-top: 8px; color: #ffa726; font-size: 1.1em; font-weight: bold;">+${xp} XP!</div>` : '';
             this.meaningDisplay.innerHTML = `
                 <div>${this.generateScoreText(elapsedTime, accuracyRate, mistakeCount)}</div>
+                ${xpText}
                 <div style="margin-top: 10px; font-size: 0.8em; color: #90a4ae;">Enter: もう一度 | Escape: レッスン選択に戻る</div>
             `;
             // クリア時はmeaningDisplayを強制的に表示する
             this.meaningDisplay.style.display = 'block';
+        }
+
+        // XP獲得演出
+        if (xp !== undefined) {
+            this.showXPGain(xp);
         }
         
         if (this.wordInput) {
@@ -393,5 +402,105 @@ export class UIManager {
                 }, 500);
             }, 2000);
         }, 100);
+    }
+
+    // XP獲得演出
+    showXPGain(xp: number): void {
+        const xpMsg = document.createElement('div');
+        xpMsg.className = 'xp-gain-message';
+        xpMsg.textContent = `+${xp} XP!`;
+
+        document.body.appendChild(xpMsg);
+
+        setTimeout(() => {
+            xpMsg.style.opacity = '1';
+            xpMsg.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+
+            setTimeout(() => {
+                xpMsg.style.opacity = '0';
+                xpMsg.style.transform = 'translateX(-50%) translateY(-60px) scale(0.8)';
+
+                setTimeout(() => {
+                    xpMsg.remove();
+                }, 500);
+            }, 2500);
+        }, 100);
+    }
+
+    // リーダーボード更新
+    updateLeaderboard(rankings: RankingEntry[], currentUserId: string): void {
+        const listEl = document.getElementById('leaderboard-list');
+        const messageEl = document.getElementById('leaderboard-message');
+        if (!listEl || !messageEl) return;
+
+        listEl.innerHTML = '';
+        messageEl.innerHTML = '';
+
+        if (rankings.length === 0) {
+            listEl.innerHTML = '<div class="leaderboard-empty">まだ記録がありません</div>';
+            return;
+        }
+
+        // 上位5名を表示
+        const top5 = rankings.slice(0, 5);
+        let currentUserRank = -1;
+
+        top5.forEach((entry, index) => {
+            const rank = index + 1;
+            const row = document.createElement('div');
+            const isCurrentUser = entry.userId === currentUserId;
+            row.className = `leaderboard-row${isCurrentUser ? ' leaderboard-row-me' : ''}`;
+
+            const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+
+            row.innerHTML = `
+                <span class="leaderboard-rank">${medalEmoji}</span>
+                <span class="leaderboard-name">${entry.displayName}${isCurrentUser ? ' ←' : ''}</span>
+                <span class="leaderboard-xp">${entry.totalXP} XP</span>
+            `;
+            listEl.appendChild(row);
+
+            if (isCurrentUser) {
+                currentUserRank = rank;
+            }
+        });
+
+        // 自分が5位以内にいない場合、ランキング内の位置を探す
+        if (currentUserRank === -1) {
+            const fullRankIndex = rankings.findIndex(e => e.userId === currentUserId);
+            if (fullRankIndex >= 0) {
+                currentUserRank = fullRankIndex + 1;
+                const entry = rankings[fullRankIndex];
+                const row = document.createElement('div');
+                row.className = 'leaderboard-row leaderboard-row-me';
+                row.innerHTML = `
+                    <span class="leaderboard-rank">${currentUserRank}.</span>
+                    <span class="leaderboard-name">${entry.displayName} ←</span>
+                    <span class="leaderboard-xp">${entry.totalXP} XP</span>
+                `;
+
+                // 区切り線を追加
+                const separator = document.createElement('div');
+                separator.className = 'leaderboard-separator';
+                separator.textContent = '···';
+                listEl.appendChild(separator);
+                listEl.appendChild(row);
+            }
+        }
+
+        // 「あとXXPでY位！」メッセージ
+        if (currentUserRank > 1) {
+            const myIndex = rankings.findIndex(e => e.userId === currentUserId);
+            if (myIndex > 0) {
+                const aboveEntry = rankings[myIndex - 1];
+                const myEntry = rankings[myIndex];
+                const diff = aboveEntry.totalXP - myEntry.totalXP;
+                if (diff > 0) {
+                    messageEl.textContent = `あと ${diff} XP で ${myIndex}位！`;
+                }
+            }
+        } else if (currentUserRank === 1) {
+            messageEl.textContent = '🎉 1位をキープ中！';
+        }
     }
 }
