@@ -1168,8 +1168,8 @@ body {
 
 /* モードボタン */
 .mode-buttons {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-top: 15px;
 }
@@ -1180,13 +1180,29 @@ body {
     border: none;
     padding: 15px 20px;
     border-radius: 12px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: left;
+    text-align: center;
     position: relative;
     box-shadow: var(--shadow-light);
+}
+
+/* レベル別の色分け */
+.mode-btn[data-mode="vocabulary-learning"],
+.mode-btn[data-mode="progressive"] {
+    background: #4CAF50; /* 初級: 緑 */
+}
+
+.mode-btn[data-mode="pronunciation-meaning"],
+.mode-btn[data-mode="pronunciation-only"] {
+    background: #2196F3; /* 中級: 青 */
+}
+
+.mode-btn[data-mode="japanese-reading"],
+.mode-btn[data-mode="pronunciation-blind"] {
+    background: #FF6B6B; /* 上級: 赤 */
 }
 
 
@@ -1201,9 +1217,9 @@ body {
 }
 
 .mode-btn:hover {
-    background: var(--color-success);
     box-shadow: var(--shadow-medium);
     transform: translateY(-2px);
+    filter: brightness(1.1);
 }
 
 /* 削除ボタン - 目立たないスタイル */
@@ -1603,5 +1619,10 @@ body {
         height: 45px;
         font-size: 1.6rem;
         gap: 10px;
+    }
+    
+    /* モードボタンをモバイルでは1列に */
+    .mode-buttons {
+        grid-template-columns: 1fr;
     }
 }

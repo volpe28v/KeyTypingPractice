@@ -1483,7 +1483,7 @@ function validateKeyInput(e) {
 
 function highlightWrongChar(position) {
     // スペル隠しモードと段階的練習モードでは何もしない（各モードの表示関数で処理する）
-    if (isCustomLesson && (lessonMode === 'vocabulary-learning' || lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive' || lessonMode === 'japanese-reading')) {
+    if (isCustomLesson && (lessonMode === 'vocabulary-learning' || lessonMode === 'pronunciation-only' || lessonMode === 'pronunciation-meaning' || lessonMode === 'progressive' || lessonMode === 'japanese-reading' || lessonMode === 'pronunciation-blind')) {
         return;
     }
     

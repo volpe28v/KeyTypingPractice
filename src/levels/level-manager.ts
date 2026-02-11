@@ -6,6 +6,7 @@ import { ProgressiveLearningLevel } from './level1-progressive.ts';
 import { PronunciationMeaningLevel } from './level2-pronunciation-meaning.ts';
 import { PronunciationOnlyLevel } from './level3-pronunciation-only.ts';
 import { JapaneseReadingLevel } from './level4-japanese-reading.ts';
+import { PronunciationBlindLevel } from './level5-pronunciation-blind.ts';
 import type { WordData } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
@@ -35,7 +36,8 @@ class LevelManager {
             'progressive': new ProgressiveLearningLevel(this.gameManager, this.audioManager, this.uiManager),
             'pronunciation-meaning': new PronunciationMeaningLevel(this.gameManager, this.audioManager, this.uiManager),
             'pronunciation-only': new PronunciationOnlyLevel(this.gameManager, this.audioManager, this.uiManager),
-            'japanese-reading': new JapaneseReadingLevel(this.gameManager, this.audioManager, this.uiManager)
+            'japanese-reading': new JapaneseReadingLevel(this.gameManager, this.audioManager, this.uiManager),
+            'pronunciation-blind': new PronunciationBlindLevel(this.gameManager, this.audioManager, this.uiManager)
         };
     }
 
