@@ -16,7 +16,7 @@ import {
   QuerySnapshot,
   DocumentData
 } from 'firebase/firestore';
-import type { LessonData, RecordData } from './types';
+import type { LessonData, RecordData, XPRecord } from './types';
 
 export class FirestoreManager {
   public userId: string | null;
@@ -278,6 +278,66 @@ export class FirestoreManager {
     } catch (error) {
       console.error('❌ Error clearing Firestore records:', error);
       throw error;
+    }
+  }
+
+  // XPレコードの保存
+  async saveXPRecord(record: XPRecord): Promise<string | null> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot save XP record (offline or not authenticated)');
+      return null;
+    }
+
+    try {
+      const xpData = {
+        ...record,
+        userId: this.userId,
+        createdAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'weeklyXP'), xpData);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error saving XP record to Firestore:', error);
+      return null;
+    }
+  }
+
+  // 今週のXPレコードを全件取得
+  async loadWeeklyXP(weekKey: string): Promise<XPRecord[]> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot load weekly XP (offline or not authenticated)');
+      return [];
+    }
+
+    try {
+      const q = query(
+        collection(db, 'weeklyXP'),
+        where('weekKey', '==', weekKey)
+      );
+
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const records: XPRecord[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        records.push({
+          lessonId: data.lessonId,
+          levelIndex: data.levelIndex,
+          userId: data.userId,
+          displayName: data.displayName,
+          xp: data.xp,
+          accuracy: data.accuracy,
+          wordCount: data.wordCount,
+          weekKey: data.weekKey,
+          createdAt: data.createdAt
+        });
+      });
+
+      return records;
+    } catch (error) {
+      console.error('❌ Error loading weekly XP from Firestore:', error);
+      return [];
     }
   }
 

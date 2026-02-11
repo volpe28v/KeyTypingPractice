@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create Controllers
     const gameController = new GameController(
         gameManager, audioManager, uiManager, keyboardManager,
-        inputHandler, recordManager
+        inputHandler, recordManager, storageManager
     );
 
     const lessonFlowController = new LessonFlowController(
@@ -158,6 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
             await lessonFlowController.loadCustomLessons();
             await recordManager.loadRecords();
             gameController.updateLessonList();
+
+            // リーダーボード読み込み
+            gameController.updateLeaderboard();
 
             // データ読み込み後に最新レッスンを自動選択
             if (lessonFlowController.customLessons.length > 0) {
