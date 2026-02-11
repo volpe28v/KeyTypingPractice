@@ -997,6 +997,24 @@ body {
     padding: 0;
 }
 
+/* レッスン進捗表示 */
+.lesson-progress.empty {
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.highest-level {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.highest-detail {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: var(--text-secondary);
+}
+
 .new-record-message {
     position: fixed;
     top: 100px;
@@ -1214,6 +1232,29 @@ body {
 .mode-btn.selected {
     background: var(--color-success);
     box-shadow: var(--shadow-medium);
+}
+
+/* モードボタン内の記録表示 */
+.mode-record {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    opacity: 0.9;
+    font-weight: normal;
+}
+
+/* 正答率100%達成ボタン */
+.mode-btn.mode-btn-perfect {
+    box-shadow: 0 0 0 3px var(--color-success), var(--shadow-medium);
+    position: relative;
+}
+
+.mode-btn.mode-btn-perfect::after {
+    content: '\2713';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
 }
 
 .mode-btn:hover {

@@ -37,3 +37,13 @@ export interface LevelData {
 
 // レッスンモードの型定義
 export type LessonMode = 'vocabulary-learning' | 'progressive' | 'pronunciation-meaning' | 'pronunciation-only' | 'japanese-reading';
+
+// モード名→レベル番号のマッピング
+export const MODE_TO_LEVEL: Record<string, number> = {
+    'vocabulary-learning': 0,
+    'progressive': 1,
+    'pronunciation-meaning': 2,
+    'pronunciation-only': 3,
+    'japanese-reading': 4,
+    'pronunciation-blind': 5,
+};

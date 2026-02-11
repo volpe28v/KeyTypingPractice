@@ -1,4 +1,4 @@
-import type { WordData, LevelData } from '../types';
+import { type WordData, type LevelData, MODE_TO_LEVEL } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
@@ -293,7 +293,8 @@ export class GameController {
                     this.gameManager.currentLessonIndex >= 0 &&
                     this.gameManager.currentLessonIndex < customLessons.length) {
                     const lessonId = customLessons[this.gameManager.currentLessonIndex].id;
-                    await this.recordManager.addRecord(`lesson${lessonId}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                    const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
+                    await this.recordManager.addRecord(`lesson${lessonId}_${levelIndex}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
                 } else {
                     await this.recordManager.addRecord(`level${this.gameManager.currentLevel}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
                 }

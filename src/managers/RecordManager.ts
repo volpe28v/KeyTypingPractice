@@ -73,41 +73,53 @@ export class RecordManager {
         }
     }
 
+    getRecordForKey(key: string): { accuracy: number; elapsedTime: number } | null {
+        const records = this.records[key];
+        if (!records || records.length === 0) return null;
+
+        const best = records[0];
+        return {
+            accuracy: best.accuracy !== undefined ? best.accuracy : 100,
+            elapsedTime: best.elapsedTime || best
+        };
+    }
+
     displayBestTimes(customLessons: LessonData[]): void {
         customLessons.forEach(lesson => {
-            const lessonRecords = this.records[`lesson${lesson.id}`] || [];
             const lessonRecordsList = document.getElementById(`lesson${lesson.id}-records`);
 
             if (lessonRecordsList) {
                 lessonRecordsList.innerHTML = '';
 
-                if (lessonRecords.length > 0) {
-                    const bestRecord = lessonRecords.reduce((best, current) => {
-                        const currentAccuracy = current.accuracy !== undefined ? current.accuracy : 100;
-                        const bestAccuracy = best.accuracy !== undefined ? best.accuracy : 100;
-                        const currentTime = current.elapsedTime || current;
-                        const bestTime = best.elapsedTime || best;
-
-                        if (currentAccuracy > bestAccuracy) {
-                            return current;
-                        } else if (currentAccuracy === bestAccuracy && currentTime < bestTime) {
-                            return current;
-                        }
-                        return best;
-                    });
-
-                    const li = document.createElement('li');
-                    const recordTime = bestRecord.elapsedTime || bestRecord;
-                    const recordAccuracy = bestRecord.accuracy !== undefined ? bestRecord.accuracy : 100;
-
-                    li.innerHTML = `<span style="color: var(--color-success); font-size: 1.2rem; font-weight: bold;">${recordAccuracy}%</span><br><small style="color: var(--text-muted);">${this.uiManager.formatTime(recordTime)}</small>`;
-                    lessonRecordsList.appendChild(li);
-                } else {
-                    const li = document.createElement('li');
-                    li.textContent = '記録なし';
-                    li.style.color = '#666666';
-                    lessonRecordsList.appendChild(li);
+                // 最高クリアレベルを検索
+                let highestLevel = -1;
+                for (let i = 5; i >= 0; i--) {
+                    const record = this.getRecordForKey(`lesson${lesson.id}_${i}`);
+                    if (record) {
+                        highestLevel = i;
+                        break;
+                    }
                 }
+
+                const li = document.createElement('li');
+                if (highestLevel >= 0) {
+                    const record = this.getRecordForKey(`lesson${lesson.id}_${highestLevel}`)!;
+                    const seconds = Math.floor(record.elapsedTime / 1000);
+                    li.className = 'lesson-progress';
+                    li.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                } else {
+                    // 旧フォーマット（lesson${id}）の記録を確認
+                    const legacyRecord = this.getRecordForKey(`lesson${lesson.id}`);
+                    if (legacyRecord) {
+                        const seconds = Math.floor(legacyRecord.elapsedTime / 1000);
+                        li.className = 'lesson-progress';
+                        li.innerHTML = `<span class="highest-level">Lv-</span> <span class="highest-detail">${legacyRecord.accuracy}% ${seconds}秒</span>`;
+                    } else {
+                        li.className = 'lesson-progress empty';
+                        li.textContent = '-';
+                    }
+                }
+                lessonRecordsList.appendChild(li);
             }
         });
     }
