@@ -1,4 +1,4 @@
-import type { LessonData } from '../types';
+import type { LessonData, UserFavorite } from '../types';
 import type { StorageManager } from './StorageManager';
 import type { UIManager } from './UIManager';
 
@@ -86,10 +86,10 @@ export class RecordManager {
 
     displayBestTimes(customLessons: LessonData[]): void {
         customLessons.forEach(lesson => {
-            const lessonRecordsList = document.getElementById(`lesson${lesson.id}-records`);
+            const recordEl = document.getElementById(`lesson${lesson.id}-records`);
 
-            if (lessonRecordsList) {
-                lessonRecordsList.innerHTML = '';
+            if (recordEl) {
+                recordEl.innerHTML = '';
 
                 // 最高クリアレベルを検索
                 let highestLevel = -1;
@@ -101,25 +101,56 @@ export class RecordManager {
                     }
                 }
 
-                const li = document.createElement('li');
                 if (highestLevel >= 0) {
                     const record = this.getRecordForKey(`lesson${lesson.id}_${highestLevel}`)!;
                     const seconds = Math.floor(record.elapsedTime / 1000);
-                    li.className = 'lesson-progress';
-                    li.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                    recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                    recordEl.classList.remove('empty');
                 } else {
                     // 旧フォーマット（lesson${id}）の記録を確認
                     const legacyRecord = this.getRecordForKey(`lesson${lesson.id}`);
                     if (legacyRecord) {
                         const seconds = Math.floor(legacyRecord.elapsedTime / 1000);
-                        li.className = 'lesson-progress';
-                        li.innerHTML = `<span class="highest-level">Lv-</span> <span class="highest-detail">${legacyRecord.accuracy}% ${seconds}秒</span>`;
+                        recordEl.innerHTML = `<span class="highest-level">Lv-</span> <span class="highest-detail">${legacyRecord.accuracy}% ${seconds}秒</span>`;
+                        recordEl.classList.remove('empty');
                     } else {
-                        li.className = 'lesson-progress empty';
-                        li.textContent = '-';
+                        recordEl.textContent = '-';
+                        recordEl.classList.add('empty');
                     }
                 }
-                lessonRecordsList.appendChild(li);
+            }
+        });
+    }
+
+    /**
+     * お気に入りレッスンの最高記録を表示
+     */
+    displayFavoriteBestTimes(favorites: UserFavorite[]): void {
+        favorites.forEach(favorite => {
+            const recordEl = document.getElementById(`favLesson${favorite.lessonId}-records`);
+
+            if (recordEl) {
+                recordEl.innerHTML = '';
+
+                // 最高クリアレベルを検索
+                let highestLevel = -1;
+                for (let i = 5; i >= 0; i--) {
+                    const record = this.getRecordForKey(`favLesson${favorite.lessonId}_${i}`);
+                    if (record) {
+                        highestLevel = i;
+                        break;
+                    }
+                }
+
+                if (highestLevel >= 0) {
+                    const record = this.getRecordForKey(`favLesson${favorite.lessonId}_${highestLevel}`)!;
+                    const seconds = Math.floor(record.elapsedTime / 1000);
+                    recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                    recordEl.classList.remove('empty');
+                } else {
+                    recordEl.textContent = '-';
+                    recordEl.classList.add('empty');
+                }
             }
         });
     }
