@@ -9,7 +9,9 @@ export interface LessonData {
   id: string;
   name: string;
   words: WordData[];
-  userId?: string;
+  ownerId?: string;             // レッスン作成者のユーザーID（新フィールド）
+  ownerDisplayName?: string;    // レッスン作成者名（新フィールド）
+  userId?: string;              // 後方互換用（旧フィールド、非推奨）
   firestoreId?: string;
   createdAt?: string;
 }
@@ -87,4 +89,34 @@ export function getWeekKey(): string {
     const days = Math.floor((now.getTime() - jan1.getTime()) / 86400000);
     const week = Math.ceil((days + jan1.getDay() + 1) / 7);
     return `${now.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+// お気に入りレッスンの型定義
+export interface UserFavorite {
+  firestoreId?: string;
+  userId: string;
+  lessonId: string;
+  lessonName: string;
+  ownerDisplayName: string;
+  addedAt?: any;
+}
+
+// レッスン記録の型定義
+export interface LessonRecord {
+  firestoreId?: string;
+  userId: string;
+  lessonId: string;
+  levelIndex: number;
+  accuracy: number;
+  elapsedTime: number;
+  wordCount: number;
+  createdAt?: any;
+}
+
+// レッスン別ランキングエントリの型定義
+export interface LessonRankingEntry {
+  userId: string;
+  displayName: string;
+  accuracy: number;
+  elapsedTime: number;
 }

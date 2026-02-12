@@ -1,4 +1,4 @@
-import type { WordData, LessonData } from '../types';
+import type { WordData, LessonData, UserFavorite, LessonRankingEntry } from '../types';
 import type { LessonManager } from '../managers/LessonManager';
 import type { StorageManager } from '../managers/StorageManager';
 import type { UIManager } from '../managers/UIManager';
@@ -24,6 +24,7 @@ interface IRecordManager {
 export class LessonFlowController {
     // State
     public customLessons: LessonData[] = [];
+    public userFavorites: UserFavorite[] = [];
     public selectedLessonForMode: { lesson: LessonData; index: number } | null = null;
     public selectedCustomMode: string = 'progressive';
     public customWords: WordData[] = [];
@@ -102,6 +103,51 @@ export class LessonFlowController {
         this.lessonManager.displayWordsInSelection(lesson);
         this.resetWordsEditMode();
         this.updateModeButtonRecords(lesson.id);
+
+        // お気に入りレッスンとマイレッスンの処理
+        const editToggle = document.querySelector('.edit-toggle') as HTMLElement;
+        const lessonRankingSection = document.getElementById('lesson-ranking-section');
+        const user = (window as any).authManager?.getCurrentUser();
+        const isFavorite = this.userFavorites.some(f => f.lessonId === lesson.firestoreId);
+
+        if (isFavorite) {
+            // お気に入りレッスンの場合: 編集ボタン非表示、レッスン別ランキング表示
+            if (editToggle) editToggle.style.display = 'none';
+
+            if (lessonRankingSection && lesson.firestoreId) {
+                lessonRankingSection.style.display = 'block';
+                this.setupLessonRankingTabs(lesson.firestoreId);
+            }
+        } else {
+            // マイレッスンの場合: 編集ボタン表示、レッスン別ランキング非表示
+            if (editToggle) editToggle.style.display = 'block';
+            if (lessonRankingSection) lessonRankingSection.style.display = 'none';
+        }
+    }
+
+    // レッスン別ランキングのタブセットアップ
+    private setupLessonRankingTabs(lessonId: string): void {
+        const tabsEl = document.getElementById('lesson-ranking-tabs');
+        if (!tabsEl) return;
+
+        tabsEl.innerHTML = '';
+        const modes = ['Lv1', 'Lv2', 'Lv3', 'Lv4', 'Lv5'];
+
+        modes.forEach((modeName, index) => {
+            const levelIndex = index + 1; // 1-5
+            const tab = document.createElement('button');
+            tab.className = `lesson-ranking-tab${levelIndex === 1 ? ' active' : ''}`;
+            tab.textContent = modeName;
+            tab.onclick = () => {
+                document.querySelectorAll('.lesson-ranking-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.loadLessonRanking(lessonId, levelIndex);
+            };
+            tabsEl.appendChild(tab);
+        });
+
+        // 初期表示: Lv1
+        this.loadLessonRanking(lessonId, 1);
     }
 
     toggleWordsEdit(): void {
@@ -184,7 +230,7 @@ export class LessonFlowController {
         });
     }
 
-    saveWordsEdit(): boolean {
+    async saveWordsEdit(): Promise<boolean> {
         const newLessonName = (document.getElementById('lesson-name-edit-input') as HTMLInputElement).value.trim();
         if (!newLessonName) {
             alert('レッスン名を入力してください。');
@@ -202,6 +248,8 @@ export class LessonFlowController {
         if (success) {
             document.getElementById('selected-lesson-name')!.textContent = newLessonName;
             this.resetWordsEditMode();
+
+            // 編集後の処理（特になし）
         }
         return success;
     }
@@ -252,6 +300,7 @@ export class LessonFlowController {
         }
 
         const { lesson } = this.selectedLessonForMode;
+
         const lessonId = lesson.firestoreId || lesson.id;
         const success = await this.lessonManager.deleteLesson(
             lessonId,
@@ -289,12 +338,12 @@ export class LessonFlowController {
         document.querySelector(`[data-mode="${mode}"]`)?.classList.add('selected');
     }
 
-    saveNewLessonOnly(): void {
-        const success = this.lessonManager.saveNewLesson(
+    async saveNewLessonOnly(): Promise<void> {
+        const newLesson = this.lessonManager.saveNewLesson(
             this.customLessons,
             () => this.gameController?.updateLessonList()
         );
-        if (success) {
+        if (newLesson) {
             (document.getElementById('lesson-name-input') as HTMLInputElement).value = '';
             (document.getElementById('custom-words-input') as HTMLTextAreaElement).value = '';
 
@@ -303,7 +352,7 @@ export class LessonFlowController {
         }
     }
 
-    saveAndStartLesson(mode?: string): void {
+    async saveAndStartLesson(mode?: string): Promise<void> {
         const input = (document.getElementById('custom-words-input') as HTMLTextAreaElement).value;
 
         if (!input.trim()) {
@@ -311,11 +360,11 @@ export class LessonFlowController {
             return;
         }
 
-        const success = this.lessonManager.saveNewLesson(
+        const newLesson = this.lessonManager.saveNewLesson(
             this.customLessons,
             () => this.gameController?.updateLessonList()
         );
-        if (!success) {
+        if (!newLesson) {
             return;
         }
 
@@ -349,7 +398,7 @@ export class LessonFlowController {
         this.gameController?.initGame();
     }
 
-    startCustomLesson(): void {
+    async startCustomLesson(): Promise<void> {
         const input = (document.getElementById('custom-words-input') as HTMLTextAreaElement).value;
 
         if (!input.trim()) {
@@ -369,11 +418,11 @@ export class LessonFlowController {
             return;
         }
 
-        const saveSuccess = this.lessonManager.saveNewLesson(
+        const newLesson = this.lessonManager.saveNewLesson(
             this.customLessons,
             () => this.gameController?.updateLessonList()
         );
-        if (!saveSuccess) {
+        if (!newLesson) {
             console.warn('レッスンの保存に失敗しましたが、ゲームを開始します。');
         }
 
@@ -382,7 +431,7 @@ export class LessonFlowController {
         this.gameManager.lessonMode = this.selectedCustomMode;
         this.gameManager.isCustomLesson = true;
 
-        if (saveSuccess && this.customLessons.length > 0) {
+        if (newLesson && this.customLessons.length > 0) {
             this.gameManager.currentLessonIndex = this.customLessons.length - 1;
         }
 
@@ -404,9 +453,110 @@ export class LessonFlowController {
             if (!Array.isArray(this.customLessons)) {
                 this.customLessons = [];
             }
+
+            // お気に入りも一緒に読み込む
+            this.userFavorites = await this.storageManager.loadUserFavorites();
+            if (!Array.isArray(this.userFavorites)) {
+                this.userFavorites = [];
+            }
         } catch (error) {
             console.error('❌ Error loading custom lessons:', error);
             this.customLessons = [];
+            this.userFavorites = [];
         }
+    }
+
+    // 公開レッスンブラウザを表示
+    async showPublicLessonBrowser(): Promise<void> {
+        const publicLessons = await this.storageManager.loadAllPublicLessons();
+        const browserEl = document.getElementById('public-lesson-browser');
+        const listEl = document.getElementById('public-lesson-list');
+
+        if (!browserEl || !listEl) return;
+
+        // 既存のカードをクリア
+        listEl.innerHTML = '';
+
+        // 既にお気に入り登録済みのlessonIdを収集
+        const favoriteLessonIds = new Set(this.userFavorites.map(f => f.lessonId));
+
+        if (publicLessons.length === 0) {
+            listEl.innerHTML = '<div class="public-lesson-card"><p style="text-align: center; color: var(--text-muted);">まだ公開レッスンがありません</p></div>';
+        } else {
+            publicLessons.forEach(lesson => {
+                const card = document.createElement('div');
+                card.className = 'public-lesson-card';
+
+                const isFavorite = favoriteLessonIds.has(lesson.firestoreId || '');
+
+                card.innerHTML = `
+                    <div class="public-lesson-card-header">
+                        <h3>${lesson.name}</h3>
+                        <span class="public-lesson-author">by ${lesson.ownerDisplayName || 'Unknown'}</span>
+                    </div>
+                    <div class="public-lesson-card-info">
+                        <span>${lesson.words.length}単語</span>
+                    </div>
+                    <div class="public-lesson-card-preview">
+                        ${lesson.words.slice(0, 3).map(w => `${w.word} - ${w.meaning}`).join(', ')}${lesson.words.length > 3 ? '...' : ''}
+                    </div>
+                    ${isFavorite
+                        ? '<span class="public-lesson-imported">お気に入り済み ★</span>'
+                        : `<button class="public-lesson-import-btn" onclick="addToFavorites('${lesson.firestoreId}', '${lesson.name}', '${lesson.ownerDisplayName}')">お気に入りに追加</button>`
+                    }
+                `;
+
+                listEl.appendChild(card);
+            });
+        }
+
+        browserEl.style.display = 'block';
+    }
+
+    // お気に入りに追加
+    async addToFavorites(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<void> {
+        // 既にお気に入り済みかチェック
+        const alreadyFavorite = this.userFavorites.some(f => f.lessonId === lessonId);
+
+        if (alreadyFavorite) {
+            alert('このレッスンは既にお気に入り済みです。');
+            return;
+        }
+
+        const success = await this.storageManager.addFavorite(lessonId, lessonName, ownerDisplayName);
+        if (success) {
+            // userFavoritesを再読み込み
+            await this.loadCustomLessons(); // この中でuserFavoritesも読み込まれる
+            this.gameController?.updateLessonList();
+            alert('お気に入りに追加しました！');
+            // ブラウザを更新
+            await this.showPublicLessonBrowser();
+        } else {
+            alert('お気に入りへの追加に失敗しました。');
+        }
+    }
+
+    // お気に入りから削除
+    async removeFromFavorites(favoriteId: string): Promise<void> {
+        const success = await this.storageManager.removeFavorite(favoriteId);
+        if (success) {
+            // userFavoritesを再読み込み
+            await this.loadCustomLessons(); // この中でuserFavoritesも読み込まれる
+            this.gameController?.updateLessonList();
+            alert('お気に入りから削除しました。');
+        } else {
+            alert('お気に入りからの削除に失敗しました。');
+        }
+    }
+
+    // レッスン別ランキング読み込み
+    async loadLessonRanking(lessonId: string, levelIndex: number): Promise<void> {
+        const rankings = await this.storageManager.loadLessonRanking(lessonId, levelIndex);
+        const user = (window as any).authManager?.getCurrentUser();
+        const containerEl = document.getElementById('lesson-ranking-list');
+
+        if (!containerEl || !user) return;
+
+        this.uiManager.updateLessonRanking(rankings, user.uid, containerEl);
     }
 }

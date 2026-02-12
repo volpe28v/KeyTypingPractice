@@ -68,10 +68,12 @@ export class LessonManager {
         
         // レッスンリストに追加
         customLessons.push(newLesson);
-        
+
         // ローカルストレージに保存
-        this.storageManager.saveCustomLessons(customLessons);
-        
+        const user = (window as any).authManager?.getCurrentUser();
+        const displayName = user?.displayName || 'Unknown';
+        this.storageManager.saveCustomLessons(customLessons, displayName);
+
         // サイドバーのレッスン一覧を更新
         if (updateLessonListCallback) {
             updateLessonListCallback();
@@ -122,10 +124,12 @@ export class LessonManager {
         const lessonIndex = selectedLessonForMode.index;
         customLessons[lessonIndex].words = newWords;
         selectedLessonForMode.lesson.words = newWords;
-        
+
         // ローカルストレージに保存
-        this.storageManager.saveCustomLessons(customLessons);
-        
+        const user = (window as any).authManager?.getCurrentUser();
+        const displayName = user?.displayName || 'Unknown';
+        this.storageManager.saveCustomLessons(customLessons, displayName);
+
         // 表示を更新
         this.displayWordsInSelection(selectedLessonForMode.lesson);
         if (updateLessonListCallback) {

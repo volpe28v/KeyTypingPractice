@@ -11,11 +11,15 @@ import { LevelManager } from '../levels/level-manager';
 // LessonFlowController型の循環依存を避けるためのインターフェース
 interface ILessonFlowController {
     customLessons: import('../types').LessonData[];
+    userFavorites: import('../types').UserFavorite[];
     selectedLessonForMode: { lesson: import('../types').LessonData; index: number } | null;
     customWords: WordData[];
     showLessonModeSelection(index: number): void;
     showCustomLessonSetup(): void;
     loadCustomLessons(): Promise<void>;
+    showPublicLessonBrowser(): Promise<void>;
+    addToFavorites(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<void>;
+    removeFromFavorites(favoriteId: string): Promise<void>;
 }
 
 /**
@@ -319,6 +323,9 @@ export class GameController {
                 const xp = calculateXP(levelIndex, this.gameManager.words.length, accuracyRate);
                 await this.saveXPRecord(levelIndex, this.gameManager.words.length, accuracyRate, xp);
 
+                // 共有レッスンの場合、共有レッスン記録も保存
+                await this.saveSharedLessonRecordIfNeeded(levelIndex, accuracyRate, elapsedTime, this.gameManager.words.length);
+
                 if (this.levelManager && this.levelManager.cleanup) {
                     this.levelManager.cleanup();
                 }
@@ -458,9 +465,19 @@ export class GameController {
 
         const clearButton = recordsSidebar.querySelector('.clear-records-btn');
 
-        const existingRecords = recordsSidebar.querySelectorAll('.level-record');
+        const existingRecords = recordsSidebar.querySelectorAll('.level-record, .sidebar-section-header');
         existingRecords.forEach(record => record.remove());
 
+        const customLessons = this.lessonFlowController?.customLessons || [];
+        const userFavorites = this.lessonFlowController?.userFavorites || [];
+        const user = (window as any).authManager?.getCurrentUser();
+        const currentUserId = user?.uid;
+
+        if (!Array.isArray(customLessons)) {
+            return;
+        }
+
+        // 新しいレッスンを作成ボタン
         const newLessonRecord = document.createElement('div');
         newLessonRecord.className = 'level-record';
 
@@ -474,45 +491,108 @@ export class GameController {
         newLessonRecord.appendChild(newLessonTitle);
         recordsSidebar.insertBefore(newLessonRecord, clearButton);
 
-        const customLessons = this.lessonFlowController?.customLessons || [];
-        if (!Array.isArray(customLessons) || customLessons.length === 0) {
-            return;
+        // マイレッスンセクション（自分が作成したレッスン）後方互換性対応
+        const myLessons = customLessons.filter(l => (l.ownerId || l.userId) === currentUserId);
+        if (myLessons.length > 0) {
+            const sortedMyLessons = [...myLessons].sort((a, b) => Number(b.id) - Number(a.id));
+
+            sortedMyLessons.forEach((lesson) => {
+                const originalIndex = customLessons.findIndex(l => l.id === lesson.id);
+                const levelRecord = this.createLessonRecord(lesson, originalIndex);
+                recordsSidebar.insertBefore(levelRecord, clearButton);
+            });
         }
 
-        const sortedLessons = [...customLessons].sort((a, b) => Number(b.id) - Number(a.id));
+        // お気に入りセクション
+        const favoritesHeader = document.createElement('div');
+        favoritesHeader.className = 'sidebar-section-header';
+        favoritesHeader.textContent = 'お気に入り';
+        recordsSidebar.insertBefore(favoritesHeader, clearButton);
 
-        sortedLessons.forEach((lesson) => {
-            const originalIndex = customLessons.findIndex(l => l.id === lesson.id);
+        // 公開レッスンを探すボタン
+        const browseLessonRecord = document.createElement('div');
+        browseLessonRecord.className = 'level-record';
 
-            const levelRecord = document.createElement('div');
-            levelRecord.className = 'level-record';
-
-            const levelTitle = document.createElement('h3');
-            levelTitle.className = 'level-selector';
-            levelTitle.setAttribute('data-lesson-id', lesson.id);
-            levelTitle.textContent = lesson.name;
-            levelTitle.style.cursor = 'pointer';
-
-            levelTitle.addEventListener('click', () => {
-                if (this.gameManager.gameActive && this.gameManager.timerStarted) {
-                    if (!confirm(`現在のゲームを中断して「${lesson.name}」を開始しますか？`)) {
-                        return;
-                    }
-                }
-                this.lessonFlowController?.showLessonModeSelection(originalIndex);
-            });
-
-            const recordsList = document.createElement('ol');
-            recordsList.id = `lesson${lesson.id}-records`;
-            recordsList.className = 'best-time-display';
-
-            levelRecord.appendChild(levelTitle);
-            levelRecord.appendChild(recordsList);
-
-            recordsSidebar.insertBefore(levelRecord, clearButton);
+        const browseLessonTitle = document.createElement('h3');
+        browseLessonTitle.className = 'level-selector public-lesson-browse-btn';
+        browseLessonTitle.textContent = '🔗 公開レッスンを探す';
+        browseLessonTitle.addEventListener('click', () => {
+            this.lessonFlowController?.showPublicLessonBrowser();
         });
 
+        browseLessonRecord.appendChild(browseLessonTitle);
+        recordsSidebar.insertBefore(browseLessonRecord, clearButton);
+
+        // お気に入りレッスン表示
+        if (userFavorites.length > 0) {
+            userFavorites.forEach((favorite) => {
+                // お気に入りレッスンはcustomLessonsには含まれていないので、
+                // 別途表示する必要があります。ここでは仮のindexを使用
+                const levelRecord = this.createFavoriteLessonRecord(favorite);
+                recordsSidebar.insertBefore(levelRecord, clearButton);
+            });
+        }
+
         this.recordManager.displayBestTimes(customLessons);
+    }
+
+    private createLessonRecord(lesson: import('../types').LessonData, originalIndex: number): HTMLElement {
+        const levelRecord = document.createElement('div');
+        levelRecord.className = 'level-record';
+
+        const levelTitle = document.createElement('h3');
+        levelTitle.className = 'level-selector';
+        levelTitle.setAttribute('data-lesson-id', lesson.id);
+        levelTitle.style.cursor = 'pointer';
+        levelTitle.textContent = lesson.name;
+
+        levelTitle.addEventListener('click', () => {
+            if (this.gameManager.gameActive && this.gameManager.timerStarted) {
+                if (!confirm(`現在のゲームを中断して「${lesson.name}」を開始しますか？`)) {
+                    return;
+                }
+            }
+            this.lessonFlowController?.showLessonModeSelection(originalIndex);
+        });
+
+        const recordsList = document.createElement('ol');
+        recordsList.id = `lesson${lesson.id}-records`;
+        recordsList.className = 'best-time-display';
+
+        levelRecord.appendChild(levelTitle);
+        levelRecord.appendChild(recordsList);
+
+        return levelRecord;
+    }
+
+    private createFavoriteLessonRecord(favorite: import('../types').UserFavorite): HTMLElement {
+        const levelRecord = document.createElement('div');
+        levelRecord.className = 'level-record';
+
+        const levelTitle = document.createElement('h3');
+        levelTitle.className = 'level-selector';
+        levelTitle.style.cursor = 'pointer';
+        levelTitle.innerHTML = `${favorite.lessonName} <span class="lesson-author-tag">(by ${favorite.ownerDisplayName})</span>`;
+
+        levelTitle.addEventListener('click', async () => {
+            if (this.gameManager.gameActive && this.gameManager.timerStarted) {
+                if (!confirm(`現在のゲームを中断して「${favorite.lessonName}」を開始しますか？`)) {
+                    return;
+                }
+            }
+            // お気に入りレッスンの場合、実際のレッスンデータを取得する必要がある
+            // ここでは簡易的にアラートを表示
+            alert('お気に入りレッスンの実装は未完了です。');
+            // TODO: lessonIdからレッスンデータを取得し、showLessonModeSelectionを呼び出す
+        });
+
+        const recordsList = document.createElement('ol');
+        recordsList.className = 'best-time-display';
+
+        levelRecord.appendChild(levelTitle);
+        levelRecord.appendChild(recordsList);
+
+        return levelRecord;
     }
 
     private async saveXPRecord(levelIndex: number, wordCount: number, accuracy: number, xp: number): Promise<void> {
@@ -539,6 +619,34 @@ export class GameController {
         };
 
         await this.storageManager.saveXPRecord(record);
+    }
+
+    private async saveSharedLessonRecordIfNeeded(levelIndex: number, accuracy: number, elapsedTime: number, wordCount: number): Promise<void> {
+        const user = (window as any).authManager?.getCurrentUser();
+        if (!user) return;
+
+        const customLessons = this.lessonFlowController?.customLessons || [];
+        if (!this.gameManager.isCustomLesson ||
+            this.gameManager.currentLessonIndex < 0 ||
+            this.gameManager.currentLessonIndex >= customLessons.length) {
+            return;
+        }
+
+        const lesson = customLessons[this.gameManager.currentLessonIndex];
+        if (!lesson.firestoreId) {
+            return;
+        }
+
+        const record = {
+            userId: user.uid,
+            lessonId: lesson.firestoreId,
+            levelIndex,
+            accuracy,
+            elapsedTime,
+            wordCount
+        };
+
+        await this.storageManager.saveLessonRecord(record);
     }
 
     async updateLeaderboard(): Promise<void> {

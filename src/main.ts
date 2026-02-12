@@ -90,6 +90,11 @@ declare global {
         deleteSelectedLesson?: () => void;
         clearRecords?: () => void;
         replayCurrentWord?: () => void;
+        // Public lesson and favorites functions
+        showPublicLessonBrowser?: () => void;
+        closePublicLessonBrowser?: () => void;
+        addToFavorites?: (lessonId: string, lessonName: string, ownerDisplayName: string) => void;
+        removeFromFavorites?: (favoriteId: string) => void;
     }
 }
 
@@ -204,6 +209,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.deleteSelectedLesson = () => lessonFlowController.deleteSelectedLesson();
     window.clearRecords = () => recordManager.clearRecords(lessonFlowController.customLessons);
     window.replayCurrentWord = () => gameController.replayCurrentWord();
+    // Public lesson and favorites functions
+    window.showPublicLessonBrowser = () => lessonFlowController.showPublicLessonBrowser();
+    window.closePublicLessonBrowser = () => uiManager.hideModal('public-lesson-browser');
+    window.addToFavorites = (lessonId: string, lessonName: string, ownerDisplayName: string) =>
+        lessonFlowController.addToFavorites(lessonId, lessonName, ownerDisplayName);
+    window.removeFromFavorites = (favoriteId: string) =>
+        lessonFlowController.removeFromFavorites(favoriteId);
 });
 
 // window load handler

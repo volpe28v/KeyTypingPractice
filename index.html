@@ -66,7 +66,7 @@
                         <button class="mode-btn save-words-btn" onclick="saveWordsEdit()">保存</button>
                     </div>
                 </div>
-                
+
                 <div class="mode-selection">
                     <h3>学習モード</h3>
                     <div class="mode-buttons">
@@ -78,7 +78,18 @@
                         <button class="mode-btn" data-mode="pronunciation-blind" onclick="startLessonWithMode('pronunciation-blind')">Lv5: 発音（文字数隠し）</button>
                     </div>
                 </div>
-                
+
+                <!-- レッスン別ランキング表示エリア -->
+                <div class="lesson-ranking-section" id="lesson-ranking-section" style="display: none;">
+                    <h3>ランキング</h3>
+                    <div class="lesson-ranking-tabs" id="lesson-ranking-tabs">
+                        <!-- Lv1-Lv5のタブ（JSで動的生成） -->
+                    </div>
+                    <div class="lesson-ranking-list" id="lesson-ranking-list">
+                        <!-- ランキング表示（JSで動的生成） -->
+                    </div>
+                </div>
+
                 <div class="lesson-mode-buttons btn-group">
                     <button class="btn-delete-lesson" onclick="deleteSelectedLesson()">削除</button>
                 </div>
@@ -185,6 +196,17 @@
             <!-- 動的に生成されるレベル記録がここに入ります -->
             
             <button onclick="clearRecords()" class="clear-records-btn">記録をクリア</button>
+        </div>
+    </div>
+
+    <!-- 公開レッスンブラウザ -->
+    <div class="public-lesson-browser" id="public-lesson-browser" style="display: none;">
+        <h2>公開レッスン一覧</h2>
+        <div id="public-lesson-list" class="public-lesson-list">
+            <!-- 動的生成: レッスンカード + お気に入り追加ボタン -->
+        </div>
+        <div class="public-lesson-browser-buttons btn-group">
+            <button class="btn btn-secondary" onclick="closePublicLessonBrowser()">閉じる</button>
         </div>
     </div>
 

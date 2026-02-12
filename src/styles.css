@@ -1775,3 +1775,268 @@ body {
     text-align: center;
     letter-spacing: 1px;
 }
+
+/* ======== 共有レッスン機能 ======== */
+
+/* サイドバーセクション区切り */
+.sidebar-section-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 12px 0 4px 0;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.public-lesson-browse-btn {
+    cursor: pointer;
+    color: var(--color-primary);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.public-lesson-browse-btn:hover {
+    opacity: 1;
+}
+
+.lesson-author-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+/* 公開トグル */
+.publish-toggle {
+    text-align: center;
+    margin: 16px 0;
+}
+
+.btn-publish {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 2px solid var(--color-primary);
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-publish:hover {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.btn-publish.published {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: #ffffff;
+}
+
+/* 公開レッスンブラウザモーダル */
+.public-lesson-browser {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1001;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.public-lesson-browser h2 {
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.public-lesson-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 50vh;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.public-lesson-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--bg-primary);
+    transition: background 0.2s;
+}
+
+.public-lesson-card:hover {
+    background: rgba(84, 110, 122, 0.06);
+}
+
+.public-lesson-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.public-lesson-card-header h3 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.public-lesson-author {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.public-lesson-card-info {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.public-lesson-card-preview {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.public-lesson-import-btn {
+    padding: 6px 16px;
+    background: var(--color-success);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.public-lesson-import-btn:hover {
+    opacity: 0.9;
+}
+
+.public-lesson-imported {
+    color: var(--color-success);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.public-lesson-browser-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* レッスン別ランキング */
+.lesson-ranking-section {
+    margin: 16px 0;
+    padding: 16px;
+    background: rgba(84, 110, 122, 0.06);
+    border-radius: 8px;
+}
+
+.lesson-ranking-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.lesson-ranking-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+}
+
+.lesson-ranking-tab {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.lesson-ranking-tab:hover {
+    background: rgba(84, 110, 122, 0.06);
+}
+
+.lesson-ranking-tab.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.lesson-ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lesson-ranking-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.lesson-ranking-row:hover {
+    background: rgba(84, 110, 122, 0.06);
+}
+
+.lesson-ranking-row-me {
+    background: rgba(84, 110, 122, 0.1);
+    font-weight: 700;
+}
+
+.lesson-ranking-rank {
+    width: 28px;
+    text-align: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.lesson-ranking-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lesson-ranking-score {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-left: 8px;
+    text-align: right;
+}
+
+.lesson-ranking-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 12px 0;
+}

@@ -1,22 +1,23 @@
 import { db } from './firebase.ts';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  setDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
   orderBy,
+  limit,
   serverTimestamp,
   DocumentReference,
   QuerySnapshot,
   DocumentData
 } from 'firebase/firestore';
-import type { LessonData, RecordData, XPRecord } from './types';
+import type { LessonData, RecordData, XPRecord, UserFavorite, LessonRecord, LessonRankingEntry } from './types';
 
 export class FirestoreManager {
   public userId: string | null;
@@ -41,7 +42,7 @@ export class FirestoreManager {
   }
 
   // カスタムレッスンの保存
-  async saveCustomLesson(lesson: LessonData): Promise<string | null> {
+  async saveCustomLesson(lesson: LessonData, displayName: string): Promise<string | null> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot save lesson (offline or not authenticated)');
       return null;
@@ -50,7 +51,8 @@ export class FirestoreManager {
     try {
       const lessonData = {
         ...lesson,
-        userId: this.userId,
+        ownerId: this.userId,
+        ownerDisplayName: displayName,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
@@ -64,7 +66,7 @@ export class FirestoreManager {
     }
   }
 
-  // カスタムレッスンの読み込み
+  // カスタムレッスンの読み込み（後方互換性対応）
   async loadCustomLessons(): Promise<LessonData[]> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot load lessons (offline or not authenticated)');
@@ -72,28 +74,41 @@ export class FirestoreManager {
     }
 
     try {
-      const q = query(
-        collection(db, 'lessons'),
-        where('userId', '==', this.userId),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
-      const lessons: LessonData[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const lessonData = doc.data();
-        lessons.push({
-          firestoreId: doc.id,
-          id: lessonData.id,
-          name: lessonData.name,
-          words: lessonData.words,
-          userId: lessonData.userId
-        } as LessonData);
+      // 後方互換性: ownerIdとuserIdの両方でクエリして統合
+      const [ownerIdResults, userIdResults] = await Promise.all([
+        // 新しいレッスン: ownerIdで検索
+        getDocs(query(
+          collection(db, 'lessons'),
+          where('ownerId', '==', this.userId),
+          orderBy('createdAt', 'desc')
+        )).catch(() => ({ docs: [] as any[] })),
+        // 古いレッスン: userIdで検索
+        getDocs(query(
+          collection(db, 'lessons'),
+          where('userId', '==', this.userId),
+          orderBy('createdAt', 'desc')
+        )).catch(() => ({ docs: [] as any[] }))
+      ]);
+
+      // 統合してfirestoreIdでDuplicate除去
+      const lessonsMap = new Map<string, LessonData>();
+      [ownerIdResults, userIdResults].forEach((snapshot: QuerySnapshot<DocumentData> | { docs: any[] }) => {
+        snapshot.docs.forEach((doc) => {
+          if (!lessonsMap.has(doc.id)) {
+            const data = doc.data();
+            lessonsMap.set(doc.id, {
+              firestoreId: doc.id,
+              id: data.id,
+              name: data.name,
+              words: data.words,
+              ownerId: data.ownerId || data.userId,  // フォールバック
+              ownerDisplayName: data.ownerDisplayName || 'Unknown'
+            } as LessonData);
+          }
+        });
       });
 
-
-      return lessons;
+      return Array.from(lessonsMap.values());
     } catch (error) {
       console.error('❌ Error loading lessons from Firestore:', error);
       return [];
@@ -101,7 +116,11 @@ export class FirestoreManager {
   }
 
   // カスタムレッスンの更新
-  async updateCustomLesson(lessonId: string, updates: Partial<LessonData>): Promise<boolean> {
+  async updateCustomLesson(
+    lessonId: string,
+    updates: Partial<LessonData>,
+    displayName?: string  // 新規追加（オプショナル）
+  ): Promise<boolean> {
     if (!this.isOnline || !this.userId) {
       console.warn('⚠️ Cannot update lesson (offline or not authenticated)');
       return false;
@@ -109,11 +128,18 @@ export class FirestoreManager {
 
     try {
       const lessonRef = doc(db, 'lessons', lessonId);
-      await updateDoc(lessonRef, {
+      const updateData: any = {
         ...updates,
         updatedAt: serverTimestamp()
-      });
-      
+      };
+
+      // displayName が渡された場合のみ ownerDisplayName を更新
+      if (displayName) {
+        updateData.ownerDisplayName = displayName;
+      }
+
+      await updateDoc(lessonRef, updateData);
+
 
       return true;
     } catch (error) {
@@ -348,5 +374,204 @@ export class FirestoreManager {
       userId: this.userId,
       canUseFirestore: this.isOnline && !!this.userId
     };
+  }
+
+  // 全公開レッスンを取得（自分のレッスンを除く）
+  async loadAllPublicLessons(): Promise<LessonData[]> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot load public lessons (offline or not authenticated)');
+      return [];
+    }
+
+    try {
+      const q = query(
+        collection(db, 'lessons'),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
+
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const lessons: LessonData[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // 自分のレッスンは除外
+        if (data.ownerId !== this.userId) {
+          lessons.push({
+            firestoreId: doc.id,
+            id: data.id,
+            name: data.name,
+            words: data.words,
+            ownerId: data.ownerId,
+            ownerDisplayName: data.ownerDisplayName || 'Unknown'  // フォールバック追加
+          } as LessonData);
+        }
+      });
+
+      return lessons;
+    } catch (error) {
+      console.error('❌ Error loading public lessons:', error);
+      return [];
+    }
+  }
+
+  // お気に入りに追加
+  async addFavorite(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<string | null> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot add favorite (offline or not authenticated)');
+      return null;
+    }
+
+    try {
+      const favoriteData = {
+        userId: this.userId,
+        lessonId: lessonId,
+        lessonName: lessonName,
+        ownerDisplayName: ownerDisplayName,
+        addedAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'userFavorites'), favoriteData);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error adding favorite:', error);
+      return null;
+    }
+  }
+
+  // お気に入りから削除
+  async removeFavorite(favoriteId: string): Promise<boolean> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot remove favorite (offline or not authenticated)');
+      return false;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'userFavorites', favoriteId));
+      return true;
+    } catch (error) {
+      console.error('❌ Error removing favorite:', error);
+      return false;
+    }
+  }
+
+  // 自分のお気に入り一覧を取得
+  async loadUserFavorites(): Promise<UserFavorite[]> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot load favorites (offline or not authenticated)');
+      return [];
+    }
+
+    try {
+      const q = query(
+        collection(db, 'userFavorites'),
+        where('userId', '==', this.userId),
+        orderBy('addedAt', 'desc')
+      );
+
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const favorites: UserFavorite[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        favorites.push({
+          firestoreId: doc.id,
+          userId: data.userId,
+          lessonId: data.lessonId,
+          lessonName: data.lessonName,
+          ownerDisplayName: data.ownerDisplayName,
+          addedAt: data.addedAt
+        });
+      });
+
+      return favorites;
+    } catch (error) {
+      console.error('❌ Error loading favorites:', error);
+      return [];
+    }
+  }
+
+  // レッスン記録を保存
+  async saveLessonRecord(record: LessonRecord): Promise<string | null> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot save lesson record (offline or not authenticated)');
+      return null;
+    }
+
+    try {
+      const recordData = {
+        ...record,
+        userId: this.userId,
+        createdAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'lessonRecords'), recordData);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error saving lesson record:', error);
+      return null;
+    }
+  }
+
+  // レッスン別・モード別ランキングを取得
+  async loadLessonRanking(lessonId: string, levelIndex: number): Promise<LessonRankingEntry[]> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot load lesson ranking (offline or not authenticated)');
+      return [];
+    }
+
+    try {
+      const q = query(
+        collection(db, 'lessonRecords'),
+        where('lessonId', '==', lessonId),
+        where('levelIndex', '==', levelIndex)
+      );
+
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+      const recordsMap = new Map<string, LessonRecord>();
+
+      // ユーザーごとに最高記録を抽出（accuracy優先、同率ならelapsedTime優先）
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const record: LessonRecord = {
+          userId: data.userId,
+          lessonId: data.lessonId,
+          levelIndex: data.levelIndex,
+          accuracy: data.accuracy,
+          elapsedTime: data.elapsedTime,
+          wordCount: data.wordCount,
+          createdAt: data.createdAt
+        };
+
+        const existing = recordsMap.get(record.userId);
+        if (!existing ||
+            record.accuracy > existing.accuracy ||
+            (record.accuracy === existing.accuracy && record.elapsedTime < existing.elapsedTime)) {
+          recordsMap.set(record.userId, record);
+        }
+      });
+
+      // ランキングエントリに変換
+      const rankings: LessonRankingEntry[] = Array.from(recordsMap.values()).map(record => ({
+        userId: record.userId,
+        displayName: '', // displayNameは後で取得する必要がある（ユーザー情報から）
+        accuracy: record.accuracy,
+        elapsedTime: record.elapsedTime
+      }));
+
+      // ソート：accuracy降順、同率ならelapsedTime昇順
+      rankings.sort((a, b) => {
+        if (b.accuracy !== a.accuracy) {
+          return b.accuracy - a.accuracy;
+        }
+        return a.elapsedTime - b.elapsedTime;
+      });
+
+      // 上位10件を返す
+      return rankings.slice(0, 10);
+    } catch (error) {
+      console.error('❌ Error loading lesson ranking:', error);
+      return [];
+    }
   }
 }

@@ -1,4 +1,4 @@
-import type { RankingEntry } from '../types';
+import type { RankingEntry, LessonRankingEntry } from '../types';
 
 /**
  * UIManager - UI操作とDOM要素管理クラス
@@ -501,6 +501,65 @@ export class UIManager {
             }
         } else if (currentUserRank === 1) {
             messageEl.textContent = '🎉 1位をキープ中！';
+        }
+    }
+
+    // レッスン別ランキング更新
+    updateLessonRanking(rankings: LessonRankingEntry[], currentUserId: string, containerElement: HTMLElement): void {
+        if (!containerElement) return;
+
+        containerElement.innerHTML = '';
+
+        if (rankings.length === 0) {
+            containerElement.innerHTML = '<div class="lesson-ranking-empty">まだ記録がありません</div>';
+            return;
+        }
+
+        // 上位5名を表示
+        const top5 = rankings.slice(0, 5);
+        let currentUserRank = -1;
+
+        top5.forEach((entry, index) => {
+            const rank = index + 1;
+            const row = document.createElement('div');
+            const isCurrentUser = entry.userId === currentUserId;
+            row.className = `lesson-ranking-row${isCurrentUser ? ' lesson-ranking-row-me' : ''}`;
+
+            const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+
+            row.innerHTML = `
+                <span class="lesson-ranking-rank">${medalEmoji}</span>
+                <span class="lesson-ranking-name">${entry.displayName}${isCurrentUser ? ' ←' : ''}</span>
+                <span class="lesson-ranking-score">${entry.accuracy}% / ${this.formatTime(entry.elapsedTime)}</span>
+            `;
+            containerElement.appendChild(row);
+
+            if (isCurrentUser) {
+                currentUserRank = rank;
+            }
+        });
+
+        // 自分が5位以内にいない場合、ランキング内の位置を探す
+        if (currentUserRank === -1) {
+            const fullRankIndex = rankings.findIndex(e => e.userId === currentUserId);
+            if (fullRankIndex >= 0) {
+                currentUserRank = fullRankIndex + 1;
+                const entry = rankings[fullRankIndex];
+                const row = document.createElement('div');
+                row.className = 'lesson-ranking-row lesson-ranking-row-me';
+                row.innerHTML = `
+                    <span class="lesson-ranking-rank">${currentUserRank}.</span>
+                    <span class="lesson-ranking-name">${entry.displayName} ←</span>
+                    <span class="lesson-ranking-score">${entry.accuracy}% / ${this.formatTime(entry.elapsedTime)}</span>
+                `;
+
+                // 区切り線を追加
+                const separator = document.createElement('div');
+                separator.className = 'leaderboard-separator';
+                separator.textContent = '···';
+                containerElement.appendChild(separator);
+                containerElement.appendChild(row);
+            }
         }
     }
 }
