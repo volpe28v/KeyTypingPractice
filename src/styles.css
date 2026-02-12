@@ -1986,6 +1986,59 @@ body {
     font-weight: 600;
 }
 
+/* メダル色: 薄い背景色 + 太めボーダー + 高コントラスト文字色 */
+.lesson-ranking-tab.medal-gold,
+.lesson-ranking-tab.medal-silver,
+.lesson-ranking-tab.medal-bronze,
+.lesson-ranking-tab.medal-participated {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.lesson-ranking-tab.medal-gold {
+    background: rgba(245, 166, 35, 0.1);
+    border-color: #D4911E;
+    color: #B37A12;
+}
+.lesson-ranking-tab.medal-gold.active {
+    background: #D4911E;
+    border-color: #D4911E;
+    color: #fff;
+}
+
+.lesson-ranking-tab.medal-silver {
+    background: rgba(158, 158, 158, 0.1);
+    border-color: #9E9E9E;
+    color: #757575;
+}
+.lesson-ranking-tab.medal-silver.active {
+    background: #9E9E9E;
+    border-color: #9E9E9E;
+    color: #fff;
+}
+
+.lesson-ranking-tab.medal-bronze {
+    background: rgba(162, 117, 80, 0.1);
+    border-color: #A27550;
+    color: #7B5B3A;
+}
+.lesson-ranking-tab.medal-bronze.active {
+    background: #A27550;
+    border-color: #A27550;
+    color: #fff;
+}
+
+.lesson-ranking-tab.medal-participated {
+    background: rgba(84, 110, 122, 0.08);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.lesson-ranking-tab.medal-participated.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
 .lesson-ranking-list {
     display: flex;
     flex-direction: column;
