@@ -170,7 +170,7 @@ export class MyLesson implements LessonSource {
     }
 
     showRanking(): boolean {
-        return false;
+        return true;
     }
 
     getDisplayInfo() {
