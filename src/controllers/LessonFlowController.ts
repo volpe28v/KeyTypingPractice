@@ -120,11 +120,24 @@ export class LessonFlowController {
             editToggle.style.display = this.selectedLessonSource.canEdit() ? 'block' : 'none';
         }
 
-        // ポリモーフィズムでお気に入り削除ボタンの表示/非表示を制御
+        // ポリモーフィズムで削除ボタンの表示とラベルを制御
         const displayInfo = this.selectedLessonSource.getDisplayInfo();
-        const removeFavoriteBtn = document.getElementById('remove-favorite-btn');
-        if (removeFavoriteBtn) {
-            removeFavoriteBtn.style.display = displayInfo.showRemoveFavoriteButton ? 'block' : 'none';
+        const lessonDeleteBtn = document.getElementById('lesson-delete-btn') as HTMLButtonElement;
+        if (lessonDeleteBtn) {
+            if (displayInfo.showRemoveFavoriteButton) {
+                // お気に入りレッスン: 「お気に入りから削除」として表示
+                lessonDeleteBtn.textContent = 'お気に入りから削除';
+                lessonDeleteBtn.onclick = () => this.removeFavoriteFromModal();
+                lessonDeleteBtn.style.display = '';
+            } else if (this.selectedLessonSource.canEdit()) {
+                // マイレッスン: 通常の「削除」として表示
+                lessonDeleteBtn.textContent = '削除';
+                lessonDeleteBtn.onclick = () => this.deleteSelectedLesson();
+                lessonDeleteBtn.style.display = '';
+            } else {
+                // 公開レッスン等: 削除ボタン非表示
+                lessonDeleteBtn.style.display = 'none';
+            }
         }
 
         // ポリモーフィズムでランキングの表示/非表示を制御
@@ -140,13 +153,15 @@ export class LessonFlowController {
     }
 
     // レッスン別ランキングのタブセットアップ
-    private setupLessonRankingTabs(lessonId: string): void {
+    private async setupLessonRankingTabs(lessonId: string): Promise<void> {
         const tabsEl = document.getElementById('lesson-ranking-tabs');
         if (!tabsEl) return;
 
         tabsEl.innerHTML = '';
         const modes = ['Lv1', 'Lv2', 'Lv3', 'Lv4', 'Lv5'];
 
+        // タブを先に作成して表示
+        const tabs: HTMLButtonElement[] = [];
         modes.forEach((modeName, index) => {
             const levelIndex = index + 1; // 1-5
             const tab = document.createElement('button');
@@ -158,10 +173,35 @@ export class LessonFlowController {
                 this.loadLessonRanking(lessonId, levelIndex);
             };
             tabsEl.appendChild(tab);
+            tabs.push(tab);
         });
 
         // 初期表示: Lv1
         this.loadLessonRanking(lessonId, 1);
+
+        // 全Lvのランキングを並列取得してメダル色を付与
+        const user = (window as any).authManager?.getCurrentUser();
+        if (!user) return;
+
+        const rankingPromises = modes.map((_, index) =>
+            this.storageManager.loadLessonRanking(lessonId, index + 1)
+        );
+        const allRankings = await Promise.all(rankingPromises);
+
+        allRankings.forEach((rankings, index) => {
+            const myRank = rankings.findIndex(r => r.userId === user.uid);
+            if (myRank === -1) return; // 記録なし
+
+            if (myRank === 0) {
+                tabs[index].classList.add('medal-gold');
+            } else if (myRank === 1) {
+                tabs[index].classList.add('medal-silver');
+            } else if (myRank === 2) {
+                tabs[index].classList.add('medal-bronze');
+            } else {
+                tabs[index].classList.add('medal-participated');
+            }
+        });
     }
 
     toggleWordsEdit(): void {
