@@ -120,3 +120,101 @@ export interface LessonRankingEntry {
   accuracy: number;
   elapsedTime: number;
 }
+
+// レッスンソースインターフェース（Strategy パターン）
+export interface LessonSource {
+    // レッスンデータの取得
+    getLesson(): LessonData;
+
+    // 記録キーの生成（レベルごとに異なる）
+    getRecordKey(levelIndex: number): string;
+
+    // レッスン記録をlessonRecordsに保存するか
+    shouldSaveLessonRecord(): boolean;
+
+    // 編集可能か
+    canEdit(): boolean;
+
+    // ランキングを表示するか
+    showRanking(): boolean;
+
+    // 表示情報（削除ボタン等の制御用）
+    getDisplayInfo(): {
+        showRemoveFavoriteButton: boolean;
+        favoriteId?: string;
+    };
+}
+
+// マイレッスンクラス
+export class MyLesson implements LessonSource {
+    constructor(
+        private lesson: LessonData,
+        private index: number
+    ) {}
+
+    getLesson(): LessonData {
+        return this.lesson;
+    }
+
+    getRecordKey(levelIndex: number): string {
+        return `lesson${this.lesson.id}_${levelIndex}`;
+    }
+
+    shouldSaveLessonRecord(): boolean {
+        // マイレッスンでも firestoreId がある場合は公開レッスンとして保存
+        return !!this.lesson.firestoreId;
+    }
+
+    canEdit(): boolean {
+        return true;
+    }
+
+    showRanking(): boolean {
+        return false;
+    }
+
+    getDisplayInfo() {
+        return {
+            showRemoveFavoriteButton: false
+        };
+    }
+
+    getIndex(): number {
+        return this.index;
+    }
+}
+
+// お気に入りレッスンクラス
+export class FavoriteLesson implements LessonSource {
+    constructor(
+        private lesson: LessonData,
+        private favorite: UserFavorite
+    ) {}
+
+    getLesson(): LessonData {
+        return this.lesson;
+    }
+
+    getRecordKey(levelIndex: number): string {
+        return `favLesson${this.lesson.firestoreId}_${levelIndex}`;
+    }
+
+    shouldSaveLessonRecord(): boolean {
+        return true; // お気に入りレッスンは必ず保存
+    }
+
+    canEdit(): boolean {
+        return false;
+    }
+
+    showRanking(): boolean {
+        return true;
+    }
+
+    getDisplayInfo() {
+        return {
+            showRemoveFavoriteButton: true,
+            favoriteId: this.favorite.firestoreId
+        };
+    }
+}

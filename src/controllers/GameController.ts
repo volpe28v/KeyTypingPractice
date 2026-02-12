@@ -1,4 +1,4 @@
-import { type WordData, type LevelData, type XPRecord, MODE_TO_LEVEL, calculateXP, getWeekKey } from '../types';
+import { type WordData, type LevelData, type XPRecord, MODE_TO_LEVEL, calculateXP, getWeekKey, FavoriteLesson, MyLesson } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
@@ -12,9 +12,11 @@ import { LevelManager } from '../levels/level-manager';
 interface ILessonFlowController {
     customLessons: import('../types').LessonData[];
     userFavorites: import('../types').UserFavorite[];
-    selectedLessonForMode: { lesson: import('../types').LessonData; index: number } | null;
+    selectedLessonSource: import('../types').LessonSource | null;
     customWords: WordData[];
-    showLessonModeSelection(index: number): void;
+    storageManager: StorageManager;
+    showLessonModeSelection(): void;
+    selectLesson(lessonSource: import('../types').LessonSource): void;
     showCustomLessonSetup(): void;
     loadCustomLessons(): Promise<void>;
     showPublicLessonBrowser(): Promise<void>;
@@ -305,13 +307,16 @@ export class GameController {
                     ? 100
                     : Math.round((totalTypesCount / (totalTypesCount + this.gameManager.mistakeCount)) * 100);
 
-                const customLessons = this.lessonFlowController?.customLessons || [];
-                if (this.gameManager.isCustomLesson &&
-                    this.gameManager.currentLessonIndex >= 0 &&
-                    this.gameManager.currentLessonIndex < customLessons.length) {
-                    const lessonId = customLessons[this.gameManager.currentLessonIndex].id;
-                    const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
-                    await this.recordManager.addRecord(`lesson${lessonId}_${levelIndex}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                if (this.gameManager.isCustomLesson) {
+                    const lessonSource = this.lessonFlowController?.selectedLessonSource;
+                    if (lessonSource) {
+                        const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
+
+                        // ポリモーフィズムで記録キーを取得（条件分岐なし）
+                        const recordKey = lessonSource.getRecordKey(levelIndex);
+
+                        await this.recordManager.addRecord(recordKey, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                    }
                 } else {
                     await this.recordManager.addRecord(`level${this.gameManager.currentLevel}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
                 }
@@ -399,9 +404,16 @@ export class GameController {
         }
 
         const lfc = this.lessonFlowController;
-        if (lfc?.selectedLessonForMode && lfc.selectedLessonForMode.lesson) {
-            const { lesson, index } = lfc.selectedLessonForMode;
-            this.gameManager.currentLessonIndex = index;
+        if (lfc?.selectedLessonSource) {
+            const lesson = lfc.selectedLessonSource.getLesson();
+            
+            // MyLesson の場合のみ index を設定
+            if (lfc.selectedLessonSource instanceof MyLesson) {
+                this.gameManager.currentLessonIndex = lfc.selectedLessonSource.getIndex();
+            } else {
+                this.gameManager.currentLessonIndex = -1;
+            }
+            
             lfc.customWords = lesson.words;
             this.gameManager.isCustomLesson = true;
 
@@ -448,11 +460,13 @@ export class GameController {
         this.updateLeaderboard();
 
         const lfc = this.lessonFlowController;
-        if (lfc?.selectedLessonForMode && lfc.selectedLessonForMode.index !== undefined) {
-            lfc.showLessonModeSelection(lfc.selectedLessonForMode.index);
+        if (lfc?.selectedLessonSource) {
+            lfc.showLessonModeSelection();
         } else {
             if (customLessons.length > 0) {
-                lfc?.showLessonModeSelection(0);
+                const firstLesson = customLessons[0];
+                const lessonSource = new MyLesson(firstLesson, 0);
+                lfc?.selectLesson(lessonSource);
             } else {
                 lfc?.showCustomLessonSetup();
             }
@@ -552,7 +566,8 @@ export class GameController {
                     return;
                 }
             }
-            this.lessonFlowController?.showLessonModeSelection(originalIndex);
+            const lessonSource = new MyLesson(lesson, originalIndex);
+            this.lessonFlowController?.selectLesson(lessonSource);
         });
 
         const recordsList = document.createElement('ol');
@@ -580,10 +595,19 @@ export class GameController {
                     return;
                 }
             }
-            // お気に入りレッスンの場合、実際のレッスンデータを取得する必要がある
-            // ここでは簡易的にアラートを表示
-            alert('お気に入りレッスンの実装は未完了です。');
-            // TODO: lessonIdからレッスンデータを取得し、showLessonModeSelectionを呼び出す
+
+            // FavoriteLesson インスタンスを作成
+            const lesson = await this.lessonFlowController!.storageManager.loadLessonById(favorite.lessonId);
+
+            if (!lesson) {
+                alert('レッスンデータの取得に失敗しました。');
+                return;
+            }
+
+            const lessonSource = new FavoriteLesson(lesson, favorite);
+
+            // LessonSource を使ってレッスンを選択
+            this.lessonFlowController?.selectLesson(lessonSource);
         });
 
         const recordsList = document.createElement('ol');
@@ -599,12 +623,11 @@ export class GameController {
         const user = (window as any).authManager?.getCurrentUser();
         if (!user) return;
 
-        const customLessons = this.lessonFlowController?.customLessons || [];
+        const lessonSource = this.lessonFlowController?.selectedLessonSource;
         let lessonId = '';
-        if (this.gameManager.isCustomLesson &&
-            this.gameManager.currentLessonIndex >= 0 &&
-            this.gameManager.currentLessonIndex < customLessons.length) {
-            lessonId = customLessons[this.gameManager.currentLessonIndex].id;
+        if (this.gameManager.isCustomLesson && lessonSource) {
+            const lesson = lessonSource.getLesson();
+            lessonId = lesson.firestoreId || lesson.id;
         }
 
         const record: XPRecord = {
@@ -625,14 +648,17 @@ export class GameController {
         const user = (window as any).authManager?.getCurrentUser();
         if (!user) return;
 
-        const customLessons = this.lessonFlowController?.customLessons || [];
-        if (!this.gameManager.isCustomLesson ||
-            this.gameManager.currentLessonIndex < 0 ||
-            this.gameManager.currentLessonIndex >= customLessons.length) {
+        const lessonSource = this.lessonFlowController?.selectedLessonSource;
+        if (!this.gameManager.isCustomLesson || !lessonSource) {
             return;
         }
 
-        const lesson = customLessons[this.gameManager.currentLessonIndex];
+        // ポリモーフィズムで判定（条件分岐なし）
+        if (!lessonSource.shouldSaveLessonRecord()) {
+            return;
+        }
+
+        const lesson = lessonSource.getLesson();
         if (!lesson.firestoreId) {
             return;
         }

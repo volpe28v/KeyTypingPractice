@@ -281,6 +281,23 @@ export class StorageManager {
         }
     }
 
+    /**
+     * レッスンIDからレッスンデータを取得
+     */
+    async loadLessonById(lessonId: string): Promise<LessonData | null> {
+        if (!this.firestoreManager) {
+            console.warn('⚠️ Firestore not connected. Please login first.');
+            return null;
+        }
+
+        try {
+            return await this.firestoreManager.loadLessonById(lessonId);
+        } catch (error) {
+            console.error('❌ Error loading lesson by ID:', error);
+            return null;
+        }
+    }
+
     // お気に入りに追加
     async addFavorite(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<boolean> {
         if (!this.firestoreManager) {

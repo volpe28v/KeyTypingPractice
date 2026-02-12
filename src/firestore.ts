@@ -415,6 +415,39 @@ export class FirestoreManager {
     }
   }
 
+  /**
+   * レッスンIDからレッスンデータを取得
+   */
+  async loadLessonById(lessonId: string): Promise<LessonData | null> {
+    if (!this.isOnline || !this.userId) {
+      console.warn('⚠️ Cannot load lesson (offline or not authenticated)');
+      return null;
+    }
+
+    try {
+      const lessonRef = doc(db, 'lessons', lessonId);
+      const lessonDoc = await getDoc(lessonRef);
+
+      if (!lessonDoc.exists()) {
+        console.warn('⚠️ Lesson not found:', lessonId);
+        return null;
+      }
+
+      const data = lessonDoc.data();
+      return {
+        firestoreId: lessonDoc.id,
+        id: data.id,
+        name: data.name,
+        words: data.words,
+        ownerId: data.ownerId || data.userId,
+        ownerDisplayName: data.ownerDisplayName || 'Unknown'
+      } as LessonData;
+    } catch (error) {
+      console.error('❌ Error loading lesson by ID:', error);
+      return null;
+    }
+  }
+
   // お気に入りに追加
   async addFavorite(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<string | null> {
     if (!this.isOnline || !this.userId) {

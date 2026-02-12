@@ -19,6 +19,7 @@ import { LessonFlowController } from './controllers/LessonFlowController.ts';
 // Other imports
 import { InputHandler } from './InputHandler.ts';
 import { setupWindowProxies } from './windowProxies.ts';
+import { MyLesson } from './types.ts';
 
 // Level imports
 import { LevelManager } from './levels/level-manager.ts';
@@ -169,11 +170,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // データ読み込み後に最新レッスンを自動選択
             if (lessonFlowController.customLessons.length > 0) {
-                const newestLesson = lessonFlowController.customLessons.reduce((max, lesson, index, array) =>
+                const newestLessonIndex = lessonFlowController.customLessons.reduce((max, lesson, index, array) =>
                     lesson.id > array[max].id ? index : max, 0
                 );
+                const newestLesson = lessonFlowController.customLessons[newestLessonIndex];
                 setTimeout(() => {
-                    lessonFlowController.showLessonModeSelection(newestLesson);
+                    const lessonSource = new MyLesson(newestLesson, newestLessonIndex);
+                    lessonFlowController.selectLesson(lessonSource);
                 }, 100);
             }
         } else {
