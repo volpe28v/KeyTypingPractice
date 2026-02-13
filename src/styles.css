@@ -15,7 +15,12 @@
     --color-success: #66bb6a; /* 控えめなグリーン */
     --color-danger: #ef5350; /* 控えめな赤 */
     --color-warning: #ffa726; /* オレンジ系の警告色 */
-    
+
+    /* レベル別カラー - ランキングパレットと調和 */
+    --level-beginner: #507B6C;
+    --level-intermediate: #587590;
+    --level-advanced: #8F6D4D;
+
     /* 文字色 - グレースケール */
     --text-primary: #37474f; /* 読みやすいダークグレー */
     --text-secondary: #607d8b; /* ミディアムブルーグレー */
@@ -1210,17 +1215,17 @@ body {
 /* レベル別の色分け */
 .mode-btn[data-mode="vocabulary-learning"],
 .mode-btn[data-mode="progressive"] {
-    background: #4CAF50; /* 初級: 緑 */
+    background: var(--level-beginner); /* 初級: ミュートセージ */
 }
 
 .mode-btn[data-mode="pronunciation-meaning"],
 .mode-btn[data-mode="pronunciation-only"] {
-    background: #2196F3; /* 中級: 青 */
+    background: var(--level-intermediate); /* 中級: スレートブルー */
 }
 
 .mode-btn[data-mode="japanese-reading"],
 .mode-btn[data-mode="pronunciation-blind"] {
-    background: #FF6B6B; /* 上級: 赤 */
+    background: var(--level-advanced); /* 上級: コッパーブラウン */
 }
 
 
@@ -1230,8 +1235,10 @@ body {
 }
 
 .mode-btn.selected {
-    background: var(--color-success);
+    outline: 3px solid rgba(255, 255, 255, 0.9);
+    outline-offset: -1px;
     box-shadow: var(--shadow-medium);
+    filter: brightness(0.85);
 }
 
 /* モードボタン内の記録表示 */
@@ -1244,7 +1251,6 @@ body {
 
 /* 正答率100%達成ボタン */
 .mode-btn.mode-btn-perfect {
-    box-shadow: 0 0 0 3px var(--color-success), var(--shadow-medium);
     position: relative;
 }
 
@@ -1261,6 +1267,11 @@ body {
     box-shadow: var(--shadow-medium);
     transform: translateY(-2px);
     filter: brightness(1.1);
+}
+
+.mode-btn.selected:hover {
+    filter: brightness(0.92);
+    transform: translateY(-1px);
 }
 
 /* 削除ボタン - 目立たないスタイル */
