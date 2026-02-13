@@ -711,6 +711,7 @@ export class GameController {
 
         const record = {
             userId: user.uid,
+            displayName: user.displayName || 'Unknown',
             lessonId: lesson.firestoreId,
             levelIndex,
             accuracy,

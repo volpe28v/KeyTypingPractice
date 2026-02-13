@@ -105,6 +105,7 @@ export interface UserFavorite {
 export interface LessonRecord {
   firestoreId?: string;
   userId: string;
+  displayName: string;
   lessonId: string;
   levelIndex: number;
   accuracy: number;

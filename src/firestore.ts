@@ -568,6 +568,7 @@ export class FirestoreManager {
         const data = doc.data();
         const record: LessonRecord = {
           userId: data.userId,
+          displayName: data.displayName || 'Unknown',
           lessonId: data.lessonId,
           levelIndex: data.levelIndex,
           accuracy: data.accuracy,
@@ -587,7 +588,7 @@ export class FirestoreManager {
       // ランキングエントリに変換
       const rankings: LessonRankingEntry[] = Array.from(recordsMap.values()).map(record => ({
         userId: record.userId,
-        displayName: '', // displayNameは後で取得する必要がある（ユーザー情報から）
+        displayName: record.displayName || 'Unknown',
         accuracy: record.accuracy,
         elapsedTime: record.elapsedTime
       }));
