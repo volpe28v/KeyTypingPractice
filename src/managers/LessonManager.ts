@@ -58,20 +58,24 @@ export class LessonManager {
             finalLessonName = `${words[0].word} - ${words[0].meaning}`;
         }
         
+        // ユーザー情報を取得
+        const user = (window as any).authManager?.getCurrentUser();
+        const displayName = user?.displayName || 'Unknown';
+
         // 新しいレッスンオブジェクトを作成
         const newLesson = {
             id: Date.now().toString(), // 一意のID
             name: finalLessonName,
             words: words,
-            createdAt: new Date().toLocaleString()
+            createdAt: new Date().toLocaleString(),
+            ownerId: user?.uid,
+            ownerDisplayName: displayName
         };
-        
+
         // レッスンリストに追加
         customLessons.push(newLesson);
 
         // ローカルストレージに保存
-        const user = (window as any).authManager?.getCurrentUser();
-        const displayName = user?.displayName || 'Unknown';
         this.storageManager.saveCustomLessons(customLessons, displayName);
 
         // サイドバーのレッスン一覧を更新

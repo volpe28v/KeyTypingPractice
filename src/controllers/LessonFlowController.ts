@@ -453,7 +453,15 @@ export class LessonFlowController {
             (document.getElementById('custom-words-input') as HTMLTextAreaElement).value = '';
 
             this.uiManager.hideModal('custom-lesson-setup');
-            this.gameController?.backToTitle();
+
+            // 追加したレッスンを選択状態にする
+            const newIndex = this.customLessons.indexOf(newLesson);
+            if (newIndex >= 0) {
+                const lessonSource = new MyLesson(newLesson, newIndex);
+                this.selectLesson(lessonSource);
+            } else {
+                this.gameController?.backToTitle();
+            }
         }
     }
 
