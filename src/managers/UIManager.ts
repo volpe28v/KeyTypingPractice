@@ -350,6 +350,13 @@ export class UIManager {
 
     // フォーカス管理のセットアップ
     setupFocusManagement(): void {
+        // replay-audio-btn がフォーカスを奪わないようにする
+        if (this.replayAudioBtn) {
+            this.replayAudioBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+            });
+        }
+
         document.addEventListener('click', (e) => {
             if ((window as any).gameActive && this.wordInput && !this.wordInput.disabled) {
                 const clickedElement = e.target as HTMLElement;
