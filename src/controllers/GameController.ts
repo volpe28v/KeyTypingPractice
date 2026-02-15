@@ -753,8 +753,57 @@ export class GameController {
                 this.audioManager.initAudioContext();
             }
 
-            if (e.key === 'Enter' || e.key === ' ') {
-                // Lv0: 単語学習モード専用の処理
+            if (e.key === 'Enter') {
+                if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+                    // Lv0: 単語学習モード専用の処理
+                    if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
+                        const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                        const result = this.levelManager.handleKeyInput(e, currentWord);
+                        if (result === 'next_word') {
+                            this.gameManager.currentWordIndex++;
+                            if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                                this.displayWord();
+                            }
+                        }
+                    } else {
+                        // フォールバック
+                        e.preventDefault();
+                        const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
+                        if (currentWord && currentWord.word) {
+                            if (!this.gameManager.vocabularyLearningIsJapanese) {
+                                this.audioManager.speakJapanese(currentWord.meaning);
+                                this.gameManager.vocabularyLearningIsJapanese = true;
+                                this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                            } else {
+                                this.audioManager.speakWord(currentWord.word);
+                                this.gameManager.vocabularyLearningIsJapanese = false;
+                                this.gameManager.vocabularyLearningCount++;
+                                if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {
+                                    this.gameManager.currentWordIndex++;
+                                    if (!window.isShowingClearScreen && this.gameManager.gameActive) {
+                                        this.displayWord();
+                                    }
+                                } else {
+                                    this.uiManager.showFeedback(`Enter/Spaceで日本語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
+                                }
+                            }
+                        }
+                    }
+                    return;
+                } else if (this.gameManager.gameActive) {
+                    // Lv1〜Lv5: Enterキーで音声リプレイ
+                    e.preventDefault();
+                    this.replayCurrentWord();
+                    return;
+                }
+
+                if (!this.gameManager.gameActive) {
+                    if (this.gameManager.currentWordIndex >= this.gameManager.words.length) {
+                        this.initGame();
+                    }
+                }
+            } else if (e.key === ' ') {
+                // Lv0: Spaceキーの処理
                 if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
                     if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
                         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
