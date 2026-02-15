@@ -22,6 +22,7 @@ interface ILessonFlowController {
     showPublicLessonBrowser(): Promise<void>;
     addToFavorites(lessonId: string, lessonName: string, ownerDisplayName: string): Promise<void>;
     removeFromFavorites(favoriteId: string): Promise<void>;
+    updateSelectedCardHighlight(): void;
 }
 
 /**
@@ -533,6 +534,9 @@ export class GameController {
 
         this.recordManager.displayBestTimes(customLessons);
         this.recordManager.displayFavoriteBestTimes(userFavorites);
+
+        // 再描画後にハイライトを復元
+        this.lessonFlowController?.updateSelectedCardHighlight();
     }
 
     private createSectionElement(title: string, count: number, actionBtn: HTMLElement, sectionKey: string): HTMLElement {

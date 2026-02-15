@@ -60,9 +60,24 @@ export class LessonFlowController {
         this.recordManager = rm;
     }
 
+    updateSelectedCardHighlight(): void {
+        this.clearSelectedCardHighlight();
+        if (!this.selectedLessonSource) return;
+        const lesson = this.selectedLessonSource.getLesson();
+        // カードは lesson.id または firestoreId で登録されるため、両方で検索
+        const card = document.querySelector(`.lesson-card[data-lesson-id="${lesson.id}"]`) ||
+                     (lesson.firestoreId ? document.querySelector(`.lesson-card[data-lesson-id="${lesson.firestoreId}"]`) : null);
+        if (card) card.classList.add('selected');
+    }
+
+    clearSelectedCardHighlight(): void {
+        document.querySelectorAll('.lesson-card.selected').forEach(el => el.classList.remove('selected'));
+    }
+
     showCustomLessonSetup(): void {
         this.uiManager.hideModal('lesson-mode-selection');
         this.selectedLessonSource = null;
+        this.clearSelectedCardHighlight();
 
         (document.querySelector('.typing-area') as HTMLElement).style.display = 'none';
         (document.querySelector('.keyboard-display-container') as HTMLElement).style.display = 'none';
@@ -86,6 +101,7 @@ export class LessonFlowController {
      */
     selectLesson(lessonSource: LessonSource): void {
         this.selectedLessonSource = lessonSource;
+        this.updateSelectedCardHighlight();
         this.showLessonModeSelection();
     }
 
@@ -393,6 +409,7 @@ export class LessonFlowController {
     cancelLessonMode(): void {
         this.uiManager.hideModal('lesson-mode-selection');
         this.selectedLessonSource = null;
+        this.clearSelectedCardHighlight();
         this.gameController?.backToTitle();
     }
 
@@ -413,6 +430,7 @@ export class LessonFlowController {
 
         if (success) {
             this.selectedLessonSource = null;
+            this.clearSelectedCardHighlight();
 
             if (this.customLessons.length > 0) {
                 const newestLessonIndex = 0;
@@ -687,6 +705,7 @@ export class LessonFlowController {
 
         this.uiManager.hideModal('lesson-mode-selection');
         this.selectedLessonSource = null;
+        this.clearSelectedCardHighlight();
         this.gameController?.backToTitle();
     }
 

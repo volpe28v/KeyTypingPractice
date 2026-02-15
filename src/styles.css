@@ -1892,7 +1892,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    padding: 4px 0;
+    padding: 4px;
     max-height: 2000px;
     opacity: 1;
     overflow: hidden;
@@ -1926,6 +1926,16 @@ body {
 
 .lesson-card:active {
     transform: translateY(0);
+}
+
+.lesson-card.selected {
+    border-color: var(--color-primary);
+    background: rgba(84, 110, 122, 0.08);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.lesson-card.selected .card-name {
+    color: var(--color-primary-dark);
 }
 
 .lesson-card .card-name {
