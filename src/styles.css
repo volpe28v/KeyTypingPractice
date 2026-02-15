@@ -1332,6 +1332,8 @@ body {
     display: none;
     width: 100%;
     max-width: 650px;
+    max-height: calc(100vh - calc(var(--viewport-margin) * 4));
+    overflow-y: auto;
     margin: 0 auto;
     background: var(--bg-card);
     border: 2px solid var(--color-primary);
