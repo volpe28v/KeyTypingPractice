@@ -72,7 +72,7 @@ export interface RankingEntry {
 
 // モード別基本XP値
 export const XP_PER_LEVEL: Record<number, number> = {
-    0: 1, 1: 2, 2: 3, 3: 4, 4: 4, 5: 5
+    0: 1, 1: 5, 2: 3, 3: 4, 4: 4, 5: 5
 };
 
 // XP計算
