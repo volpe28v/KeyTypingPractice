@@ -175,4 +175,98 @@ export class AudioManager {
     speak(word: string): void {
         this.speakWord(word);
     }
+
+    // パーフェクトクリア用お祝いサウンド（上昇アルペジオ）
+    playCelebrationSound(): void {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+
+        try {
+            const currentTime = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            const noteDuration = 0.15;
+
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'sine';
+                const noteStart = currentTime + i * noteDuration;
+                osc.frequency.setValueAtTime(freq, noteStart);
+
+                gain.gain.setValueAtTime(0, noteStart);
+                gain.gain.linearRampToValueAtTime(0.2, noteStart + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteStart + noteDuration);
+
+                osc.start(noteStart);
+                osc.stop(noteStart + noteDuration);
+            });
+        } catch (e) {
+            console.error('Error playing celebration sound:', e);
+        }
+    }
+
+    // 通常クリア用チャイム（2音）
+    playClearSound(): void {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+
+        try {
+            const currentTime = ctx.currentTime;
+            const notes = [783.99, 1046.50]; // G5, C6
+            const durations = [0.2, 0.2];
+
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'triangle';
+                const noteStart = currentTime + i * 0.2;
+                osc.frequency.setValueAtTime(freq, noteStart);
+
+                gain.gain.setValueAtTime(0, noteStart);
+                gain.gain.linearRampToValueAtTime(0.18, noteStart + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteStart + durations[i]);
+
+                osc.start(noteStart);
+                osc.stop(noteStart + durations[i]);
+            });
+        } catch (e) {
+            console.error('Error playing clear sound:', e);
+        }
+    }
+
+    // コンボ時の短い「ポン！」（コンボ数でピッチ上昇）
+    playComboSound(comboCount: number): void {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+
+        try {
+            const currentTime = ctx.currentTime;
+            const baseFreq = 600;
+            const maxFreq = 1000;
+            const freq = Math.min(baseFreq + (comboCount - 2) * 50, maxFreq);
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq * 1.2, currentTime + 0.08);
+
+            gain.gain.setValueAtTime(0.15, currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.12);
+
+            osc.start(currentTime);
+            osc.stop(currentTime + 0.12);
+        } catch (e) {
+            console.error('Error playing combo sound:', e);
+        }
+    }
 }

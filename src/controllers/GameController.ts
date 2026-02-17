@@ -95,6 +95,16 @@ export class GameController {
     private scheduleNextWord(delay: number): void {
         this.clearDisplayWordTimer();
         this.displayWordTimer = setTimeout(() => {
+            // displayWord() (= currentWordMistake リセット) より前にコンボ更新
+            const combo = this.gameManager.updateCombo();
+            if (combo >= 2) {
+                this.uiManager.showCombo(combo);
+                this.audioManager.playComboSound(combo);
+            }
+            if (combo === 5 || combo === 10 || combo === 15 || combo === 20) {
+                this.uiManager.showScreenPulse(combo);
+            }
+
             window.currentWordIndex++;
             this.gameManager.correctCount++;
 
@@ -110,6 +120,9 @@ export class GameController {
 
     initGame(): void {
         window.isShowingClearScreen = false;
+
+        // 残留演出要素を除去
+        document.querySelectorAll('.confetti-container, .combo-message, .praise-message').forEach(el => el.remove());
 
         if (this.uiManager.meaningDisplay) {
             this.uiManager.meaningDisplay.innerHTML = '';
@@ -337,10 +350,14 @@ export class GameController {
                 }
 
                 this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate, xp);
+                this.uiManager.showPraiseMessage(isPerfect);
 
                 if (isPerfect) {
+                    this.uiManager.showConfetti();
+                    this.audioManager.playCelebrationSound();
                     this.audioManager.playCorrectSound("congratulations");
                 } else {
+                    this.audioManager.playClearSound();
                     this.audioManager.playCorrectSound("complete");
                 }
 

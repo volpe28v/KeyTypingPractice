@@ -41,6 +41,10 @@ export class GameManager {
     public vocabularyLearningMaxCount: number = 5;
     public vocabularyLearningIsJapanese: boolean = false;
     
+    // Combo properties
+    public comboCount: number = 0;
+    public maxCombo: number = 0;
+
     // Hidden letter selection properties
     public hiddenLetters: string[] = [];
     public shuffledChoices: string[] = [];
@@ -82,6 +86,10 @@ export class GameManager {
         this.vocabularyLearningMaxCount = 5;
         this.vocabularyLearningIsJapanese = false;
         
+        // コンボ関連
+        this.comboCount = 0;
+        this.maxCombo = 0;
+
         // 隠れた文字選択機能関連
         this.hiddenLetters = [];
         this.shuffledChoices = [];
@@ -107,9 +115,11 @@ export class GameManager {
         this.currentWordIndex = 0;
         this.correctCount = 0;
         this.mistakeCount = 0;
+        this.comboCount = 0;
+        this.maxCombo = 0;
         this.gameActive = true;
         this.timerStarted = false;
-        
+
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
@@ -262,6 +272,17 @@ export class GameManager {
     resetVocabularyLearning(): void {
         this.vocabularyLearningCount = 0;
         this.vocabularyLearningIsJapanese = false;
+    }
+
+    // コンボを更新（単語完了時に呼ぶ）
+    updateCombo(): number {
+        if (!this.currentWordMistake) {
+            this.comboCount++;
+            if (this.comboCount > this.maxCombo) this.maxCombo = this.comboCount;
+        } else {
+            this.comboCount = 0;
+        }
+        return this.comboCount;
     }
 
     // 隠れた文字選択機能の初期化

@@ -434,6 +434,115 @@ export class UIManager {
         }, 100);
     }
 
+    // コンボ表示（2コンボ以上で表示）
+    showCombo(comboCount: number): void {
+        // 既存のコンボメッセージを削除
+        document.querySelectorAll('.combo-message').forEach(el => el.remove());
+
+        const comboMsg = document.createElement('div');
+        comboMsg.className = 'combo-message';
+        if (comboCount >= 10) {
+            comboMsg.classList.add('combo-legendary');
+        } else if (comboCount >= 5) {
+            comboMsg.classList.add('combo-great');
+        }
+        comboMsg.textContent = `${comboCount} COMBO!`;
+
+        const typingArea = document.querySelector('.typing-area');
+        if (typingArea) {
+            typingArea.appendChild(comboMsg);
+        }
+
+        setTimeout(() => {
+            comboMsg.style.opacity = '0';
+            setTimeout(() => comboMsg.remove(), 300);
+        }, 800);
+    }
+
+    // 画面パルスエフェクト（コンボマイルストーン時）
+    showScreenPulse(comboCount: number): void {
+        const typingArea = document.querySelector('.typing-area');
+        if (!typingArea) return;
+
+        const pulseClass = comboCount >= 10 ? 'screen-pulse-strong' : 'screen-pulse';
+        typingArea.classList.add(pulseClass);
+
+        setTimeout(() => {
+            typingArea.classList.remove(pulseClass);
+        }, 600);
+    }
+
+    // ランダム称賛メッセージ
+    private static readonly PRAISE_MESSAGES = [
+        'すごい！', 'やったね！', 'かっこいい！', 'がんばったね！', 'さいこう！',
+        'ナイス！', 'いいかんじ！', 'バッチリ！', 'グッジョブ！', 'えらい！'
+    ];
+    private static readonly PERFECT_PRAISE_MESSAGES = [
+        'てんさい！', 'かんぺき！', 'ミスなしすごい！', 'スーパースター！',
+        'チャンピオン！', 'むてき！', 'マスター！', '100てん！'
+    ];
+
+    showPraiseMessage(isPerfect: boolean): void {
+        const messages = isPerfect ? UIManager.PERFECT_PRAISE_MESSAGES : UIManager.PRAISE_MESSAGES;
+        const message = messages[Math.floor(Math.random() * messages.length)];
+
+        const praiseMsg = document.createElement('div');
+        praiseMsg.className = 'praise-message';
+        if (isPerfect) {
+            praiseMsg.classList.add('praise-perfect');
+        }
+        praiseMsg.textContent = message;
+
+        document.body.appendChild(praiseMsg);
+
+        setTimeout(() => {
+            praiseMsg.style.opacity = '1';
+            praiseMsg.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+
+            setTimeout(() => {
+                praiseMsg.style.opacity = '0';
+                praiseMsg.style.transform = 'translateX(-50%) translateY(-40px) scale(0.8)';
+
+                setTimeout(() => praiseMsg.remove(), 500);
+            }, 2500);
+        }, 100);
+    }
+
+    // 紙吹雪エフェクト（パーフェクト限定）
+    showConfetti(): void {
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+
+        const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd', '#01a3a4'];
+        const particleCount = 40;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'confetti-particle';
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const left = Math.random() * 100;
+            const delay = Math.random() * 1.5;
+            const duration = 2 + Math.random() * 2;
+            const rotation = Math.random() * 360;
+            const size = 6 + Math.random() * 6;
+
+            particle.style.backgroundColor = color;
+            particle.style.left = `${left}%`;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size * 2.5}px`;
+            particle.style.animationDelay = `${delay}s`;
+            particle.style.animationDuration = `${duration}s`;
+            particle.style.transform = `rotate(${rotation}deg)`;
+
+            container.appendChild(particle);
+        }
+
+        document.body.appendChild(container);
+
+        setTimeout(() => container.remove(), 4000);
+    }
+
     // リーダーボード更新
     updateLeaderboard(rankings: RankingEntry[], currentUserId: string): void {
         const listEl = document.getElementById('leaderboard-list');
