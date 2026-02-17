@@ -380,6 +380,28 @@ body {
     transform: scale(0.95);
 }
 
+.reset-audio-btn {
+    background-color: transparent;
+    border: 1px solid var(--text-muted);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    display: none; /* ゲーム中のみ表示 */
+}
+
+.reset-audio-btn:hover {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
 .meaning {
     font-size: 2rem;
     margin-bottom: 20px;

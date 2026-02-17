@@ -14,7 +14,8 @@ export class UIManager {
     public scoreDisplay: HTMLElement | null;
     public timerDisplay: HTMLElement | null;
     public replayAudioBtn: HTMLElement | null;
-    
+    public resetAudioBtn: HTMLElement | null;
+
     // State properties
     public isComposing: boolean = false;
     public pendingGameActive: boolean | undefined;
@@ -29,6 +30,7 @@ export class UIManager {
         this.scoreDisplay = document.getElementById('score-display');
         this.timerDisplay = document.getElementById('timer-display');
         this.replayAudioBtn = document.getElementById('replay-audio-btn');
+        this.resetAudioBtn = document.getElementById('reset-audio-btn');
     }
     
     // タイマー表示を更新
@@ -265,8 +267,11 @@ export class UIManager {
         if (this.replayAudioBtn) {
             this.replayAudioBtn.style.display = 'none';
         }
+        if (this.resetAudioBtn) {
+            this.resetAudioBtn.style.display = 'none';
+        }
     }
-    
+
     // タイトル画面の表示
     showTitle(): void {
         if (this.wordDisplay) {
@@ -281,6 +286,9 @@ export class UIManager {
         }
         if (this.replayAudioBtn) {
             this.replayAudioBtn.style.display = 'none';
+        }
+        if (this.resetAudioBtn) {
+            this.resetAudioBtn.style.display = 'none';
         }
         if (this.wordInput) {
             this.wordInput.value = '';
@@ -353,6 +361,12 @@ export class UIManager {
         // replay-audio-btn がフォーカスを奪わないようにする
         if (this.replayAudioBtn) {
             this.replayAudioBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+            });
+        }
+        // reset-audio-btn がフォーカスを奪わないようにする
+        if (this.resetAudioBtn) {
+            this.resetAudioBtn.addEventListener('mousedown', (e) => {
                 e.preventDefault();
             });
         }

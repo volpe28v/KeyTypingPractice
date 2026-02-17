@@ -220,6 +220,9 @@ export class GameController {
             if (this.uiManager.replayAudioBtn) {
                 this.uiManager.replayAudioBtn.style.display = 'block';
             }
+            if (this.uiManager.resetAudioBtn) {
+                this.uiManager.resetAudioBtn.style.display = 'block';
+            }
 
             if (currentWord && currentWord.word) {
                 if (this.gameManager.isCustomLesson) {
@@ -293,6 +296,7 @@ export class GameController {
                 this.gameManager.gameActive = false;
 
                 if (this.uiManager.replayAudioBtn) this.uiManager.replayAudioBtn.style.display = 'none';
+                if (this.uiManager.resetAudioBtn) this.uiManager.resetAudioBtn.style.display = 'none';
                 if (this.uiManager.wordInput) this.uiManager.wordInput.value = '';
 
                 // リーダーボード更新
@@ -940,5 +944,17 @@ export class GameController {
 
         // 戻るボタン
         document.getElementById('back-to-title-btn')?.addEventListener('click', () => this.backToTitle());
+
+        // 音声リセットボタン
+        document.getElementById('reset-audio-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            (e.target as HTMLElement).blur();
+            this.audioManager.resetAudio();
+            this.uiManager.showFeedback('音声をリセットしました', 'correct');
+            // AudioContext テスト
+            setTimeout(() => this.audioManager.playTypingSound(), 300);
+            // SpeechSynthesis テスト（リセット完了後に発話）
+            setTimeout(() => this.audioManager.speakWord('reset'), 500);
+        });
     }
 }

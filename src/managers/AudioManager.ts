@@ -14,10 +14,13 @@ export class AudioManager {
         if (!this.audioContext) {
             try {
                 this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-
             } catch (e) {
                 console.error('Failed to create AudioContext:', e);
             }
+        }
+        // suspended 状態なら resume
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
         }
         return this.audioContext;
     }
@@ -123,57 +126,83 @@ export class AudioManager {
         }
     }
 
-    // 正解時に効果音を再生する関数
-    playCorrectSound(word: string = "good"): void {
+    // 安全な SpeechSynthesis ラッパー
+    private safeSpeek(text: string, options: { lang: string; rate: number; pitch?: number; volume?: number }): void {
+        if (!window.speechSynthesis) return;
 
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            utterance.rate = 1.2;
-            utterance.pitch = 2.0;
-            utterance.volume = 1.0;
-            
+        // スタック検出: speaking が true なのに実際は無音の場合、pause/resume で復帰
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+        }
+
+        window.speechSynthesis.cancel();
+
+        // Chrome の既知バグ対策: cancel() 直後の speak() がスタックするため短い遅延を入れる
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = options.lang;
+            utterance.rate = options.rate;
+            if (options.pitch !== undefined) utterance.pitch = options.pitch;
+            if (options.volume !== undefined) utterance.volume = options.volume;
+
+            utterance.onerror = (e) => {
+                console.warn('SpeechSynthesis error:', e.error);
+            };
 
             window.speechSynthesis.speak(utterance);
-        } else {
-            console.warn('speechSynthesis not available');
-        }
+        }, 50);
+    }
+
+    // 正解時に効果音を再生する関数
+    playCorrectSound(word: string = "good"): void {
+        this.safeSpeek(word, { lang: 'en-US', rate: 1.2, pitch: 2.0, volume: 1.0 });
     }
 
     // 単語を発音する関数（英語）
     speakWord(word: string): void {
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.8;
-            
-            window.speechSynthesis.speak(utterance);
-        }
+        this.safeSpeek(word, { lang: 'en-US', rate: 0.8 });
     }
-    
+
     // 日本語を音声で読み上げる
     speakJapanese(text: string): void {
         if (!text || text.trim() === '') return;
-        
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ja-JP';
-            utterance.rate = 0.9;
-            utterance.pitch = 1.0;
-            
-            window.speechSynthesis.speak(utterance);
-        }
+        this.safeSpeek(text, { lang: 'ja-JP', rate: 0.9, pitch: 1.0 });
     }
     
     // speak関数（speakWordのエイリアス - 互換性のため）
     speak(word: string): void {
         this.speakWord(word);
+    }
+
+    // 音声機能の手動リセット
+    resetAudio(): void {
+        // SpeechSynthesis 多段階リセット
+        if (window.speechSynthesis) {
+            // 1. キャンセルで既存キューをクリア
+            window.speechSynthesis.cancel();
+
+            // 2. ダミー発話でパイプラインをフラッシュ（Chrome のスタック解消）
+            setTimeout(() => {
+                const dummy = new SpeechSynthesisUtterance('');
+                dummy.volume = 0;
+                dummy.lang = 'en-US';
+                window.speechSynthesis.speak(dummy);
+
+                // 3. ダミー発話後にもう一度キャンセルしてクリーンな状態に
+                setTimeout(() => {
+                    window.speechSynthesis.cancel();
+                }, 50);
+            }, 100);
+        }
+
+        // AudioContext リセット（破棄して再作成）
+        if (this.audioContext) {
+            this.audioContext.close().catch(() => {});
+            this.audioContext = null;
+        }
+        // 新しい AudioContext を即時作成
+        this.initAudioContext();
     }
 
     // パーフェクトクリア用お祝いサウンド（上昇アルペジオ）
