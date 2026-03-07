@@ -403,9 +403,21 @@ export class FirestoreManager {
             name: data.name,
             words: data.words,
             ownerId: data.ownerId,
-            ownerDisplayName: data.ownerDisplayName || 'Unknown'  // フォールバック追加
+            ownerDisplayName: data.ownerDisplayName || 'Unknown',  // フォールバック追加
+            createdAt: data.createdAt
           } as LessonData);
         }
+      });
+
+      // createdAtの型混在（Timestamp/文字列）に対応したクライアント側ソート
+      lessons.sort((a, b) => {
+        const getTime = (v: any): number => {
+          if (!v) return 0;
+          if (v.toDate) return v.toDate().getTime();
+          if (typeof v === 'string') { const d = new Date(v); return isNaN(d.getTime()) ? 0 : d.getTime(); }
+          return 0;
+        };
+        return getTime(b.createdAt) - getTime(a.createdAt);
       });
 
       return lessons;

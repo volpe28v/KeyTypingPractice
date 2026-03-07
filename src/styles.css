@@ -2103,9 +2103,16 @@ body {
 }
 
 .public-lesson-card-info {
+    display: flex;
+    justify-content: space-between;
     font-size: 0.85rem;
     color: var(--text-secondary);
     margin-bottom: 8px;
+}
+
+.public-lesson-date {
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 
 .public-lesson-card-preview {

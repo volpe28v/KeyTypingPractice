@@ -620,6 +620,18 @@ export class LessonFlowController {
 
                 const isFavorite = favoriteLessonIds.has(lesson.firestoreId || '');
 
+                let createdDate = '';
+                if (lesson.createdAt?.toDate) {
+                    // Firestore Timestamp
+                    createdDate = lesson.createdAt.toDate().toLocaleDateString('ja-JP');
+                } else if (typeof lesson.createdAt === 'string' && lesson.createdAt) {
+                    // 文字列形式（LessonManager経由）
+                    const d = new Date(lesson.createdAt);
+                    if (!isNaN(d.getTime())) {
+                        createdDate = d.toLocaleDateString('ja-JP');
+                    }
+                }
+
                 card.innerHTML = `
                     <div class="public-lesson-card-header">
                         <h3>${lesson.name}</h3>
@@ -627,6 +639,7 @@ export class LessonFlowController {
                     </div>
                     <div class="public-lesson-card-info">
                         <span>${lesson.words.length}単語</span>
+                        ${createdDate ? `<span class="public-lesson-date">${createdDate}</span>` : ''}
                     </div>
                     <div class="public-lesson-card-preview">
                         ${lesson.words.slice(0, 3).map(w => `${w.word} - ${w.meaning}`).join(', ')}${lesson.words.length > 3 ? '...' : ''}

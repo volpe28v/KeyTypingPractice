@@ -4,9 +4,48 @@
  */
 export class AudioManager {
     private audioContext: AudioContext | null = null;
+    private speechTimerId: ReturnType<typeof setTimeout> | null = null;
+    private cachedVoices: { [lang: string]: SpeechSynthesisVoice | null } = {};
 
     constructor() {
         this.audioContext = null;
+        // ボイス一覧のロードを事前に開始
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.addEventListener('voiceschanged', () => {
+                this.cachedVoices = {};
+            });
+        }
+    }
+
+    // 高品質ボイスを優先的に選択
+    private getPreferredVoice(lang: string): SpeechSynthesisVoice | null {
+        if (this.cachedVoices[lang] !== undefined) return this.cachedVoices[lang];
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) return null;
+
+        const langPrefix = lang.split('-')[0];
+
+        // 優先ボイスリスト（上から順に試す）
+        const preferred: { [key: string]: string[] } = {
+            'en': ['Google US English', 'Samantha', 'Karen', 'Daniel', 'Moira'],
+            'ja': ['Google 日本語', 'Kyoko', 'Otoya'],
+        };
+
+        const preferredNames = preferred[langPrefix] || [];
+        for (const name of preferredNames) {
+            const voice = voices.find(v => v.name === name);
+            if (voice) {
+                this.cachedVoices[lang] = voice;
+                return voice;
+            }
+        }
+
+        // フォールバック: 同じ言語のボイスから選択
+        const fallback = voices.find(v => v.lang.startsWith(langPrefix)) || null;
+        this.cachedVoices[lang] = fallback;
+        return fallback;
     }
 
     // AudioContextの初期化（ユーザー操作後に実行）
@@ -130,33 +169,78 @@ export class AudioManager {
     private safeSpeek(text: string, options: { lang: string; rate: number; pitch?: number; volume?: number }): void {
         if (!window.speechSynthesis) return;
 
-        // スタック検出: speaking が true なのに実際は無音の場合、pause/resume で復帰
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
+        // 前回の予約をキャンセル（連続呼び出し時の競合防止）
+        if (this.speechTimerId !== null) {
+            clearTimeout(this.speechTimerId);
+            this.speechTimerId = null;
         }
 
         window.speechSynthesis.cancel();
 
-        // Chrome の既知バグ対策: cancel() 直後の speak() がスタックするため短い遅延を入れる
-        setTimeout(() => {
+        // Chrome の既知バグ対策: cancel() 直後の speak() がスタックするため遅延を入れる
+        this.speechTimerId = setTimeout(() => {
+            this.speechTimerId = null;
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = options.lang;
             utterance.rate = options.rate;
             if (options.pitch !== undefined) utterance.pitch = options.pitch;
             if (options.volume !== undefined) utterance.volume = options.volume;
 
+            const voice = this.getPreferredVoice(options.lang);
+            if (voice) utterance.voice = voice;
+
             utterance.onerror = (e) => {
-                console.warn('SpeechSynthesis error:', e.error);
+                if (e.error !== 'interrupted') {
+                    console.warn('SpeechSynthesis error:', e.error);
+                }
             };
 
             window.speechSynthesis.speak(utterance);
-        }, 50);
+        }, 100);
     }
 
     // 正解時に効果音を再生する関数
-    playCorrectSound(word: string = "good"): void {
-        this.safeSpeek(word, { lang: 'en-US', rate: 1.2, pitch: 2.0, volume: 1.0 });
+    playCorrectSound(type: string = "good"): void {
+        const ctx = this.initAudioContext();
+        if (!ctx) return;
+
+        try {
+            const currentTime = ctx.currentTime;
+
+            if (type === "excellent") {
+                // excellent: 明るい2音チャイム（ピンポン♪）
+                const notes = [880, 1108.73]; // A5, C#6
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.type = 'sine';
+                    const start = currentTime + i * 0.1;
+                    osc.frequency.setValueAtTime(freq, start);
+                    gain.gain.setValueAtTime(0, start);
+                    gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+                    osc.start(start);
+                    osc.stop(start + 0.18);
+                });
+            } else {
+                // good: 柔らかい単音チャイム（ポン♪）
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(784, currentTime); // G5
+                gain.gain.setValueAtTime(0, currentTime);
+                gain.gain.linearRampToValueAtTime(0.15, currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.15);
+                osc.start(currentTime);
+                osc.stop(currentTime + 0.15);
+            }
+        } catch (e) {
+            console.error('Error playing correct sound:', e);
+        }
     }
 
     // 単語を発音する関数（英語）

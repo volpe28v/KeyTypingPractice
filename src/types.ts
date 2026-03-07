@@ -13,7 +13,7 @@ export interface LessonData {
   ownerDisplayName?: string;    // レッスン作成者名（新フィールド）
   userId?: string;              // 後方互換用（旧フィールド、非推奨）
   firestoreId?: string;
-  createdAt?: string;
+  createdAt?: any;
 }
 
 // 記録データの型定義

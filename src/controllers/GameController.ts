@@ -292,7 +292,7 @@ export class GameController {
                 this.uiManager.showFeedback('Escapeキーでレッスン選択画面に戻ります');
                 this.uiManager.showXPGain(lv0XP);
 
-                this.audioManager.playCorrectSound("congratulations");
+                this.audioManager.playCelebrationSound();
                 this.gameManager.gameActive = false;
 
                 if (this.uiManager.replayAudioBtn) this.uiManager.replayAudioBtn.style.display = 'none';
@@ -359,10 +359,8 @@ export class GameController {
                 if (isPerfect) {
                     this.uiManager.showConfetti();
                     this.audioManager.playCelebrationSound();
-                    this.audioManager.playCorrectSound("congratulations");
                 } else {
                     this.audioManager.playClearSound();
-                    this.audioManager.playCorrectSound("complete");
                 }
 
                 // リーダーボード更新
