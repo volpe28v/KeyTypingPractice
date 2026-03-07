@@ -51,16 +51,17 @@ class PronunciationOnlyLevel extends BaseLevel {
     // リアルタイム表示更新
     updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
-        const userInput = this.uiManager.wordInput.value.trim();
+        const userInput = this.uiManager.wordInput.value;
         let displayHTML = '';
 
         for (let i = 0; i < currentWord.length; i++) {
+            const dc = currentWord[i] === ' ' ? '␣' : currentWord[i];
             if (i < userInput.length) {
                 // 入力済み文字のみ表示
                 if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                    displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    displayHTML += `<span class="correct-char">${dc}</span>`;
                 } else {
-                    displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                    displayHTML += `<span class="incorrect-char">${dc}</span>`;
                 }
             } else {
                 // 未入力文字（●で隠す）

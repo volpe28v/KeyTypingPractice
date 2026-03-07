@@ -52,18 +52,20 @@ class PronunciationBlindLevel extends BaseLevel {
     // リアルタイム表示更新
     updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
-        const userInput = this.uiManager.wordInput.value.trim();
+        const userInput = this.uiManager.wordInput.value;
         let displayHTML = '';
 
         for (let i = 0; i < currentWord.length; i++) {
+            const dc = currentWord[i] === ' ' ? '␣' : currentWord[i];
             if (i < userInput.length) {
                 // 入力済み文字
                 if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
                     // 正解した文字だけ表示
-                    displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    displayHTML += `<span class="correct-char">${dc}</span>`;
                 } else {
                     // 間違った文字は赤で表示
-                    displayHTML += `<span class="incorrect-char">${userInput[i]}</span>`;
+                    const inputDc = userInput[i] === ' ' ? '␣' : userInput[i];
+                    displayHTML += `<span class="incorrect-char">${inputDc}</span>`;
                 }
             } else {
                 // 未入力の文字は何も表示しない（文字数を隠す）

@@ -230,7 +230,7 @@ export class GameController {
                         this.levelManager.initializeWord(currentWord, playAudio, clearInput);
                     } else {
                         console.warn('LevelManager not available, using fallback');
-                        this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                        this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char === ' ' ? '␣' : char}</span>`).join('');
                         this.uiManager.updateMeaningDisplay(currentWord.meaning);
                         if (this.uiManager.wordInput) {
                             this.uiManager.wordInput.style.display = 'inline-block';
@@ -239,7 +239,7 @@ export class GameController {
                         if (playAudio) this.audioManager.speakWord(currentWord.word);
                     }
                 } else {
-                    this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char}</span>`).join('');
+                    this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char === ' ' ? '␣' : char}</span>`).join('');
                     this.uiManager.updateMeaningDisplay(currentWord.meaning);
                     if (this.uiManager.wordInput) {
                         this.uiManager.wordInput.style.display = 'inline-block';

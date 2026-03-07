@@ -28,7 +28,7 @@ class VocabularyLearningLevel {
         }
 
         // 単語を通常表示（spanで各文字を分割）
-        this.uiManager.wordDisplay.innerHTML = word.word.split('').map(char => `<span>${char}</span>`).join('');
+        this.uiManager.wordDisplay.innerHTML = word.word.split('').map(char => `<span>${char === ' ' ? '␣' : char}</span>`).join('');
         
         // 意味を表示
         this.uiManager.meaningDisplay.textContent = word.meaning;

@@ -53,12 +53,12 @@ class ProgressiveLearningLevel {
     // 段階的表示の更新（script.jsのupdateProgressiveDisplay()と統合）
     updateDisplay(): void {
         const currentWord = this.gameManager.getCurrentWord().word;
-        const userInput = this.uiManager.wordInput.value.trim();
+        const userInput = this.uiManager.wordInput.value;
         let displayHTML = '';
-        
+
         // 表示する文字数を計算（全体 - 隠す文字数）
         const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
-        
+
         // 入力でエラーがあるかチェック
         let firstErrorIndex = -1;
         for (let i = 0; i < userInput.length; i++) {
@@ -67,22 +67,23 @@ class ProgressiveLearningLevel {
                 break;
             }
         }
-        
+
         for (let i = 0; i < currentWord.length; i++) {
+            const dc = currentWord[i] === ' ' ? '␣' : currentWord[i];
             if (i < visibleCharCount) {
                 // 常に表示する部分（入力に応じてスタイル変更）
                 if (i < userInput.length) {
                     if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
                         if (i === firstErrorIndex) {
-                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            displayHTML += `<span class="incorrect-char">${dc}</span>`;
                         } else {
-                            displayHTML += `<span>${currentWord[i]}</span>`;
+                            displayHTML += `<span>${dc}</span>`;
                         }
                     } else {
-                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        displayHTML += `<span class="correct-char">${dc}</span>`;
                     }
                 } else {
-                    displayHTML += `<span>${currentWord[i]}</span>`;
+                    displayHTML += `<span>${dc}</span>`;
                 }
             } else {
                 // 隠し部分
@@ -90,13 +91,13 @@ class ProgressiveLearningLevel {
                     // 入力済みの文字は隠し部分でも表示
                     if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
                         if (i === firstErrorIndex) {
-                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            displayHTML += `<span class="incorrect-char">${dc}</span>`;
                         } else {
                             displayHTML += '<span style="color: #666;">●</span>';
                         }
                     } else {
                         // 正解の文字は緑色で表示
-                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        displayHTML += `<span class="correct-char">${dc}</span>`;
                     }
                 } else {
                     // 未入力の文字は黒丸

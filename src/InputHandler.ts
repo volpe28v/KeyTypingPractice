@@ -117,9 +117,14 @@ export class InputHandler {
         });
     }
 
+    // スペース文字を視覚的に表示するヘルパー
+    private displayChar(char: string): string {
+        return char === ' ' ? '␣' : char;
+    }
+
     updateProgressiveDisplay(): void {
         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex].word;
-        const userInput = this.uiManager.wordInput!.value.trim();
+        const userInput = this.uiManager.wordInput!.value;
         let displayHTML = '';
 
         const visibleCharCount = Math.max(0, currentWord.length - this.gameManager.progressiveStep);
@@ -133,30 +138,31 @@ export class InputHandler {
         }
 
         for (let i = 0; i < currentWord.length; i++) {
+            const dc = this.displayChar(currentWord[i]);
             if (i < visibleCharCount) {
                 if (i < userInput.length) {
                     if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
                         if (i === firstErrorIndex) {
-                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            displayHTML += `<span class="incorrect-char">${dc}</span>`;
                         } else {
-                            displayHTML += `<span>${currentWord[i]}</span>`;
+                            displayHTML += `<span>${dc}</span>`;
                         }
                     } else {
-                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        displayHTML += `<span class="correct-char">${dc}</span>`;
                     }
                 } else {
-                    displayHTML += `<span>${currentWord[i]}</span>`;
+                    displayHTML += `<span>${dc}</span>`;
                 }
             } else {
                 if (i < userInput.length) {
                     if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
                         if (i === firstErrorIndex) {
-                            displayHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                            displayHTML += `<span class="incorrect-char">${dc}</span>`;
                         } else {
                             displayHTML += '<span style="color: #666;">●</span>';
                         }
                     } else {
-                        displayHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        displayHTML += `<span class="correct-char">${dc}</span>`;
                     }
                 } else {
                     displayHTML += '<span style="color: #666;">●</span>';
@@ -180,7 +186,7 @@ export class InputHandler {
         }
 
         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex].word;
-        const userInput = this.uiManager.wordInput!.value.trim();
+        const userInput = this.uiManager.wordInput!.value;
 
         const existingSpans = this.uiManager.wordDisplay!.querySelectorAll('span');
 
@@ -203,6 +209,7 @@ export class InputHandler {
         const spans = this.uiManager.wordDisplay!.querySelectorAll('span');
 
         for (let i = 0; i < currentWord.length && i < spans.length; i++) {
+            const dc = this.displayChar(currentWord[i]);
             if (firstErrorIndex !== -1 && i >= firstErrorIndex) {
                 if (i === firstErrorIndex) {
                     spans[i].textContent = '●';
@@ -214,7 +221,7 @@ export class InputHandler {
                     (spans[i] as HTMLElement).style.color = '#666';
                 }
             } else if (i < userInput.length) {
-                spans[i].textContent = currentWord[i];
+                spans[i].textContent = dc;
                 spans[i].className = 'correct-char';
                 (spans[i] as HTMLElement).style.color = '';
             } else {
@@ -288,12 +295,13 @@ export class InputHandler {
         let highlightedHTML = '';
 
         for (let i = 0; i < currentWord.length; i++) {
+            const dc = this.displayChar(currentWord[i]);
             if (i < position) {
-                highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                highlightedHTML += `<span class="correct-char">${dc}</span>`;
             } else if (i === position) {
-                highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                highlightedHTML += `<span class="incorrect-char">${dc}</span>`;
             } else {
-                highlightedHTML += `<span>${currentWord[i]}</span>`;
+                highlightedHTML += `<span>${dc}</span>`;
             }
         }
 
@@ -306,7 +314,7 @@ export class InputHandler {
         }
 
         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex].word;
-        const userInput = this.uiManager.wordInput!.value.trim();
+        const userInput = this.uiManager.wordInput!.value;
 
         this.updatePartialWordDisplay();
 
@@ -320,7 +328,7 @@ export class InputHandler {
             } else {
                 let correctHTML = '';
                 for (let i = 0; i < currentWord.length; i++) {
-                    correctHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                    correctHTML += `<span class="correct-char">${this.displayChar(currentWord[i])}</span>`;
                 }
                 this.uiManager.wordDisplay!.innerHTML = correctHTML;
 
@@ -351,14 +359,15 @@ export class InputHandler {
         } else {
             let highlightedHTML = '';
             for (let i = 0; i < currentWord.length; i++) {
+                const dc = this.displayChar(currentWord[i]);
                 if (i < userInput.length) {
                     if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                        highlightedHTML += `<span class="correct-char">${currentWord[i]}</span>`;
+                        highlightedHTML += `<span class="correct-char">${dc}</span>`;
                     } else {
-                        highlightedHTML += `<span class="incorrect-char">${currentWord[i]}</span>`;
+                        highlightedHTML += `<span class="incorrect-char">${dc}</span>`;
                     }
                 } else {
-                    highlightedHTML += `<span>${currentWord[i]}</span>`;
+                    highlightedHTML += `<span>${dc}</span>`;
                 }
             }
 
