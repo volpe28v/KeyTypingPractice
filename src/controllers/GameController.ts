@@ -821,9 +821,9 @@ export class GameController {
                         this.initGame();
                     }
                 }
-            } else if (e.key === ' ') {
+            } else if (e.key === ' ' && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
                 // Lv0: Spaceキーの処理
-                if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+                if (this.gameManager.gameActive) {
                     if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
                         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
                         const result = this.levelManager.handleKeyInput(e, currentWord);

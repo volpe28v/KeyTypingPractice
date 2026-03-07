@@ -12,18 +12,25 @@ export class LessonManager {
         this.storageManager = storageManager;
     }
 
+    // スマート引用符をASCII引用符に正規化
+    private normalizeQuotes(text: string): string {
+        return text
+            .replace(/[\u2018\u2019\u02BC]/g, "'")
+            .replace(/[\u201C\u201D]/g, '"');
+    }
+
     // 入力された単語を解析
     parseCustomWords(input: string): WordData[] {
         const lines = input.trim().split('\n');
         const words = [];
-        
+
         for (let line of lines) {
             line = line.trim();
             if (line === '') continue;
-            
+
             const parts = line.split(',');
             if (parts.length >= 2) {
-                const word = parts[0].trim();
+                const word = this.normalizeQuotes(parts[0].trim());
                 const meaning = parts.slice(1).join(',').trim();
                 
                 if (word && meaning) {

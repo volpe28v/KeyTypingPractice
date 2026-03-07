@@ -98,6 +98,13 @@ export class GameManager {
         this.lastShuffledStep = -1; // 最後にシャッフルした段階を記録
     }
     
+    // スマート引用符をASCII引用符に正規化
+    private normalizeQuotes(text: string): string {
+        return text
+            .replace(/[\u2018\u2019\u02BC]/g, "'")  // ' ' ʼ → '
+            .replace(/[\u201C\u201D]/g, '"');         // " " → "
+    }
+
     // ゲームを初期化
     initGame(levelLists: LevelData[], customWords: WordData[] | null = null): void {
         if (!this.isCustomLesson) {
@@ -111,6 +118,12 @@ export class GameManager {
             this.words = customWords || [];
             this.shuffleArray(this.words);
         }
+
+        // スマート引用符を正規化
+        this.words = this.words.map(w => ({
+            ...w,
+            word: this.normalizeQuotes(w.word)
+        }));
         
         this.currentWordIndex = 0;
         this.correctCount = 0;
