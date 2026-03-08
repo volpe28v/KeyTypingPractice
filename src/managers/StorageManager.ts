@@ -360,6 +360,20 @@ export class StorageManager {
         }
     }
 
+    // 自分のレッスン記録の最高記録をレベル別に取得
+    async loadMyBestLessonRecords(lessonId: string): Promise<Map<number, { accuracy: number; elapsedTime: number }>> {
+        if (!this.firestoreManager) {
+            return new Map();
+        }
+
+        try {
+            return await this.firestoreManager.loadMyBestLessonRecords(lessonId);
+        } catch (error) {
+            console.error('❌ Error loading my best lesson records:', error);
+            return new Map();
+        }
+    }
+
     // レッスン別・モード別ランキングを取得
     async loadLessonRanking(lessonId: string, levelIndex: number): Promise<LessonRankingEntry[]> {
         if (!this.firestoreManager) {
