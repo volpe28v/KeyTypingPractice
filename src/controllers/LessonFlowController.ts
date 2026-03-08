@@ -15,7 +15,6 @@ interface IGameController {
 // RecordManager型の循環依存を避けるためのインターフェース
 interface IRecordManager {
     hideRecords(): void;
-    getRecordForKey(key: string): { accuracy: number; elapsedTime: number } | null;
 }
 
 /**
@@ -278,39 +277,6 @@ export class LessonFlowController {
         if (lessonNameInput) lessonNameInput.style.display = 'none';
         const langEditContainer = document.getElementById('lesson-language-edit-container');
         if (langEditContainer) langEditContainer.style.display = 'none';
-    }
-
-    private updateModeButtonRecords(lessonId: string): void {
-        const modes = [
-            'vocabulary-learning', 'progressive', 'pronunciation-meaning',
-            'pronunciation-only', 'japanese-reading', 'pronunciation-blind'
-        ];
-
-        // lesson-mode-selection 内のモードボタンのみ対象
-        const modeSelection = document.getElementById('lesson-mode-selection');
-        if (!modeSelection) return;
-
-        modes.forEach((mode, levelIndex) => {
-            const btn = modeSelection.querySelector(`.mode-btn[data-mode="${mode}"]`) as HTMLElement;
-            if (!btn) return;
-
-            // 既存の記録表示をクリア
-            const existing = btn.querySelector('.mode-record');
-            if (existing) existing.remove();
-            btn.classList.remove('mode-btn-perfect');
-
-            const record = this.recordManager?.getRecordForKey(`lesson${lessonId}_${levelIndex}`);
-            if (record) {
-                const recordDiv = document.createElement('div');
-                recordDiv.className = 'mode-record';
-                recordDiv.textContent = `${record.accuracy}% / ${this.uiManager.formatTime(record.elapsedTime)}`;
-                btn.appendChild(recordDiv);
-
-                if (record.accuracy === 100) {
-                    btn.classList.add('mode-btn-perfect');
-                }
-            }
-        });
     }
 
     /**

@@ -299,16 +299,6 @@ export class GameController {
                     ? 100
                     : Math.round((totalTypesCount / (totalTypesCount + this.gameManager.mistakeCount)) * 100);
 
-                const lessonSource = this.lessonFlowController?.selectedLessonSource;
-                if (lessonSource) {
-                    const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
-
-                    // ポリモーフィズムで記録キーを取得（条件分岐なし）
-                    const recordKey = lessonSource.getRecordKey(levelIndex);
-
-                    await this.recordManager.addRecord(recordKey, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
-                }
-
                 const isPerfect = this.gameManager.mistakeCount === 0;
 
                 // XP計算・保存

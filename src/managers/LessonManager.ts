@@ -186,12 +186,7 @@ export class LessonManager {
             
             // ローカル配列から削除
             customLessons.splice(lessonIndex, 1);
-            
-            // 記録も削除
-            const records = await this.storageManager.loadRecords();
-            delete records[`lesson${lessonId}`];
-            await this.storageManager.saveRecords(records);
-            
+
             // レッスン一覧を更新
             if (updateLessonListCallback) {
                 updateLessonListCallback();
