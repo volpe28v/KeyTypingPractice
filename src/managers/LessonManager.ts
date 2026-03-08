@@ -46,6 +46,7 @@ export class LessonManager {
     saveNewLesson(customLessons: LessonData[], updateLessonListCallback?: () => void): LessonData | null {
         const lessonName = (document.getElementById('lesson-name-input') as HTMLInputElement).value.trim();
         const wordsText = (document.getElementById('custom-words-input') as HTMLTextAreaElement).value.trim();
+        const language = (document.getElementById('lesson-language') as HTMLSelectElement)?.value || 'en-US';
         
         if (!wordsText) {
             alert('単語を入力してください。');
@@ -76,7 +77,8 @@ export class LessonManager {
             words: words,
             createdAt: new Date().toLocaleString(),
             ownerId: user?.uid,
-            ownerDisplayName: displayName
+            ownerDisplayName: displayName,
+            language: language
         };
 
         // レッスンリストに追加
@@ -93,6 +95,8 @@ export class LessonManager {
         // 入力フィールドをクリア
         (document.getElementById('lesson-name-input') as HTMLInputElement).value = '';
         (document.getElementById('custom-words-input') as HTMLTextAreaElement).value = '';
+        const langSelect = document.getElementById('lesson-language') as HTMLSelectElement;
+        if (langSelect) langSelect.value = 'en-US';
         
         alert(`レッスン「${finalLessonName}」を保存しました！`);
         return newLesson;

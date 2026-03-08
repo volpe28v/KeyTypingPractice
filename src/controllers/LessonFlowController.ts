@@ -121,6 +121,11 @@ export class LessonFlowController {
         this.uiManager.showModal('lesson-mode-selection');
 
         document.getElementById('selected-lesson-name')!.textContent = lesson.name;
+        const langBadge = document.getElementById('selected-lesson-language');
+        if (langBadge) {
+            const langLabels: { [key: string]: string } = { 'en-US': 'English', 'ms-MY': 'Bahasa Melayu' };
+            langBadge.textContent = langLabels[lesson.language || 'en-US'] || lesson.language || 'English';
+        }
         document.getElementById('back-to-title-btn')!.style.display = 'none';
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('selected'));
 
@@ -240,6 +245,13 @@ export class LessonFlowController {
             (lessonNameInput as HTMLInputElement).value = lesson.name;
             const wordsText = lesson.words.map(word => `${word.word}, ${word.meaning}`).join('\n');
             (wordsEditArea as HTMLTextAreaElement).value = wordsText;
+
+            // 言語セレクタを表示して現在の値を設定
+            const langEditContainer = document.getElementById('lesson-language-edit-container');
+            const langEditSelect = document.getElementById('lesson-language-edit') as HTMLSelectElement;
+            if (langEditContainer) langEditContainer.style.display = 'block';
+            if (langEditSelect) langEditSelect.value = lesson.language || 'en-US';
+
             wordsEditArea!.focus();
         } else {
             this.cancelWordsEdit();
@@ -264,6 +276,8 @@ export class LessonFlowController {
         if (editToggle) editToggle.textContent = '編集';
         if (lessonNameH2) lessonNameH2.style.display = 'block';
         if (lessonNameInput) lessonNameInput.style.display = 'none';
+        const langEditContainer = document.getElementById('lesson-language-edit-container');
+        if (langEditContainer) langEditContainer.style.display = 'none';
     }
 
     private updateModeButtonRecords(lessonId: string): void {
@@ -348,6 +362,12 @@ export class LessonFlowController {
         const lesson = this.selectedLessonSource!.getLesson();
         lesson.name = newLessonName;
 
+        // 言語を更新
+        const langEditSelect = document.getElementById('lesson-language-edit') as HTMLSelectElement;
+        if (langEditSelect) {
+            lesson.language = langEditSelect.value;
+        }
+
         // MyLesson の場合のみ編集可能なので、型チェック
         let success = false;
         if (this.selectedLessonSource instanceof MyLesson) {
@@ -384,6 +404,7 @@ export class LessonFlowController {
 
         this.customWords = lesson.words;
         this.gameManager.lessonMode = mode;
+        this.gameManager.lessonLanguage = lesson.language || 'en-US';
 
         this.uiManager.hideModal('lesson-mode-selection');
 
@@ -511,6 +532,8 @@ export class LessonFlowController {
 
         this.gameManager.lessonMode = mode || this.selectedCustomMode;
         this.gameManager.currentLessonIndex = newestLesson;
+        const langSelect = document.getElementById('lesson-language') as HTMLSelectElement;
+        this.gameManager.lessonLanguage = langSelect?.value || 'en-US';
 
         (document.getElementById('lesson-name-input') as HTMLInputElement).value = '';
         (document.getElementById('custom-words-input') as HTMLTextAreaElement).value = '';
@@ -558,6 +581,7 @@ export class LessonFlowController {
         this.storageManager.saveCustomWords(input);
 
         this.gameManager.lessonMode = this.selectedCustomMode;
+        this.gameManager.lessonLanguage = newLesson?.language || 'en-US';
 
         if (newLesson && this.customLessons.length > 0) {
             this.gameManager.currentLessonIndex = this.customLessons.length - 1;

@@ -39,7 +39,7 @@ class ProgressiveLearningLevel {
 
         // 発音を再生
         if (playAudio) {
-            this.audioManager.speakWord(word.word);
+            this.audioManager.speakWord(word.word, this.gameManager.lessonLanguage);
         }
 
         // 初期表示を更新
@@ -202,7 +202,7 @@ class ProgressiveLearningLevel {
                 (window as any).currentWordMistake = false;
                 
                 // 段階が変わったら発音
-                this.audioManager.speakWord(currentWord.word);
+                this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
             }, 1000);
             
             return 'continue_word';

@@ -220,7 +220,7 @@ export class GameController {
                         this.uiManager.wordInput.style.display = 'inline-block';
                         if (clearInput) this.uiManager.wordInput.value = '';
                     }
-                    if (playAudio) this.audioManager.speakWord(currentWord.word);
+                    if (playAudio) this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
                 }
 
                 if (this.uiManager.feedback) {
@@ -725,7 +725,7 @@ export class GameController {
         if (this.gameManager.words && this.gameManager.words.length > 0) {
             const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
             if (currentWord && currentWord.word) {
-                this.audioManager.speakWord(currentWord.word);
+                this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
             }
         }
     }
@@ -762,7 +762,7 @@ export class GameController {
                                 this.gameManager.vocabularyLearningIsJapanese = true;
                                 this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
                             } else {
-                                this.audioManager.speakWord(currentWord.word);
+                                this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
                                 this.gameManager.vocabularyLearningIsJapanese = false;
                                 this.gameManager.vocabularyLearningCount++;
                                 if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {
@@ -811,7 +811,7 @@ export class GameController {
                                 this.gameManager.vocabularyLearningIsJapanese = true;
                                 this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
                             } else {
-                                this.audioManager.speakWord(currentWord.word);
+                                this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
                                 this.gameManager.vocabularyLearningIsJapanese = false;
                                 this.gameManager.vocabularyLearningCount++;
                                 if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {
@@ -893,7 +893,7 @@ export class GameController {
                             this.gameManager.vocabularyLearningIsJapanese = true;
                             this.uiManager.showFeedback(`Enter/Spaceで英語を聞く (${this.gameManager.vocabularyLearningCount}/${this.gameManager.vocabularyLearningMaxCount})`);
                         } else {
-                            this.audioManager.speakWord(currentWord.word);
+                            this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
                             this.gameManager.vocabularyLearningIsJapanese = false;
                             this.gameManager.vocabularyLearningCount++;
                             if (this.gameManager.vocabularyLearningCount >= this.gameManager.vocabularyLearningMaxCount) {

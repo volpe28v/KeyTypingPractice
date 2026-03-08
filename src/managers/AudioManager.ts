@@ -31,6 +31,7 @@ export class AudioManager {
         const preferred: { [key: string]: string[] } = {
             'en': ['Google US English', 'Samantha', 'Karen', 'Daniel', 'Moira'],
             'ja': ['Google 日本語', 'Kyoko', 'Otoya'],
+            'ms': ['Google Bahasa Melayu'],
         };
 
         const preferredNames = preferred[langPrefix] || [];
@@ -243,9 +244,9 @@ export class AudioManager {
         }
     }
 
-    // 単語を発音する関数（英語）
-    speakWord(word: string): void {
-        this.safeSpeek(word, { lang: 'en-US', rate: 0.8 });
+    // 単語を発音する関数
+    speakWord(word: string, lang: string = 'en-US'): void {
+        this.safeSpeek(word, { lang, rate: 0.8 });
     }
 
     // 日本語を音声で読み上げる
@@ -255,8 +256,8 @@ export class AudioManager {
     }
     
     // speak関数（speakWordのエイリアス - 互換性のため）
-    speak(word: string): void {
-        this.speakWord(word);
+    speak(word: string, lang: string = 'en-US'): void {
+        this.speakWord(word, lang);
     }
 
     // 音声機能の手動リセット

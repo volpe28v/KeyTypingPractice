@@ -102,7 +102,8 @@ export class FirestoreManager {
               name: data.name,
               words: data.words,
               ownerId: data.ownerId || data.userId,  // フォールバック
-              ownerDisplayName: data.ownerDisplayName || 'Unknown'
+              ownerDisplayName: data.ownerDisplayName || 'Unknown',
+              language: data.language || 'en-US'
             } as LessonData);
           }
         });
@@ -404,7 +405,8 @@ export class FirestoreManager {
             words: data.words,
             ownerId: data.ownerId,
             ownerDisplayName: data.ownerDisplayName || 'Unknown',  // フォールバック追加
-            createdAt: data.createdAt
+            createdAt: data.createdAt,
+            language: data.language || 'en-US'
           } as LessonData);
         }
       });

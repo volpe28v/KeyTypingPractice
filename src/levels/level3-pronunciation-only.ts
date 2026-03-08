@@ -40,7 +40,7 @@ class PronunciationOnlyLevel extends BaseLevel {
 
         // 発音を再生
         if (playAudio) {
-            this.audioManager.speakWord(word.word);
+            this.audioManager.speakWord(word.word, this.gameManager.lessonLanguage);
         }
 
         // フィードバック表示
@@ -133,7 +133,7 @@ class PronunciationOnlyLevel extends BaseLevel {
     replayAudio(): void {
         const currentWord = this.gameManager.getCurrentWord();
         if (currentWord && currentWord.word) {
-            this.audioManager.speakWord(currentWord.word);
+            this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
         }
     }
 

@@ -53,6 +53,7 @@
             <div class="lesson-mode-selection" id="lesson-mode-selection" style="display: none;">
                 <div class="lesson-title-section">
                     <h2 id="selected-lesson-name">レッスン名</h2>
+                    <span id="selected-lesson-language" class="lesson-language-badge"></span>
                     <input type="text" id="lesson-name-edit-input" class="lesson-name-edit-input" style="display: none;" />
                 </div>
                 
@@ -62,6 +63,13 @@
                         <button class="btn-delete-lesson edit-toggle" onclick="toggleWordsEdit()">編集</button>
                     </div>
                     <div id="words-display" class="words-display"></div>
+                    <div id="lesson-language-edit-container" class="lesson-language-select" style="display: none;">
+                        <label for="lesson-language-edit">単語の言語:</label>
+                        <select id="lesson-language-edit">
+                            <option value="en-US">English（英語）</option>
+                            <option value="ms-MY">Bahasa Melayu（マレー語）</option>
+                        </select>
+                    </div>
                     <textarea id="words-edit-area" class="words-edit-area" style="display: none;" placeholder="単語, 意味の形式で入力してください"></textarea>
                     <div id="words-edit-controls" class="words-edit-controls btn-group" style="display: none;">
                         <button class="mode-btn save-words-btn" onclick="saveWordsEdit()">保存</button>
@@ -103,6 +111,14 @@
                 <div class="lesson-name-input">
                     <label for="lesson-name-input">レッスン名（任意）:</label>
                     <input type="text" id="lesson-name-input" placeholder="例: 基本単語、フルーツ名など">
+                </div>
+
+                <div class="lesson-language-select">
+                    <label for="lesson-language">単語の言語:</label>
+                    <select id="lesson-language">
+                        <option value="en-US">English（英語）</option>
+                        <option value="ms-MY">Bahasa Melayu（マレー語）</option>
+                    </select>
                 </div>
                 
                 <textarea id="custom-words-input" placeholder="単語と意味を入力してください&#10;形式: 単語, 意味&#10;例:&#10;apple, りんご&#10;banana, バナナ&#10;orange, オレンジ&#10;&#10;※レッスンとして保存されます"></textarea>

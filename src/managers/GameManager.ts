@@ -34,6 +34,7 @@ export class GameManager {
     // Lesson properties
     public lessonMode: string = 'full';
     public currentLessonIndex: number = 0;
+    public lessonLanguage: string = 'en-US';
     
     // Vocabulary learning mode properties
     public vocabularyLearningCount: number = 0;
@@ -78,6 +79,7 @@ export class GameManager {
         // レッスン関連
         this.lessonMode = 'full';
         this.currentLessonIndex = 0;
+        this.lessonLanguage = 'en-US';
         
         // Lv0: 単語学習モード関連
         this.vocabularyLearningCount = 0;

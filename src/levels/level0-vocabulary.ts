@@ -52,7 +52,7 @@ class VocabularyLearningLevel {
             if (typeof (window as any).speakWord !== 'undefined') {
                 (window as any).speakWord(word.word);
             } else {
-                this.audioManager.speakWord(word.word);
+                this.audioManager.speakWord(word.word, this.gameManager.lessonLanguage);
             }
         }
 
@@ -82,7 +82,7 @@ class VocabularyLearningLevel {
                     if (typeof (window as any).speakWord !== 'undefined') {
                         (window as any).speakWord(currentWord.word);
                     } else {
-                        this.audioManager.speakWord(currentWord.word);
+                        this.audioManager.speakWord(currentWord.word, this.gameManager.lessonLanguage);
                     }
                     this.gameManager.vocabularyLearningIsJapanese = false;
                     this.gameManager.vocabularyLearningCount++;

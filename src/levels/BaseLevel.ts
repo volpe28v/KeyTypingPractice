@@ -78,7 +78,7 @@ export abstract class BaseLevel {
 
     // 共通音声再生メソッド
     protected playAudio(word: string): void {
-        this.audioManager.speak(word);
+        this.audioManager.speak(word, this.gameManager.lessonLanguage);
     }
 
     // 共通リプレイメソッド（オーバーライド可能）

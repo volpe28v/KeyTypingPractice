@@ -1405,6 +1405,17 @@ body {
     margin-bottom: 20px;
 }
 
+.lesson-language-badge {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2px 12px;
+    margin-bottom: 8px;
+}
+
 .lesson-name-edit-input {
     width: 100%;
     padding: 12px 15px;
@@ -1562,6 +1573,36 @@ body {
 }
 
 .lesson-name-input input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-light);
+}
+
+.lesson-language-select {
+    margin-bottom: 15px;
+}
+
+.lesson-language-select label {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.lesson-language-select select {
+    width: 100%;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.lesson-language-select select:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: var(--shadow-light);

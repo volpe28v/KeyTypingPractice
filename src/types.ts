@@ -14,6 +14,7 @@ export interface LessonData {
   userId?: string;              // 後方互換用（旧フィールド、非推奨）
   firestoreId?: string;
   createdAt?: any;
+  language?: string;            // 単語の言語（'en-US', 'ms-MY'等。デフォルト: 'en-US'）
 }
 
 // 記録データの型定義
