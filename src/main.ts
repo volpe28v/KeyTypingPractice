@@ -30,7 +30,7 @@ import { PronunciationOnlyLevel } from './levels/level3-pronunciation-only.ts';
 import { JapaneseReadingLevel } from './levels/level4-japanese-reading.ts';
 
 // Type imports
-import type { WordData, LessonData, RecordData, LevelData, LessonMode } from './types.ts';
+import type { WordData, LessonData, LevelData, LessonMode } from './types.ts';
 
 // Global variable declarations for existing JavaScript code
 declare global {
@@ -88,7 +88,6 @@ declare global {
         toggleWordsEdit?: () => void;
         saveWordsEdit?: () => void;
         deleteSelectedLesson?: () => void;
-        clearRecords?: () => void;
         replayCurrentWord?: () => void;
         // Public lesson and favorites functions
         showPublicLessonBrowser?: () => void;
@@ -161,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
             storageManager.setFirestoreManager(firestoreManager);
 
             await lessonFlowController.loadCustomLessons();
-            await recordManager.loadRecords();
             gameController.updateLessonList();
 
             // リーダーボード読み込み
@@ -181,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             storageManager.setFirestoreManager(null);
             lessonFlowController.customLessons = [];
-            recordManager.records = {};
             gameController.updateLessonList();
         }
     });
@@ -209,7 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.toggleWordsEdit = () => lessonFlowController.toggleWordsEdit();
     window.saveWordsEdit = () => { lessonFlowController.saveWordsEdit(); };
     window.deleteSelectedLesson = () => lessonFlowController.deleteSelectedLesson();
-    window.clearRecords = () => recordManager.clearRecords(lessonFlowController.customLessons);
     window.replayCurrentWord = () => gameController.replayCurrentWord();
     // Public lesson and favorites functions
     window.showPublicLessonBrowser = () => lessonFlowController.showPublicLessonBrowser();

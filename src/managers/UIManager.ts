@@ -402,29 +402,6 @@ export class UIManager {
         });
     }
 
-    // 新記録メッセージを表示
-    showNewRecordMessage(): void {
-        const newRecordMsg = document.createElement('div');
-        newRecordMsg.className = 'new-record-message';
-        newRecordMsg.textContent = '新記録達成！';
-
-        document.body.appendChild(newRecordMsg);
-
-        setTimeout(() => {
-            newRecordMsg.style.opacity = '1';
-            newRecordMsg.style.transform = 'translateY(0) scale(1)';
-
-            setTimeout(() => {
-                newRecordMsg.style.opacity = '0';
-                newRecordMsg.style.transform = 'translateY(-50px) scale(0.8)';
-
-                setTimeout(() => {
-                    newRecordMsg.remove();
-                }, 500);
-            }, 2000);
-        }, 100);
-    }
-
     // XP獲得演出
     showXPGain(xp: number): void {
         const xpMsg = document.createElement('div');

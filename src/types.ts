@@ -17,20 +17,6 @@ export interface LessonData {
   language?: string;            // 単語の言語（'en-US', 'ms-MY'等。デフォルト: 'en-US'）
 }
 
-// 記録データの型定義
-export interface RecordData {
-  date: string;
-  totalWords: number;
-  mistakes: number;
-  accuracy: number;
-  elapsedTime: number;
-  levelName: string;
-  userId?: string;
-  firestoreId?: string;
-  totalTypes?: number; // for backward compatibility
-  id?: string; // for legacy compatibility
-}
-
 // レベルリストの型定義
 export interface LevelData {
   level: number;
