@@ -181,6 +181,7 @@ class ProgressiveLearningLevel {
         if (this.gameManager.progressiveStep <= this.gameManager.maxProgressiveSteps) {
             // まだ段階が残っている場合は同じ単語を続行
             this.uiManager.wordInput.value = '';
+            this.gameManager.positionMistakes.clear(); // ステップごとにミスカウントをリセット
             this.uiManager.feedback.textContent = `ステップ ${this.gameManager.progressiveStep}/${this.gameManager.maxProgressiveSteps} クリア！`;
             this.uiManager.feedback.className = 'feedback correct';
             
