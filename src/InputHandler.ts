@@ -40,7 +40,7 @@ export class InputHandler {
         const container = document.getElementById('hidden-letters-container');
         const lettersDiv = document.getElementById('hidden-letters');
 
-        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+        if (this.gameManager.lessonMode !== 'progressive') {
             if (container) container.style.display = 'none';
             return;
         }
@@ -84,7 +84,7 @@ export class InputHandler {
     }
 
     updateLetterChoiceButtons(userInput: string, currentWord: string): void {
-        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+        if (this.gameManager.lessonMode !== 'progressive') {
             return;
         }
 
@@ -176,7 +176,7 @@ export class InputHandler {
     }
 
     updatePartialWordDisplay(): void {
-        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode === 'full') {
+        if (this.gameManager.lessonMode === 'full') {
             return;
         }
 
@@ -255,15 +255,12 @@ export class InputHandler {
         const isCorrect = expectedChar === inputChar;
 
         if (!isCorrect && e.key !== 'Shift') {
-            if (this.gameManager.isCustomLesson && this.levelManager && this.levelManager.getCurrentLevel()) {
+            if (this.levelManager && this.levelManager.getCurrentLevel()) {
                 if (!this.levelManager.validateInput(e, currentWordData)) {
                     this.highlightWrongChar(currentPosition);
                     e.preventDefault();
                     return false;
                 }
-            } else {
-                window.mistakeCount++;
-                window.currentWordMistake = true;
             }
 
             this.highlightWrongChar(currentPosition);
@@ -271,7 +268,7 @@ export class InputHandler {
             return false;
         }
 
-        if (isCorrect && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'progressive') {
+        if (isCorrect && this.gameManager.lessonMode === 'progressive') {
             this.gameManager.consecutiveMistakes = 0;
             this.gameManager.currentCharPosition = currentPosition;
         }
@@ -279,33 +276,8 @@ export class InputHandler {
         return true;
     }
 
-    highlightWrongChar(position: number): void {
-        if (this.gameManager.isCustomLesson && (
-            this.gameManager.lessonMode === 'vocabulary-learning' ||
-            this.gameManager.lessonMode === 'pronunciation-only' ||
-            this.gameManager.lessonMode === 'pronunciation-meaning' ||
-            this.gameManager.lessonMode === 'progressive' ||
-            this.gameManager.lessonMode === 'japanese-reading' ||
-            this.gameManager.lessonMode === 'pronunciation-blind'
-        )) {
-            return;
-        }
-
-        const currentWord = this.gameManager.words[this.gameManager.currentWordIndex].word;
-        let highlightedHTML = '';
-
-        for (let i = 0; i < currentWord.length; i++) {
-            const dc = this.displayChar(currentWord[i]);
-            if (i < position) {
-                highlightedHTML += `<span class="correct-char">${dc}</span>`;
-            } else if (i === position) {
-                highlightedHTML += `<span class="incorrect-char">${dc}</span>`;
-            } else {
-                highlightedHTML += `<span>${dc}</span>`;
-            }
-        }
-
-        this.uiManager.wordDisplay!.innerHTML = highlightedHTML;
+    highlightWrongChar(_position: number): void {
+        // 各レベルが独自の表示更新を行うため、ここでは何もしない
     }
 
     checkInputRealtime(): void {
@@ -319,59 +291,19 @@ export class InputHandler {
         this.updatePartialWordDisplay();
 
         if (userInput.toLowerCase() === currentWord.toLowerCase()) {
-            if (this.gameManager.isCustomLesson && this.levelManager && this.levelManager.getCurrentLevel()) {
+            if (this.levelManager && this.levelManager.getCurrentLevel()) {
                 const result = this.levelManager.handleWordComplete();
 
                 if (result === 'next_word' && this.scheduleNextWordFn) {
                     this.scheduleNextWordFn(600);
                 }
-            } else {
-                let correctHTML = '';
-                for (let i = 0; i < currentWord.length; i++) {
-                    correctHTML += `<span class="correct-char">${this.displayChar(currentWord[i])}</span>`;
-                }
-                this.uiManager.wordDisplay!.innerHTML = correctHTML;
-
-                if (!window.currentWordMistake) {
-                    this.uiManager.showFeedback('Excellent!', 'correct');
-                    this.audioManager.playCorrectSound("excellent");
-                } else {
-                    this.uiManager.showFeedback('Good!', 'correct');
-                    this.audioManager.playCorrectSound("good");
-                }
-
-                if (this.scheduleNextWordFn) {
-                    this.scheduleNextWordFn(300);
-                }
-
-                this.uiManager.wordInput!.disabled = true;
-                setTimeout(() => {
-                    this.uiManager.wordInput!.disabled = false;
-                    this.uiManager.wordInput!.focus();
-                }, 500);
             }
 
             return;
         }
 
-        if (this.gameManager.isCustomLesson && this.levelManager && this.levelManager.getCurrentLevel()) {
+        if (this.levelManager && this.levelManager.getCurrentLevel()) {
             this.levelManager.checkInputRealtime();
-        } else {
-            let highlightedHTML = '';
-            for (let i = 0; i < currentWord.length; i++) {
-                const dc = this.displayChar(currentWord[i]);
-                if (i < userInput.length) {
-                    if (userInput[i].toLowerCase() === currentWord[i].toLowerCase()) {
-                        highlightedHTML += `<span class="correct-char">${dc}</span>`;
-                    } else {
-                        highlightedHTML += `<span class="incorrect-char">${dc}</span>`;
-                    }
-                } else {
-                    highlightedHTML += `<span>${dc}</span>`;
-                }
-            }
-
-            this.uiManager.wordDisplay!.innerHTML = highlightedHTML;
         }
 
         this.keyboardManager.highlightNextKey();

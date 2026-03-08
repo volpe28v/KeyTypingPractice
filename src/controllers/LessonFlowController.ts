@@ -384,7 +384,6 @@ export class LessonFlowController {
 
         this.customWords = lesson.words;
         this.gameManager.lessonMode = mode;
-        this.gameManager.isCustomLesson = true;
 
         this.uiManager.hideModal('lesson-mode-selection');
 
@@ -511,7 +510,6 @@ export class LessonFlowController {
         }
 
         this.gameManager.lessonMode = mode || this.selectedCustomMode;
-        this.gameManager.isCustomLesson = true;
         this.gameManager.currentLessonIndex = newestLesson;
 
         (document.getElementById('lesson-name-input') as HTMLInputElement).value = '';
@@ -560,7 +558,6 @@ export class LessonFlowController {
         this.storageManager.saveCustomWords(input);
 
         this.gameManager.lessonMode = this.selectedCustomMode;
-        this.gameManager.isCustomLesson = true;
 
         if (newLesson && this.customLessons.length > 0) {
             this.gameManager.currentLessonIndex = this.customLessons.length - 1;

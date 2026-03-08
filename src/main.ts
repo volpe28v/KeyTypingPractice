@@ -64,7 +64,6 @@ declare global {
         endTime: number | null;
         timerInterval: number | null;
         currentWordMistake: boolean;
-        isCustomLesson: boolean;
         lessonMode: string;
         currentLessonIndex: number;
         progressiveStep: number;

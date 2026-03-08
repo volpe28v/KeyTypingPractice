@@ -1,4 +1,4 @@
-import { type WordData, type LevelData, type XPRecord, MODE_TO_LEVEL, calculateXP, getWeekKey, FavoriteLesson, MyLesson } from '../types';
+import { type WordData, type XPRecord, MODE_TO_LEVEL, calculateXP, getWeekKey, FavoriteLesson, MyLesson } from '../types';
 import type { GameManager } from '../managers/GameManager';
 import type { AudioManager } from '../managers/AudioManager';
 import type { UIManager } from '../managers/UIManager';
@@ -34,8 +34,6 @@ export class GameController {
     public displayWordTimer: NodeJS.Timeout | null = null;
     private clearScreenKeyHandler: ((event: KeyboardEvent) => void) | null = null;
     private levelManager: LevelManager | null = null;
-    private levelLists: LevelData[];
-
     // Dependencies
     private gameManager: GameManager;
     private audioManager: AudioManager;
@@ -64,14 +62,6 @@ export class GameController {
         this.inputHandler = inputHandler;
         this.recordManager = recordManager;
         this.storageManager = storageManager;
-
-        this.levelLists = [
-            {
-                level: 10,
-                description: "カスタムレッスン",
-                words: []
-            }
-        ];
     }
 
     setLessonFlowController(lfc: ILessonFlowController): void {
@@ -141,12 +131,7 @@ export class GameController {
 
         // GameManagerのプロパティはLessonFlowControllerで設定済み
         const customWords = this.lessonFlowController?.customWords || [];
-
-        if (!this.gameManager.isCustomLesson) {
-            this.gameManager.initGame(this.levelLists);
-        } else {
-            this.gameManager.initGame(this.levelLists, customWords);
-        }
+        this.gameManager.initGame(customWords);
 
         // InputHandlerのコールバックを設定
         this.inputHandler.setScheduleNextWord((delay) => this.scheduleNextWord(delay));
@@ -195,7 +180,7 @@ export class GameController {
     }
 
     private startTimer(): void {
-        if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+        if (this.gameManager.lessonMode === 'vocabulary-learning') {
             return;
         }
 
@@ -225,26 +210,15 @@ export class GameController {
             }
 
             if (currentWord && currentWord.word) {
-                if (this.gameManager.isCustomLesson) {
-                    if (this.levelManager && this.levelManager.setLevel(this.gameManager.lessonMode)) {
-                        this.levelManager.initializeWord(currentWord, playAudio, clearInput);
-                    } else {
-                        console.warn('LevelManager not available, using fallback');
-                        this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char === ' ' ? '␣' : char}</span>`).join('');
-                        this.uiManager.updateMeaningDisplay(currentWord.meaning);
-                        if (this.uiManager.wordInput) {
-                            this.uiManager.wordInput.style.display = 'inline-block';
-                            if (clearInput) this.uiManager.wordInput.value = '';
-                        }
-                        if (playAudio) this.audioManager.speakWord(currentWord.word);
-                    }
+                if (this.levelManager && this.levelManager.setLevel(this.gameManager.lessonMode)) {
+                    this.levelManager.initializeWord(currentWord, playAudio, clearInput);
                 } else {
+                    console.warn('LevelManager not available, using fallback');
                     this.uiManager.wordDisplay!.innerHTML = currentWord.word.split('').map(char => `<span>${char === ' ' ? '␣' : char}</span>`).join('');
                     this.uiManager.updateMeaningDisplay(currentWord.meaning);
                     if (this.uiManager.wordInput) {
                         this.uiManager.wordInput.style.display = 'inline-block';
                         if (clearInput) this.uiManager.wordInput.value = '';
-                        this.uiManager.wordInput.focus();
                     }
                     if (playAudio) this.audioManager.speakWord(currentWord.word);
                 }
@@ -257,7 +231,7 @@ export class GameController {
                 this.keyboardManager.highlightNextKey();
                 window.currentWordMistake = false;
 
-                if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'progressive') {
+                if (this.gameManager.lessonMode === 'progressive') {
                     this.gameManager.consecutiveMistakes = 0;
                     this.gameManager.currentCharPosition = 0;
                 }
@@ -271,7 +245,7 @@ export class GameController {
 
         } else {
             // ゲーム完了
-            if (this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+            if (this.gameManager.lessonMode === 'vocabulary-learning') {
                 // Lv0: 単語学習モードの完了処理
                 this.clearDisplayWordTimer();
 
@@ -325,18 +299,14 @@ export class GameController {
                     ? 100
                     : Math.round((totalTypesCount / (totalTypesCount + this.gameManager.mistakeCount)) * 100);
 
-                if (this.gameManager.isCustomLesson) {
-                    const lessonSource = this.lessonFlowController?.selectedLessonSource;
-                    if (lessonSource) {
-                        const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
+                const lessonSource = this.lessonFlowController?.selectedLessonSource;
+                if (lessonSource) {
+                    const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
 
-                        // ポリモーフィズムで記録キーを取得（条件分岐なし）
-                        const recordKey = lessonSource.getRecordKey(levelIndex);
+                    // ポリモーフィズムで記録キーを取得（条件分岐なし）
+                    const recordKey = lessonSource.getRecordKey(levelIndex);
 
-                        await this.recordManager.addRecord(recordKey, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
-                    }
-                } else {
-                    await this.recordManager.addRecord(`level${this.gameManager.currentLevel}`, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
+                    await this.recordManager.addRecord(recordKey, elapsedTime, this.gameManager.mistakeCount, totalTypesCount);
                 }
 
                 const isPerfect = this.gameManager.mistakeCount === 0;
@@ -435,8 +405,6 @@ export class GameController {
             }
             
             lfc.customWords = lesson.words;
-            this.gameManager.isCustomLesson = true;
-
             this.uiManager.hideModal('lesson-mode-selection');
 
             (document.querySelector('.typing-area') as HTMLElement).style.display = 'block';
@@ -694,7 +662,7 @@ export class GameController {
 
         const lessonSource = this.lessonFlowController?.selectedLessonSource;
         let lessonId = '';
-        if (this.gameManager.isCustomLesson && lessonSource) {
+        if (lessonSource) {
             const lesson = lessonSource.getLesson();
             lessonId = lesson.firestoreId || lesson.id;
         }
@@ -718,7 +686,7 @@ export class GameController {
         if (!user) return;
 
         const lessonSource = this.lessonFlowController?.selectedLessonSource;
-        if (!this.gameManager.isCustomLesson || !lessonSource) {
+        if (!lessonSource) {
             return;
         }
 
@@ -773,7 +741,7 @@ export class GameController {
             }
 
             if (e.key === 'Enter') {
-                if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+                if (this.gameManager.gameActive && this.gameManager.lessonMode === 'vocabulary-learning') {
                     // Lv0: 単語学習モード専用の処理
                     if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
                         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
@@ -821,7 +789,7 @@ export class GameController {
                         this.initGame();
                     }
                 }
-            } else if (e.key === ' ' && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning') {
+            } else if (e.key === ' ' && this.gameManager.lessonMode === 'vocabulary-learning') {
                 // Lv0: Spaceキーの処理
                 if (this.gameManager.gameActive) {
                     if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {
@@ -902,7 +870,7 @@ export class GameController {
 
         // Lv0: 単語学習モード用のdocumentレベルキーハンドラ
         document.addEventListener('keydown', (e) => {
-            if (this.gameManager.gameActive && this.gameManager.isCustomLesson && this.gameManager.lessonMode === 'vocabulary-learning' &&
+            if (this.gameManager.gameActive && this.gameManager.lessonMode === 'vocabulary-learning' &&
                 wordInput.style.display === 'none' && (e.key === 'Enter' || e.key === ' ')) {
 
                 if (this.levelManager && this.levelManager.getCurrentLevel() && this.levelManager.getCurrentLevel().handleKeyInput) {

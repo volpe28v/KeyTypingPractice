@@ -1,4 +1,4 @@
-import type { WordData, LevelData } from '../types';
+import type { WordData } from '../types';
 import type { AudioManager } from './AudioManager';
 import type { StorageManager } from './StorageManager';
 
@@ -31,8 +31,7 @@ export class GameManager {
     public currentCharPosition: number = 0;
     public positionMistakes: Map<number, number> = new Map();
     
-    // Custom lesson properties
-    public isCustomLesson: boolean = false;
+    // Lesson properties
     public lessonMode: string = 'full';
     public currentLessonIndex: number = 0;
     
@@ -76,8 +75,7 @@ export class GameManager {
         this.currentCharPosition = 0;
         this.positionMistakes = new Map();
         
-        // カスタムレッスン関連
-        this.isCustomLesson = false;
+        // レッスン関連
         this.lessonMode = 'full';
         this.currentLessonIndex = 0;
         
@@ -106,18 +104,9 @@ export class GameManager {
     }
 
     // ゲームを初期化
-    initGame(levelLists: LevelData[], customWords: WordData[] | null = null): void {
-        if (!this.isCustomLesson) {
-            const levelData = levelLists.find((level: LevelData) => level.level === this.currentLevel);
-            if (levelData) {
-                const fullWordList = [...levelData.words];
-                this.shuffleArray(fullWordList);
-                this.words = fullWordList.slice(0, 10);
-            }
-        } else {
-            this.words = customWords || [];
-            this.shuffleArray(this.words);
-        }
+    initGame(customWords: WordData[] = []): void {
+        this.words = customWords;
+        this.shuffleArray(this.words);
 
         // スマート引用符を正規化
         this.words = this.words.map(w => ({
@@ -199,7 +188,7 @@ export class GameManager {
     
     // ミスをカウント（段階的練習モードの特別処理を含む）
     countMistake(visibleCharCount: number | null): void {
-        if (this.isCustomLesson && this.lessonMode === 'progressive' && visibleCharCount !== null) {
+        if (this.lessonMode === 'progressive' && visibleCharCount !== null) {
             // 段階的練習モードの場合、表示されている文字のミスはカウントしない
             // 実際には隠れた部分のミス処理を既存のロジックに任せる
         }
@@ -207,7 +196,7 @@ export class GameManager {
         (window as any).mistakeCount++;
         (window as any).currentWordMistake = true;  // ミス状態フラグを設定
         
-        if (this.isCustomLesson && this.lessonMode === 'progressive') {
+        if (this.lessonMode === 'progressive') {
             this.consecutiveMistakes++;
             
             // 3回連続ミスで進捗を戻す
@@ -271,7 +260,7 @@ export class GameManager {
     // 新しい単語用のリセット
     resetForNewWord(): void {
         (window as any).currentWordMistake = false;
-        if (this.isCustomLesson && this.lessonMode === 'progressive') {
+        if (this.lessonMode === 'progressive') {
             this.consecutiveMistakes = 0;
             this.currentCharPosition = 0;
             this.positionMistakes.clear(); // 文字位置ごとのミスカウントをリセット

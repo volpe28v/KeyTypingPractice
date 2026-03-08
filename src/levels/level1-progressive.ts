@@ -238,7 +238,7 @@ class ProgressiveLearningLevel {
         const container = document.getElementById('hidden-letters-container');
         const lettersDiv = document.getElementById('hidden-letters');
         
-        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+        if (this.gameManager.lessonMode !== 'progressive') {
             container.style.display = 'none';
             return;
         }
@@ -288,7 +288,7 @@ class ProgressiveLearningLevel {
     
     // 選択肢ボタンの状態を更新（script.jsのupdateLetterChoiceButtons()と統合）
     updateLetterChoiceButtons(userInput: string, currentWord: string): void {
-        if (!this.gameManager.isCustomLesson || this.gameManager.lessonMode !== 'progressive') {
+        if (this.gameManager.lessonMode !== 'progressive') {
             return;
         }
         

@@ -60,11 +60,6 @@ export function setupWindowProxies(gameManager: GameManager): void {
         set: (value) => { gameManager.currentWordMistake = value; }
     });
 
-    Object.defineProperty(window, 'isCustomLesson', {
-        get: () => gameManager.isCustomLesson,
-        set: (value) => { gameManager.isCustomLesson = value; }
-    });
-
     Object.defineProperty(window, 'lessonMode', {
         get: () => gameManager.lessonMode,
         set: (value) => { gameManager.lessonMode = value; }
