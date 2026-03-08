@@ -84,40 +84,38 @@ export class RecordManager {
         };
     }
 
-    displayBestTimes(customLessons: LessonData[]): void {
-        customLessons.forEach(lesson => {
+    async displayBestTimes(customLessons: LessonData[]): Promise<void> {
+        // 全レッスンの記録を並列取得
+        const recordsPromises = customLessons.map(lesson => {
+            const lessonId = lesson.firestoreId || lesson.id;
+            return this.storageManager.loadMyBestLessonRecords(lessonId);
+        });
+        const allRecords = await Promise.all(recordsPromises);
+
+        customLessons.forEach((lesson, idx) => {
             const recordEl = document.getElementById(`lesson${lesson.id}-records`);
+            if (!recordEl) return;
 
-            if (recordEl) {
-                recordEl.innerHTML = '';
+            recordEl.innerHTML = '';
+            const bestRecords = allRecords[idx];
 
-                // 最高クリアレベルを検索
-                let highestLevel = -1;
-                for (let i = 5; i >= 0; i--) {
-                    const record = this.getRecordForKey(`lesson${lesson.id}_${i}`);
-                    if (record) {
-                        highestLevel = i;
-                        break;
-                    }
+            // 最高クリアレベルを検索
+            let highestLevel = -1;
+            for (let i = 5; i >= 0; i--) {
+                if (bestRecords.get(i)) {
+                    highestLevel = i;
+                    break;
                 }
+            }
 
-                if (highestLevel >= 0) {
-                    const record = this.getRecordForKey(`lesson${lesson.id}_${highestLevel}`)!;
-                    const seconds = Math.floor(record.elapsedTime / 1000);
-                    recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
-                    recordEl.classList.remove('empty');
-                } else {
-                    // 旧フォーマット（lesson${id}）の記録を確認
-                    const legacyRecord = this.getRecordForKey(`lesson${lesson.id}`);
-                    if (legacyRecord) {
-                        const seconds = Math.floor(legacyRecord.elapsedTime / 1000);
-                        recordEl.innerHTML = `<span class="highest-level">Lv-</span> <span class="highest-detail">${legacyRecord.accuracy}% ${seconds}秒</span>`;
-                        recordEl.classList.remove('empty');
-                    } else {
-                        recordEl.textContent = '-';
-                        recordEl.classList.add('empty');
-                    }
-                }
+            if (highestLevel >= 0) {
+                const record = bestRecords.get(highestLevel)!;
+                const seconds = Math.floor(record.elapsedTime / 1000);
+                recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                recordEl.classList.remove('empty');
+            } else {
+                recordEl.textContent = '-';
+                recordEl.classList.add('empty');
             }
         });
     }
@@ -125,32 +123,37 @@ export class RecordManager {
     /**
      * お気に入りレッスンの最高記録を表示
      */
-    displayFavoriteBestTimes(favorites: UserFavorite[]): void {
-        favorites.forEach(favorite => {
+    async displayFavoriteBestTimes(favorites: UserFavorite[]): Promise<void> {
+        // 全お気に入りの記録を並列取得
+        const recordsPromises = favorites.map(favorite =>
+            this.storageManager.loadMyBestLessonRecords(favorite.lessonId)
+        );
+        const allRecords = await Promise.all(recordsPromises);
+
+        favorites.forEach((favorite, idx) => {
             const recordEl = document.getElementById(`favLesson${favorite.lessonId}-records`);
+            if (!recordEl) return;
 
-            if (recordEl) {
-                recordEl.innerHTML = '';
+            recordEl.innerHTML = '';
+            const bestRecords = allRecords[idx];
 
-                // 最高クリアレベルを検索
-                let highestLevel = -1;
-                for (let i = 5; i >= 0; i--) {
-                    const record = this.getRecordForKey(`favLesson${favorite.lessonId}_${i}`);
-                    if (record) {
-                        highestLevel = i;
-                        break;
-                    }
+            // 最高クリアレベルを検索
+            let highestLevel = -1;
+            for (let i = 5; i >= 0; i--) {
+                if (bestRecords.get(i)) {
+                    highestLevel = i;
+                    break;
                 }
+            }
 
-                if (highestLevel >= 0) {
-                    const record = this.getRecordForKey(`favLesson${favorite.lessonId}_${highestLevel}`)!;
-                    const seconds = Math.floor(record.elapsedTime / 1000);
-                    recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
-                    recordEl.classList.remove('empty');
-                } else {
-                    recordEl.textContent = '-';
-                    recordEl.classList.add('empty');
-                }
+            if (highestLevel >= 0) {
+                const record = bestRecords.get(highestLevel)!;
+                const seconds = Math.floor(record.elapsedTime / 1000);
+                recordEl.innerHTML = `<span class="highest-level">Lv${highestLevel}</span> <span class="highest-detail">${record.accuracy}% ${seconds}秒</span>`;
+                recordEl.classList.remove('empty');
+            } else {
+                recordEl.textContent = '-';
+                recordEl.classList.add('empty');
             }
         });
     }

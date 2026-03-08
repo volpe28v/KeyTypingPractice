@@ -622,4 +622,42 @@ export class FirestoreManager {
       return [];
     }
   }
+
+  // 自分のレッスン記録の最高記録をレベル別に取得
+  async loadMyBestLessonRecords(lessonId: string): Promise<Map<number, { accuracy: number; elapsedTime: number }>> {
+    const result = new Map<number, { accuracy: number; elapsedTime: number }>();
+
+    if (!this.isOnline || !this.userId) {
+      return result;
+    }
+
+    try {
+      const q = query(
+        collection(db, 'lessonRecords'),
+        where('lessonId', '==', lessonId),
+        where('userId', '==', this.userId)
+      );
+
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const levelIndex = data.levelIndex as number;
+        const accuracy = data.accuracy as number;
+        const elapsedTime = data.elapsedTime as number;
+
+        const existing = result.get(levelIndex);
+        if (!existing ||
+            accuracy > existing.accuracy ||
+            (accuracy === existing.accuracy && elapsedTime < existing.elapsedTime)) {
+          result.set(levelIndex, { accuracy, elapsedTime });
+        }
+      });
+
+      return result;
+    } catch (error) {
+      console.error('❌ Error loading my best lesson records:', error);
+      return result;
+    }
+  }
 }

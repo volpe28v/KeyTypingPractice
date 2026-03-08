@@ -314,9 +314,9 @@ export class LessonFlowController {
     }
 
     /**
-     * 選択されたレッスンの各モードの記録を表示（ポリモーフィズム対応）
+     * 選択されたレッスンの各モードの記録を表示（lessonRecordsから自分の最高記録を取得）
      */
-    private updateModeButtonRecordsForLesson(): void {
+    private async updateModeButtonRecordsForLesson(): Promise<void> {
         if (!this.selectedLessonSource) return;
 
         const modes = [
@@ -327,6 +327,11 @@ export class LessonFlowController {
         const modeSelection = document.getElementById('lesson-mode-selection');
         if (!modeSelection) return;
 
+        // lessonRecordsから自分の最高記録をレベル別に取得
+        const lesson = this.selectedLessonSource.getLesson();
+        const lessonId = lesson.firestoreId || lesson.id;
+        const bestRecords = await this.storageManager.loadMyBestLessonRecords(lessonId);
+
         modes.forEach((mode, levelIndex) => {
             const btn = modeSelection.querySelector(`.mode-btn[data-mode="${mode}"]`) as HTMLElement;
             if (!btn) return;
@@ -335,9 +340,7 @@ export class LessonFlowController {
             if (existing) existing.remove();
             btn.classList.remove('mode-btn-perfect');
 
-            // ポリモーフィズムで記録キーを取得（条件分岐なし）
-            const recordKey = this.selectedLessonSource!.getRecordKey(levelIndex);
-            const record = this.recordManager?.getRecordForKey(recordKey);
+            const record = bestRecords.get(levelIndex);
 
             if (record) {
                 const recordDiv = document.createElement('div');
