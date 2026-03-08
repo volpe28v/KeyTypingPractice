@@ -252,7 +252,22 @@ export class InputHandler {
 
         const expectedChar = currentWord[currentPosition].toLowerCase();
         const inputChar = e.key.toLowerCase();
-        const isCorrect = expectedChar === inputChar;
+        let isCorrect = expectedChar === inputChar;
+
+        // スペース・アポストロフィ省略対応: 期待文字がスキップ可能文字の場合、
+        // その文字を自動挿入して次の文字と比較する
+        const skippableChars = [' ', "'"];
+        if (!isCorrect && skippableChars.includes(expectedChar) && !skippableChars.includes(inputChar)) {
+            let skipPos = currentPosition;
+            while (skipPos < currentWord.length && skippableChars.includes(currentWord[skipPos].toLowerCase())) {
+                skipPos++;
+            }
+            if (skipPos < currentWord.length && currentWord[skipPos].toLowerCase() === inputChar) {
+                const charsToInsert = currentWord.slice(currentPosition, skipPos);
+                this.uiManager.wordInput!.value += charsToInsert;
+                isCorrect = true;
+            }
+        }
 
         if (!isCorrect && e.key !== 'Shift') {
             if (this.levelManager && this.levelManager.getCurrentLevel()) {
