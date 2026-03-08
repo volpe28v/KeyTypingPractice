@@ -286,6 +286,18 @@ export class InputHandler {
         }
 
         const currentWord = this.gameManager.words[this.gameManager.currentWordIndex].word;
+
+        // 入力値を正しい範囲に自動修正（preventDefaultをすり抜けた不正解文字を除去）
+        const rawInput = this.uiManager.wordInput!.value;
+        let validLength = 0;
+        for (let i = 0; i < rawInput.length && i < currentWord.length; i++) {
+            if (rawInput[i].toLowerCase() !== currentWord[i].toLowerCase()) break;
+            validLength++;
+        }
+        if (validLength < rawInput.length) {
+            this.uiManager.wordInput!.value = rawInput.slice(0, validLength);
+        }
+
         const userInput = this.uiManager.wordInput!.value;
 
         this.updatePartialWordDisplay();
