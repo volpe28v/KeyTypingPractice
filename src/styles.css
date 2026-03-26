@@ -2139,6 +2139,13 @@ body {
     opacity: 0.9;
 }
 
+.public-lesson-import-btn.loading,
+button.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .public-lesson-imported {
     color: var(--color-success);
     font-size: 0.85rem;
@@ -2445,4 +2452,43 @@ body {
         transform: translateY(110vh) rotate(720deg) translateX(-5px);
         opacity: 0;
     }
+}
+
+/* ポップアップ通知 */
+.popup-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 10000;
+    padding: 20px 36px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 200px;
+}
+
+.popup-notification.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-success {
+    background: var(--color-success);
+    color: #fff;
+}
+
+.popup-error {
+    background: var(--color-danger);
+    color: #fff;
+}
+
+.popup-info {
+    background: var(--color-primary);
+    color: #fff;
 }

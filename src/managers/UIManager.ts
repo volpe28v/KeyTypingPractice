@@ -356,6 +356,29 @@ export class UIManager {
         }
     }
 
+    // 画面中央にポップアップ通知を表示
+    showPopup(message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 2000): void {
+        const existing = document.getElementById('popup-notification');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'popup-notification';
+        popup.className = `popup-notification popup-${type}`;
+        popup.textContent = message;
+        document.body.appendChild(popup);
+
+        // フェードイン
+        requestAnimationFrame(() => {
+            popup.classList.add('show');
+        });
+
+        // 自動で消える
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }, duration);
+    }
+
     // フォーカス管理のセットアップ
     setupFocusManagement(): void {
         // replay-audio-btn がフォーカスを奪わないようにする

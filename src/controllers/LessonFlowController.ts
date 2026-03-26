@@ -636,7 +636,7 @@ export class LessonFlowController {
                     </div>
                     ${isFavorite
                         ? '<span class="public-lesson-imported">お気に入り済み ★</span>'
-                        : `<button class="public-lesson-import-btn" onclick="addToFavorites('${lesson.firestoreId}', '${lesson.name}', '${lesson.ownerDisplayName}')">お気に入りに追加</button>`
+                        : `<button class="public-lesson-import-btn" id="fav-btn-${lesson.firestoreId}" onclick="addToFavorites('${lesson.firestoreId}', '${lesson.name}', '${lesson.ownerDisplayName}')">お気に入りに追加</button>`
                     }
                 `;
 
@@ -653,20 +653,37 @@ export class LessonFlowController {
         const alreadyFavorite = this.userFavorites.some(f => f.lessonId === lessonId);
 
         if (alreadyFavorite) {
-            alert('このレッスンは既にお気に入り済みです。');
+            this.uiManager.showPopup('このレッスンは既にお気に入り済みです。', 'info');
             return;
         }
 
-        const success = await this.storageManager.addFavorite(lessonId, lessonName, ownerDisplayName);
-        if (success) {
-            // userFavoritesを再読み込み
-            await this.loadCustomLessons(); // この中でuserFavoritesも読み込まれる
-            this.gameController?.updateLessonList();
-            alert('お気に入りに追加しました！');
-            // ブラウザを更新
-            await this.showPublicLessonBrowser();
-        } else {
-            alert('お気に入りへの追加に失敗しました。');
+        // ボタンを処理中状態にする
+        const btn = document.getElementById(`fav-btn-${lessonId}`) as HTMLButtonElement | null;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '追加中...';
+            btn.classList.add('loading');
+        }
+
+        try {
+            const success = await this.storageManager.addFavorite(lessonId, lessonName, ownerDisplayName);
+            if (success) {
+                // userFavoritesを再読み込み
+                await this.loadCustomLessons(); // この中でuserFavoritesも読み込まれる
+                this.gameController?.updateLessonList();
+                this.uiManager.showPopup('お気に入りに追加しました！', 'success');
+                // ブラウザを更新
+                await this.showPublicLessonBrowser();
+            } else {
+                this.uiManager.showPopup('お気に入りへの追加に失敗しました。', 'error');
+            }
+        } finally {
+            // 失敗時にボタンを復元（成功時はshowPublicLessonBrowserで再描画される）
+            if (btn && !btn.closest('.public-lesson-list')?.querySelector('.public-lesson-imported')) {
+                btn.disabled = false;
+                btn.textContent = 'お気に入りに追加';
+                btn.classList.remove('loading');
+            }
         }
     }
 
@@ -677,9 +694,9 @@ export class LessonFlowController {
             // userFavoritesを再読み込み
             await this.loadCustomLessons(); // この中でuserFavoritesも読み込まれる
             this.gameController?.updateLessonList();
-            alert('お気に入りから削除しました。');
+            this.uiManager.showPopup('お気に入りから削除しました。', 'success');
         } else {
-            alert('お気に入りからの削除に失敗しました。');
+            this.uiManager.showPopup('お気に入りからの削除に失敗しました。', 'error');
         }
     }
 
@@ -693,7 +710,7 @@ export class LessonFlowController {
 
         const displayInfo = this.selectedLessonSource.getDisplayInfo();
         if (!displayInfo.showRemoveFavoriteButton || !displayInfo.favoriteId) {
-            alert('お気に入りレッスンではありません。');
+            this.uiManager.showPopup('お気に入りレッスンではありません。', 'info');
             return;
         }
 
@@ -704,12 +721,28 @@ export class LessonFlowController {
             return;
         }
 
-        await this.removeFromFavorites(displayInfo.favoriteId);
+        // ボタンを処理中状態にする
+        const deleteBtn = document.getElementById('lesson-delete-btn') as HTMLButtonElement | null;
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = '削除中...';
+            deleteBtn.classList.add('loading');
+        }
 
-        this.uiManager.hideModal('lesson-mode-selection');
-        this.selectedLessonSource = null;
-        this.clearSelectedCardHighlight();
-        this.gameController?.backToTitle();
+        try {
+            await this.removeFromFavorites(displayInfo.favoriteId);
+
+            this.uiManager.hideModal('lesson-mode-selection');
+            this.selectedLessonSource = null;
+            this.clearSelectedCardHighlight();
+            this.gameController?.backToTitle();
+        } finally {
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'お気に入りから削除';
+                deleteBtn.classList.remove('loading');
+            }
+        }
     }
 
     // レッスン別ランキング読み込み
