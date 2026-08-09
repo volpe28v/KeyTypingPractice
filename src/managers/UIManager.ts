@@ -1,4 +1,4 @@
-import type { RankingEntry, LessonRankingEntry } from '../types';
+import type { RankingEntry, LessonRankingEntry, WordResult } from '../types';
 
 /**
  * UIManager - UI操作とDOM要素管理クラス
@@ -270,6 +270,110 @@ export class UIManager {
         if (this.resetAudioBtn) {
             this.resetAudioBtn.style.display = 'none';
         }
+    }
+
+    // 練習結果パネルを表示（ミスした単語をミス数降順で一覧化）
+    showResultPanel(results: WordResult[], onRetryMissed: () => void, note?: string): void {
+        const panel = document.getElementById('result-panel');
+        const body = document.getElementById('result-panel-body');
+        const actions = document.getElementById('result-panel-actions');
+        if (!panel || !body || !actions) return;
+
+        // 記録が無い場合（Lv0など）はパネル自体を出さない
+        if (results.length === 0) {
+            this.hideResultPanel();
+            return;
+        }
+
+        const missedResults = results
+            .filter(result => result.mistakeCount > 0)
+            .sort((a, b) => b.mistakeCount - a.mistakeCount);
+
+        if (missedResults.length === 0) {
+            body.innerHTML = `<div class="result-no-miss">ノーミス！${results.length}語すべてを一度も間違えずにクリアしました 🎉</div>`;
+        } else {
+            const summary = `<div class="result-summary">苦手な単語 <strong>${missedResults.length}</strong> / ${results.length}語</div>`;
+            const rows = missedResults.map(result => this.buildResultRow(result)).join('');
+            body.innerHTML = `${summary}<ul class="result-word-list">${rows}</ul>`;
+        }
+
+        actions.innerHTML = '';
+        if (missedResults.length > 0) {
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-primary result-retry-btn';
+            retryBtn.textContent = `間違えた${missedResults.length}語だけもう一度 (R)`;
+            retryBtn.addEventListener('click', onRetryMissed);
+            actions.appendChild(retryBtn);
+        }
+
+        if (note) {
+            const noteEl = document.createElement('div');
+            noteEl.className = 'result-panel-note';
+            noteEl.textContent = note;
+            actions.appendChild(noteEl);
+        }
+
+        panel.style.display = 'block';
+        setTimeout(() => panel.classList.add('show'), 10);
+    }
+
+    // 練習結果パネルを隠す
+    hideResultPanel(): void {
+        const panel = document.getElementById('result-panel');
+        if (!panel) return;
+
+        panel.classList.remove('show');
+        panel.style.display = 'none';
+    }
+
+    // 結果1行分のHTMLを生成
+    private buildResultRow(result: WordResult): string {
+        const missedPositions = new Set(result.misses.map(miss => miss.position));
+
+        const wordHTML = result.word
+            .split('')
+            .map((char, index) => {
+                const displayChar = this.escapeHTML(char === ' ' ? '␣' : char);
+                return missedPositions.has(index)
+                    ? `<span class="result-char miss">${displayChar}</span>`
+                    : `<span class="result-char">${displayChar}</span>`;
+            })
+            .join('');
+
+        return `
+            <li class="result-word-item">
+                <div class="result-word-main">
+                    <span class="result-word">${wordHTML}</span>
+                    <span class="result-miss-count">×${result.mistakeCount}</span>
+                </div>
+                <div class="result-word-sub">
+                    <span class="result-meaning">${this.escapeHTML(result.meaning)}</span>
+                    <span class="result-miss-keys">${this.buildMissKeysText(result)}</span>
+                </div>
+            </li>
+        `;
+    }
+
+    // 「正しい文字 → 誤って押した文字」を頻度順に整形
+    private buildMissKeysText(result: WordResult): string {
+        const pairCounts = new Map<string, number>();
+        result.misses.forEach(miss => {
+            const key = `${miss.expected} → ${miss.typed}`;
+            pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+        });
+
+        return [...pairCounts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([pair, count]) => this.escapeHTML(count > 1 ? `${pair} ×${count}` : pair))
+            .join(' / ');
+    }
+
+    // ユーザー作成のレッスン内容を安全に埋め込むためのエスケープ
+    private escapeHTML(text: string): string {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // タイトル画面の表示

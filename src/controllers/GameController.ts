@@ -33,6 +33,8 @@ export class GameController {
     // State
     public displayWordTimer: NodeJS.Timeout | null = null;
     private clearScreenKeyHandler: ((event: KeyboardEvent) => void) | null = null;
+    // 次の initGame() を復習セッションとして開始するかどうか
+    private pendingReviewSession: boolean = false;
     private levelManager: LevelManager | null = null;
     // Dependencies
     private gameManager: GameManager;
@@ -95,6 +97,9 @@ export class GameController {
                 this.uiManager.showScreenPulse(combo);
             }
 
+            // インデックスを進める前に、この単語の結果を確定させる
+            this.gameManager.commitWordAttempt();
+
             window.currentWordIndex++;
             this.gameManager.correctCount++;
 
@@ -111,8 +116,13 @@ export class GameController {
     initGame(): void {
         window.isShowingClearScreen = false;
 
+        // 復習セッションは retryMissedWords() から開始された場合のみ
+        this.gameManager.isReviewSession = this.pendingReviewSession;
+        this.pendingReviewSession = false;
+
         // 残留演出要素を除去
         document.querySelectorAll('.confetti-container, .combo-message, .praise-message').forEach(el => el.remove());
+        this.uiManager.hideResultPanel();
 
         if (this.uiManager.meaningDisplay) {
             this.uiManager.meaningDisplay.innerHTML = '';
@@ -201,6 +211,7 @@ export class GameController {
             const currentWord = this.gameManager.words[this.gameManager.currentWordIndex];
 
             this.gameManager.resetForNewWord();
+            this.gameManager.beginWordAttempt();
 
             if (this.uiManager.replayAudioBtn) {
                 this.uiManager.replayAudioBtn.style.display = 'block';
@@ -302,18 +313,29 @@ export class GameController {
                 const isPerfect = this.gameManager.mistakeCount === 0;
 
                 // XP計算・保存
+                // 復習セッションは単語が絞り込まれているため、XP・記録は保存しない（記録汚染防止）
                 const levelIndex = MODE_TO_LEVEL[this.gameManager.lessonMode] ?? 0;
-                const xp = calculateXP(levelIndex, this.gameManager.words.length, accuracyRate);
-                await this.saveXPRecord(levelIndex, this.gameManager.words.length, accuracyRate, xp);
+                const xp = this.gameManager.isReviewSession
+                    ? undefined
+                    : calculateXP(levelIndex, this.gameManager.words.length, accuracyRate);
 
-                // 共有レッスンの場合、共有レッスン記録も保存
-                await this.saveSharedLessonRecordIfNeeded(levelIndex, accuracyRate, elapsedTime, this.gameManager.words.length);
+                if (!this.gameManager.isReviewSession) {
+                    await this.saveXPRecord(levelIndex, this.gameManager.words.length, accuracyRate, xp!);
+
+                    // 共有レッスンの場合、共有レッスン記録も保存
+                    await this.saveSharedLessonRecordIfNeeded(levelIndex, accuracyRate, elapsedTime, this.gameManager.words.length);
+                }
 
                 if (this.levelManager && this.levelManager.cleanup) {
                     this.levelManager.cleanup();
                 }
 
                 this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate, xp);
+                this.uiManager.showResultPanel(
+                    this.gameManager.wordResults,
+                    () => this.retryMissedWords(),
+                    this.gameManager.isReviewSession ? '復習モードのため、XPと記録は保存されません' : undefined
+                );
                 this.uiManager.showPraiseMessage(isPerfect);
 
                 if (isPerfect) {
@@ -354,6 +376,9 @@ export class GameController {
             } else if (event.key === 'Escape') {
                 event.preventDefault();
                 this.backToTitle();
+            } else if (event.key === 'r' || event.key === 'R') {
+                event.preventDefault();
+                this.retryMissedWords();
             }
         };
 
@@ -373,6 +398,35 @@ export class GameController {
         };
 
         document.addEventListener('keydown', this.clearScreenKeyHandler);
+    }
+
+    // ミスした単語だけで練習し直す（復習セッション）
+    retryMissedWords(): void {
+        const missedWords = this.gameManager.getMissedWords();
+        if (missedWords.length === 0) return;
+
+        const lfc = this.lessonFlowController;
+        if (!lfc) return;
+
+        window.isShowingClearScreen = false;
+
+        if (this.clearScreenKeyHandler) {
+            document.removeEventListener('keydown', this.clearScreenKeyHandler);
+            this.clearScreenKeyHandler = null;
+        }
+
+        this.uiManager.hideResultPanel();
+
+        // getMissedWords() は新しい配列を返すため、レッスン本体の単語配列は壊れない
+        lfc.customWords = missedWords;
+        this.pendingReviewSession = true;
+
+        this.uiManager.hideModal('lesson-mode-selection');
+        (document.querySelector('.typing-area') as HTMLElement).style.display = 'block';
+        (document.querySelector('.keyboard-display-container') as HTMLElement).style.display = 'block';
+        document.getElementById('back-to-title-btn')!.style.display = 'block';
+
+        this.initGame();
     }
 
     restartCurrentLesson(): void {
@@ -424,6 +478,8 @@ export class GameController {
 
         this.gameManager.gameActive = false;
         this.gameManager.timerStarted = false;
+
+        this.uiManager.hideResultPanel();
 
         document.getElementById('back-to-title-btn')!.style.display = 'none';
 

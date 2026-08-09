@@ -141,7 +141,8 @@ class ProgressiveLearningLevel {
             if (currentPosition >= visibleCharCount) {
                 // 段階的練習モード専用のミスカウント（consecutiveMistakesを増やさない）
                 this.gameManager.countMistakeForProgressive();
-                
+                this.gameManager.recordCharMistake(currentPosition, expectedChar, inputChar);
+
                 // 文字位置ベースのミス処理のみを使用
                 const positionMistakeTriggered = this.gameManager.countPositionMistake(currentPosition);
                 

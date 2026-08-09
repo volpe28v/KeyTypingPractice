@@ -1,4 +1,4 @@
-import type { WordData } from '../types';
+import type { CharMiss, WordData, WordResult } from '../types';
 import type { AudioManager } from './AudioManager';
 import type { StorageManager } from './StorageManager';
 
@@ -44,6 +44,12 @@ export class GameManager {
     // Combo properties
     public comboCount: number = 0;
     public maxCombo: number = 0;
+
+    // 単語別の練習結果（クリア後の結果表示・苦手単語リトライ用）
+    public wordResults: WordResult[] = [];
+    public isReviewSession: boolean = false;
+    private currentWordMisses: CharMiss[] = [];
+    private attemptWordIndex: number = -1;
 
     // Hidden letter selection properties
     public hiddenLetters: string[] = [];
@@ -123,6 +129,10 @@ export class GameManager {
         this.maxCombo = 0;
         this.gameActive = true;
         this.timerStarted = false;
+
+        this.wordResults = [];
+        this.currentWordMisses = [];
+        this.attemptWordIndex = -1;
 
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
@@ -276,6 +286,42 @@ export class GameManager {
     resetVocabularyLearning(): void {
         this.vocabularyLearningCount = 0;
         this.vocabularyLearningIsJapanese = false;
+    }
+
+    // 単語の計測を開始（新しい単語の表示時に呼ぶ）
+    // 同じ単語で displayWord() が複数回呼ばれても記録を失わないよう、単語ごとに1回だけ開始する
+    beginWordAttempt(): void {
+        if (this.attemptWordIndex === this.currentWordIndex) return;
+
+        this.attemptWordIndex = this.currentWordIndex;
+        this.currentWordMisses = [];
+    }
+
+    // ミスした文字を記録（ミス検知時に呼ぶ）
+    recordCharMistake(position: number, expected: string, typed: string): void {
+        this.currentWordMisses.push({ position, expected, typed });
+    }
+
+    // 単語の結果を確定（次の単語へ進む直前に呼ぶ）
+    commitWordAttempt(): void {
+        const currentWord = this.getCurrentWord();
+        if (!currentWord) return;
+
+        this.wordResults.push({
+            word: currentWord.word,
+            meaning: currentWord.meaning,
+            mistakeCount: this.currentWordMisses.length,
+            misses: this.currentWordMisses,
+        });
+
+        this.currentWordMisses = [];
+    }
+
+    // ミスした単語のみを取得（苦手単語リトライ用）
+    getMissedWords(): WordData[] {
+        return this.wordResults
+            .filter(result => result.mistakeCount > 0)
+            .map(result => ({ word: result.word, meaning: result.meaning }));
     }
 
     // コンボを更新（単語完了時に呼ぶ）

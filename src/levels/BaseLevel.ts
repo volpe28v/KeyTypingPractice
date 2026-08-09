@@ -48,6 +48,7 @@ export abstract class BaseLevel {
 
         if (!isCorrect && e.key !== 'Shift') {
             this.gameManager.countMistake(null);
+            this.gameManager.recordCharMistake(currentPosition, expectedChar, inputChar);
             this.handleMistake?.(currentWord, currentPosition);
         }
 
