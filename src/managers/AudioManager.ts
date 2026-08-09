@@ -1,3 +1,10 @@
+interface SpeechOptions {
+    lang: string;
+    rate: number;
+    pitch?: number;
+    volume?: number;
+}
+
 /**
  * AudioManager - 音声関連機能を管理するクラス
  * タイピング音、ミスタイプ音、効果音、音声合成などを処理
@@ -5,7 +12,10 @@
 export class AudioManager {
     private audioContext: AudioContext | null = null;
     private speechTimerId: ReturnType<typeof setTimeout> | null = null;
-    private cachedVoices: { [lang: string]: SpeechSynthesisVoice | null } = {};
+    private speechWatchdogId: ReturnType<typeof setTimeout> | null = null;
+    private cachedVoices: { [lang: string]: SpeechSynthesisVoice } = {};
+    // GC による発話の途中終了を防ぐため、再生中の utterance への参照を保持する
+    private currentUtterance: SpeechSynthesisUtterance | null = null;
 
     constructor() {
         this.audioContext = null;
@@ -20,10 +30,14 @@ export class AudioManager {
 
     // 高品質ボイスを優先的に選択
     private getPreferredVoice(lang: string): SpeechSynthesisVoice | null {
-        if (this.cachedVoices[lang] !== undefined) return this.cachedVoices[lang];
-
         const voices = window.speechSynthesis.getVoices();
         if (voices.length === 0) return null;
+
+        // ボイス一覧は再生成されることがあり、古いボイスを指定すると発話に失敗するため
+        // キャッシュが現在の一覧に残っている場合のみ再利用する
+        const cached = this.cachedVoices[lang];
+        if (cached && voices.includes(cached)) return cached;
+        delete this.cachedVoices[lang];
 
         const langPrefix = lang.split('-')[0];
 
@@ -45,7 +59,7 @@ export class AudioManager {
 
         // フォールバック: 同じ言語のボイスから選択
         const fallback = voices.find(v => v.lang.startsWith(langPrefix)) || null;
-        this.cachedVoices[lang] = fallback;
+        if (fallback) this.cachedVoices[lang] = fallback;
         return fallback;
     }
 
@@ -167,37 +181,75 @@ export class AudioManager {
     }
 
     // 安全な SpeechSynthesis ラッパー
-    private safeSpeek(text: string, options: { lang: string; rate: number; pitch?: number; volume?: number }): void {
-        if (!window.speechSynthesis) return;
+    private safeSpeek(text: string, options: SpeechOptions): void {
+        const synth = window.speechSynthesis;
+        if (!synth) return;
+        if (!text || text.trim() === '') return;
 
         // 前回の予約をキャンセル（連続呼び出し時の競合防止）
         if (this.speechTimerId !== null) {
             clearTimeout(this.speechTimerId);
             this.speechTimerId = null;
         }
+        if (this.speechWatchdogId !== null) {
+            clearTimeout(this.speechWatchdogId);
+            this.speechWatchdogId = null;
+        }
 
-        window.speechSynthesis.cancel();
+        // 発話中・キュー待ちのときだけキャンセルする。
+        // 何も発話していない状態での cancel() は、直後に speak() した utterance を
+        // 開始前に破棄してしまい 'canceled' エラー（＝無音）を引き起こす
+        const isBusy = synth.speaking || synth.pending;
+        if (isBusy) synth.cancel();
 
         // Chrome の既知バグ対策: cancel() 直後の speak() がスタックするため遅延を入れる
         this.speechTimerId = setTimeout(() => {
             this.speechTimerId = null;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = options.lang;
-            utterance.rate = options.rate;
-            if (options.pitch !== undefined) utterance.pitch = options.pitch;
-            if (options.volume !== undefined) utterance.volume = options.volume;
+            this.speakNow(text, options, false);
+        }, isBusy ? 100 : 0);
+    }
 
-            const voice = this.getPreferredVoice(options.lang);
-            if (voice) utterance.voice = voice;
+    // 実際に発話する（isRetry: ボイス指定なしでの再試行かどうか）
+    private speakNow(text: string, options: SpeechOptions, isRetry: boolean): void {
+        const synth = window.speechSynthesis;
 
-            utterance.onerror = (e) => {
-                if (e.error !== 'interrupted') {
-                    console.warn('SpeechSynthesis error:', e.error);
-                }
-            };
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = options.lang;
+        utterance.rate = options.rate;
+        if (options.pitch !== undefined) utterance.pitch = options.pitch;
+        if (options.volume !== undefined) utterance.volume = options.volume;
 
-            window.speechSynthesis.speak(utterance);
-        }, 100);
+        // 再試行時はボイス指定を外す（無効なボイスが原因のケースを回避）
+        const voice = isRetry ? null : this.getPreferredVoice(options.lang);
+        if (voice) utterance.voice = voice;
+
+        let started = false;
+        utterance.onstart = () => { started = true; };
+        utterance.onerror = (e) => {
+            // 次の単語へ切り替えた際は必ず発生するため無視する
+            if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                console.warn('SpeechSynthesis error:', e.error);
+            }
+        };
+
+        this.currentUtterance = utterance;
+
+        // pause 状態のままだと speak() しても再生されない
+        if (synth.paused) synth.resume();
+        synth.speak(utterance);
+
+        // 発話が始まらない場合のリカバリ（ボイス指定なしで1回だけ再試行）
+        if (isRetry) return;
+        this.speechWatchdogId = setTimeout(() => {
+            this.speechWatchdogId = null;
+            if (started || synth.speaking || synth.pending) return;
+            // 別の発話に切り替わっている場合は何もしない
+            if (this.currentUtterance !== utterance) return;
+
+            console.warn('SpeechSynthesis did not start, retrying without voice');
+            synth.cancel();
+            this.speakNow(text, options, true);
+        }, 500);
     }
 
     // 正解時に効果音を再生する関数
@@ -262,6 +314,18 @@ export class AudioManager {
 
     // 音声機能の手動リセット
     resetAudio(): void {
+        // 予約済みの発話・リカバリ処理を先に破棄する
+        if (this.speechTimerId !== null) {
+            clearTimeout(this.speechTimerId);
+            this.speechTimerId = null;
+        }
+        if (this.speechWatchdogId !== null) {
+            clearTimeout(this.speechWatchdogId);
+            this.speechWatchdogId = null;
+        }
+        this.currentUtterance = null;
+        this.cachedVoices = {};
+
         // SpeechSynthesis 多段階リセット
         if (window.speechSynthesis) {
             // 1. キャンセルで既存キューをクリア
