@@ -10,7 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **ビルド**: `npm run build`（tsc && vite build → `dist/`）
 - **プレビュー**: `npm run preview`
 - **型チェック**: `npm run typecheck`（tsc --noEmit）
-- **デプロイ**: `npm run deploy`（build → Firebase Hosting）
+- **デプロイ**: `npm run deploy`（build → Firebase Hosting のみ）
+  - `npm run deploy:firestore`（ルール・インデックスのみ。変更時だけ実行）
+  - `npm run deploy:all`（Hosting + Firestore。ルール変更を伴うリリース時のみ）
+  - デプロイ先は `.firebaserc` で `spellingmaster-49b44` に固定（`--project` を手打ちしないこと）
 - **テスト**: テストフレームワークなし
 - **リント**: リンターなし
 
@@ -92,7 +95,7 @@ src/
    - 正確率ベースの記録管理（正確率優先、同率なら時間優先）
 
 ## データ管理
-- **Firestore**: レッスン（`lessons`）、記録（`gameRecords`）、設定（`users`）
+- **Firestore**: レッスン（`lessons`）、お気に入り（`userFavorites`）、レッスン記録（`lessonRecords`）、週次XP（`weeklyXP`）、設定（`users`）
 - **認証**: Google Sign-In（Firebase Auth）
 - **セキュリティ**: Firestoreルールでユーザー単位のアクセス制御
 - **メモリ**: ゲーム状態（マネージャーインスタンス内）

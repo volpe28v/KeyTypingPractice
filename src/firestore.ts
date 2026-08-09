@@ -81,13 +81,21 @@ export class FirestoreManager {
           collection(db, 'lessons'),
           where('ownerId', '==', this.userId),
           orderBy('createdAt', 'desc')
-        )).catch(() => ({ docs: [] as any[] })),
+        )).catch((error) => {
+          // 片方が失敗してももう片方の結果を活かすため握りつぶすが、
+          // 無言で0件になるとデータ消失と区別できないので必ずログを残す
+          console.error('❌ lessons query (ownerId) failed:', error);
+          return { docs: [] as any[] };
+        }),
         // 古いレッスン: userIdで検索
         getDocs(query(
           collection(db, 'lessons'),
           where('userId', '==', this.userId),
           orderBy('createdAt', 'desc')
-        )).catch(() => ({ docs: [] as any[] }))
+        )).catch((error) => {
+          console.error('❌ lessons query (userId) failed:', error);
+          return { docs: [] as any[] };
+        })
       ]);
 
       // 統合してfirestoreIdでDuplicate除去

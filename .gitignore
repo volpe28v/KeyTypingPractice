@@ -35,5 +35,6 @@ build/
 .env.production
 
 # Firebase
+# .firebaserc はデプロイ先を固定するため意図的にコミットする
+# （プロジェクトIDは Hosting URL やクライアントバンドルに含まれる公開情報）
 .firebase/
-.firebaserc
