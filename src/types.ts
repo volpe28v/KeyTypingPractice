@@ -4,6 +4,21 @@ export interface WordData {
   meaning: string;
 }
 
+// 文字単位のミス記録
+export interface CharMiss {
+  position: number;   // 単語内の文字位置（0始まり）
+  expected: string;   // 入力すべきだった文字
+  typed: string;      // 実際に入力された文字
+}
+
+// 単語単位の練習結果
+export interface WordResult {
+  word: string;
+  meaning: string;
+  mistakeCount: number;
+  misses: CharMiss[];
+}
+
 // レッスンデータの型定義
 export interface LessonData {
   id: string;
