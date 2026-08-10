@@ -1,5 +1,13 @@
 import type { RankingEntry, LessonRankingEntry, WordResult } from '../types';
 
+// 結果パネルの表示に必要なコールバックと状態
+interface ResultPanelHandlers {
+    onRetryMissed: () => void;
+    onSpeakWord: (word: string) => void;
+    isReviewSession?: boolean;
+    note?: string;
+}
+
 /**
  * UIManager - UI操作とDOM要素管理クラス
  * DOM要素の操作、フィードバック表示、入力制御などを処理
@@ -17,6 +25,7 @@ export class UIManager {
     public resetAudioBtn: HTMLElement | null;
 
     // State properties
+    private resultSpeakHandler: ((event: Event) => void) | null = null;
     public isComposing: boolean = false;
     public pendingGameActive: boolean | undefined;
     
@@ -228,7 +237,7 @@ export class UIManager {
     }
     
     // ゲーム完了時の表示
-    showGameComplete(isPerfect: boolean, mistakeCount: number, elapsedTime: number, accuracyRate: number, xp?: number): void {
+    showGameComplete(isPerfect: boolean, mistakeCount: number, elapsedTime: number, accuracyRate: number, xp?: number, hasMissedWords: boolean = false): void {
         if (this.wordDisplay) {
             if (isPerfect) {
                 this.wordDisplay.innerHTML = '<span style="color: #ffcc00; font-size: 1.2em;">パーフェクト！</span>';
@@ -240,10 +249,11 @@ export class UIManager {
 
         if (this.meaningDisplay) {
             const xpText = xp !== undefined ? `<div style="margin-top: 8px; color: #ffa726; font-size: 1.1em; font-weight: bold;">+${xp} XP!</div>` : '';
+            const reviewHint = hasMissedWords ? 'R: 苦手単語を復習 | ' : '';
             this.meaningDisplay.innerHTML = `
                 <div>${this.generateScoreText(elapsedTime, accuracyRate, mistakeCount)}</div>
                 ${xpText}
-                <div style="margin-top: 10px; font-size: 0.8em; color: #90a4ae;">Enter: もう一度 | Escape: レッスン選択に戻る</div>
+                <div style="margin-top: 10px; font-size: 0.8em; color: #90a4ae;">Enter: もう一度 | ${reviewHint}Escape: レッスン選択に戻る</div>
             `;
             // クリア時はmeaningDisplayを強制的に表示する
             this.meaningDisplay.style.display = 'block';
@@ -273,7 +283,7 @@ export class UIManager {
     }
 
     // 練習結果パネルを表示（ミスした単語をミス数降順で一覧化）
-    showResultPanel(results: WordResult[], onRetryMissed: () => void, note?: string): void {
+    showResultPanel(results: WordResult[], handlers: ResultPanelHandlers): void {
         const panel = document.getElementById('result-panel');
         const body = document.getElementById('result-panel-body');
         const actions = document.getElementById('result-panel-actions');
@@ -290,26 +300,31 @@ export class UIManager {
             .sort((a, b) => b.mistakeCount - a.mistakeCount);
 
         if (missedResults.length === 0) {
-            body.innerHTML = `<div class="result-no-miss">ノーミス！${results.length}語すべてを一度も間違えずにクリアしました 🎉</div>`;
+            // 復習セッションをノーミスで終えた場合は「克服」として区別する
+            body.innerHTML = handlers.isReviewSession
+                ? `<div class="result-conquered">苦手だった${results.length}語を全問ノーミス！克服しました 🏆</div>`
+                : `<div class="result-no-miss">ノーミス！${results.length}語すべてを一度も間違えずにクリアしました 🎉</div>`;
         } else {
-            const summary = `<div class="result-summary">苦手な単語 <strong>${missedResults.length}</strong> / ${results.length}語</div>`;
+            const summary = `<div class="result-summary">苦手な単語 <strong>${missedResults.length}</strong> / ${results.length}語<span class="result-hint">単語をクリックすると発音します</span></div>`;
             const rows = missedResults.map(result => this.buildResultRow(result)).join('');
             body.innerHTML = `${summary}<ul class="result-word-list">${rows}</ul>`;
         }
+
+        this.bindResultWordSpeak(body, handlers.onSpeakWord);
 
         actions.innerHTML = '';
         if (missedResults.length > 0) {
             const retryBtn = document.createElement('button');
             retryBtn.className = 'btn btn-primary result-retry-btn';
             retryBtn.textContent = `間違えた${missedResults.length}語だけもう一度 (R)`;
-            retryBtn.addEventListener('click', onRetryMissed);
+            retryBtn.addEventListener('click', handlers.onRetryMissed);
             actions.appendChild(retryBtn);
         }
 
-        if (note) {
+        if (handlers.note) {
             const noteEl = document.createElement('div');
             noteEl.className = 'result-panel-note';
-            noteEl.textContent = note;
+            noteEl.textContent = handlers.note;
             actions.appendChild(noteEl);
         }
 
@@ -324,6 +339,36 @@ export class UIManager {
 
         panel.classList.remove('show');
         panel.style.display = 'none';
+    }
+
+    // 結果パネルの単語クリックで発音する（イベント委譲）
+    // body は使い回されるため、再表示のたびに古いリスナーを外す
+    private bindResultWordSpeak(body: HTMLElement, onSpeakWord: (word: string) => void): void {
+        if (this.resultSpeakHandler) {
+            body.removeEventListener('click', this.resultSpeakHandler);
+        }
+
+        this.resultSpeakHandler = (event: Event) => {
+            const target = (event.target as HTMLElement).closest('.result-word');
+            const word = target?.getAttribute('data-word');
+            if (word) onSpeakWord(word);
+        };
+
+        body.addEventListener('click', this.resultSpeakHandler);
+    }
+
+    // 復習セッション中であることを示すバッジ
+    showReviewBadge(wordCount: number): void {
+        const badge = document.getElementById('review-badge');
+        if (!badge) return;
+
+        badge.textContent = `復習モード ${wordCount}語`;
+        badge.style.display = 'block';
+    }
+
+    hideReviewBadge(): void {
+        const badge = document.getElementById('review-badge');
+        if (badge) badge.style.display = 'none';
     }
 
     // 結果1行分のHTMLを生成
@@ -343,7 +388,7 @@ export class UIManager {
         return `
             <li class="result-word-item">
                 <div class="result-word-main">
-                    <span class="result-word">${wordHTML}</span>
+                    <span class="result-word" data-word="${this.escapeHTML(result.word)}" title="クリックで発音">${wordHTML}</span>
                     <span class="result-miss-count">×${result.mistakeCount}</span>
                 </div>
                 <div class="result-word-sub">
@@ -370,10 +415,14 @@ export class UIManager {
     }
 
     // ユーザー作成のレッスン内容を安全に埋め込むためのエスケープ
+    // 単語は data-word 属性にも埋め込むため、引用符もエスケープする
     private escapeHTML(text: string): string {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // タイトル画面の表示

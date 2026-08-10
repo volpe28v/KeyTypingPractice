@@ -152,6 +152,12 @@ export class GameController {
             }
         }, 400);
 
+        if (this.gameManager.isReviewSession) {
+            this.uiManager.showReviewBadge(this.gameManager.words.length);
+        } else {
+            this.uiManager.hideReviewBadge();
+        }
+
         this.uiManager.updateProgressBar(this.gameManager.currentWordIndex, this.gameManager.words.length);
         if (this.uiManager.scoreDisplay) this.uiManager.scoreDisplay.style.display = 'none';
         if (this.uiManager.wordInput) {
@@ -330,12 +336,14 @@ export class GameController {
                     this.levelManager.cleanup();
                 }
 
-                this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate, xp);
-                this.uiManager.showResultPanel(
-                    this.gameManager.wordResults,
-                    () => this.retryMissedWords(),
-                    this.gameManager.isReviewSession ? '復習モードのため、XPと記録は保存されません' : undefined
-                );
+                const hasMissedWords = this.gameManager.getMissedWords().length > 0;
+                this.uiManager.showGameComplete(isPerfect, this.gameManager.mistakeCount, elapsedTime, accuracyRate, xp, hasMissedWords);
+                this.uiManager.showResultPanel(this.gameManager.wordResults, {
+                    onRetryMissed: () => this.retryMissedWords(),
+                    onSpeakWord: (word) => this.audioManager.speakWord(word, this.gameManager.lessonLanguage),
+                    isReviewSession: this.gameManager.isReviewSession,
+                    note: this.gameManager.isReviewSession ? '復習モードのため、XPと記録は保存されません' : undefined,
+                });
                 this.uiManager.showPraiseMessage(isPerfect);
 
                 if (isPerfect) {
@@ -480,6 +488,7 @@ export class GameController {
         this.gameManager.timerStarted = false;
 
         this.uiManager.hideResultPanel();
+        this.uiManager.hideReviewBadge();
 
         document.getElementById('back-to-title-btn')!.style.display = 'none';
 

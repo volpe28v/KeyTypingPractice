@@ -2612,3 +2612,43 @@ button.loading {
     font-size: 0.75rem;
     color: var(--text-muted);
 }
+
+/* 復習モードバッジ */
+.review-badge {
+    display: none;
+    margin: 0 auto 10px;
+    padding: 4px 14px;
+    width: fit-content;
+    background: var(--color-warning);
+    color: var(--text-white);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* 結果パネル: 苦手克服の表示 */
+.result-conquered {
+    padding: 8px 0;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--color-warning);
+    text-align: center;
+}
+
+/* 結果パネル: 単語クリックで発音 */
+.result-hint {
+    float: right;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.result-word {
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.result-word:hover {
+    background: var(--bg-surface);
+}
